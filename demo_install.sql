@@ -64,3 +64,6 @@ commit;
 
 
 select 'K2 framework install complete.' message from dual;
+
+
+@app/demo/app_install.sql
