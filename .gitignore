@@ -1,0 +1,11 @@
+
+# Exclude any files that begin with private*.
+private*
+
+# I exlude any apps I am currently building and are using the files from this repo.
+statzilla*
+
+# I recommend you exlude files starting with secret. I am not including this 
+# because I need the config/demo/secret* files to get included in the repo.
+# secret*
+
