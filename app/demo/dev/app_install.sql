@@ -5,17 +5,11 @@
 This section installs your custom application's files (replace 'app' with your app folder name).
 */
 
--- @../../config/app/secret_arcsql_cfg.sql
--- @../../config/app/secret_apex_utl2_config.sql 
--- @../../config/app/secret_k2_config.sql
--- @../../config/app/secret_saas_auth_config.sql 
--- @../../config/app/secret_app_config.sql
--- @app_schema.sql
--- @app_pkgh.sql
--- @app_pkgb.sql
--- @app_stat_in_ins_trg.sql
--- @app_stat_work_ins_trg.sql 
--- @app_stat_work_upd_trg.sql 
+@../../../config/demo/dev/secret_arcsql_cfg.sql
+@../../../config/demo/dev/secret_apex_utl2_config.sql 
+@../../../config/demo/dev/secret_k2_config.sql
+@../../../config/demo/dev/secret_saas_auth_config.sql 
+@../../../config/demo/dev/secret_app_config.sql 
 
 /*
 saas_auth_events.sql - Override default procedures in SAAS_AUTH with your custom code.
