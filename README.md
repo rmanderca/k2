@@ -21,6 +21,7 @@ Note: This section could simply replace step 2 above and achieves the same thing
 * Copy ./install/demo to ./install/your_app
 * Modify the settings for each config file in ./config/your_app folder.
 * Replace the 'demo' path in ./install/your_app/demo_install.sql and rename the file to your_app_install.sql.
+* Replace the 'demo' paths in ./app/your_app/app_install.sql with the path of your app.
 * Consider filtering files starting with secret* from git. See the .gitignore file.
 * If everything is good you should be able to run ./install/your_app/dev/your_app_install.sql as your application user without errors. If there are errors try running again. If you still get errors open an issue here.
 
