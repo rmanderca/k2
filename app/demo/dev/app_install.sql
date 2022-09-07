@@ -47,6 +47,9 @@ Create the contact groups for this application.
 
 @arcsql_contact_groups.sql
 
+-- Install scheduled jobs using the dbms job scheduler.
+@app_scheduler_jobs.sql
+
 @app_version.sql
 
 commit;
