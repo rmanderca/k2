@@ -1,5 +1,6 @@
 create or replace package apex_utl2 as
 
+    procedure enable_automations (p_app_id in number);
     function get_current_theme_id_for_app return number;
     function get_app_id return number;
     function get_app_alias return varchar2;

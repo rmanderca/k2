@@ -17,5 +17,8 @@ Add bucket properties to automatically remove stale/dead records from the stat* 
 
 ## Not happy about start_event in ARCSQL, all wrong, must replace!
 
+## Track state in schema someplace so we can detect when app has been refreshed/replaced and trigger an event hook like on_create_user but on_app_refresh.
+
+
 
 

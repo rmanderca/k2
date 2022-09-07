@@ -2,6 +2,24 @@
 create or replace package body apex_utl2 as
 
 
+procedure enable_automations ( -- | Enable any disabled automations.
+   p_app_id in number) is 
+   cursor c_automations is
+   select application_id, static_id
+     from apex_appl_automations
+    where polling_status_code in ('DISABLED')
+      and application_id = p_app_id;
+begin
+   wwv_flow_api.set_security_group_id;
+   for c in c_automations loop 
+      apex_automation.enable(
+        p_application_id=>c.application_id, 
+        p_static_id=>c.static_id);
+      arcsql.notify('enable_automations.sql: Enabled automation '||c.static_id||' ('||c.application_id||').');
+   end loop;
+end;
+
+
 function get_app_id return number is -- | Return app id if available within APEX session context else return configured value.
 begin 
     return nvl(apex_application.g_flow_id, k2_config.app_id);
