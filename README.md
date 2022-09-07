@@ -2,6 +2,8 @@
 
 The fastest way to build and prototype applications on Oracle APEX. Subscribe to my Oracle APEX focused [YouTube channel](https://www.youtube.com/channel/UC8cIGO-lRvWM-mPtJdO_9XQ) for updates.
 
+Share K2 with others using the link [builtonapex.com/k2](builtonapex.com/k2) which redirects here!
+
 ## How to install the K2 framework (quick)
 
 1. Run the ./lib/arcsql/arcsql_user.sql script to create your application user.
