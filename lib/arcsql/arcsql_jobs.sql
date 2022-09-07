@@ -1,5 +1,5 @@
 
--- uninstall: exec dbms_scheduler.drop_job('arcsql_run_sql_log_update');
+-- uninstall: exec drop_scheduler_job('arcsql_run_sql_log_update');
 begin
   if not does_scheduler_job_exist('arcsql_run_sql_log_update') then 
      -- Keeps the SQL_LOG table up to date. Should probably only run 
@@ -16,7 +16,7 @@ begin
 end;
 /
 
--- uninstall: exec dbms_scheduler.drop_job('arcsql_purge_events');
+-- uninstall: exec drop_scheduler_job('arcsql_purge_events');
 begin
   if not does_scheduler_job_exist('arcsql_purge_events') then 
      -- Removes any abandoned records in the audsid_event table.
@@ -34,7 +34,7 @@ begin
 end;
 /
 
--- uninstall: exec dbms_scheduler.drop_job('arcsql_check_alerts');
+-- uninstall: exec drop_scheduler_job('arcsql_check_alerts');
 begin
   if not does_scheduler_job_exist('arcsql_check_alerts') then 
      -- Checks to see if any existing alerts need to auto-close or re-notify.
@@ -49,7 +49,7 @@ begin
 end;
 /
 
--- uninstall: exec dbms_scheduler.drop_job('arcsql_check_contact_groups');
+-- uninstall: exec drop_scheduler_job('arcsql_check_contact_groups');
 begin
   if not does_scheduler_job_exist('arcsql_check_contact_groups') then 
      -- Checks to see if there are messages that need to be sent to 

@@ -296,6 +296,14 @@ begin
 end;
 /
 
+-- uninstall: drop procedure drop_scheduler_job
+create or replace procedure drop_scheduler_job (p_job_name in varchar2) is 
+begin
+   if does_scheduler_job_exist(p_job_name) then 
+      dbms_scheduler.drop_job(p_job_name);
+   end if;
+end;
+/
 
 -- Needs to be a standalong func here and not in arcsql package becuase authid current user is used.
 -- uninstall: drop function num_get_val_from_sql;
