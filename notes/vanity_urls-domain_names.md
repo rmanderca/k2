@@ -13,9 +13,28 @@
 * Get a terminal and update the /opt/bitnami/nginx/conf/nginx.conf file with an additional server block.
 
 ```
-server {
-   server_name superloser.io;
-   return 301 https://www.superloser.io$request_uri;
+# Made a correction after this was published to redirect port 80 to 443 and made sure the other server was on 443!
+# Think it is working now!
+
+# HTTP Server
+    server {
+        # Port to listen on, can also be set in IP:PORT format
+        listen  80;
+        return 301 https://$host$request_uri;
+        include  "/opt/bitnami/nginx/conf/bitnami/*.conf";
+
+        location /status {
+            stub_status on;
+            access_log   off;
+            allow 127.0.0.1;
+            deny all;
+        }
+    }
+   server {
+       listen 443;
+       server_name superloser.io;
+       return 301 https://www.superloser.io$request_uri;
+   }
 }
 ```
 
