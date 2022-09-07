@@ -12,45 +12,45 @@ end;
 end;
 /
 
-@lib/arcsql/arcsql_app_install.sql
+@../../../lib/arcsql/arcsql_app_install.sql
 
 /*
 Pre-load a bunch of things trying to avoid dependency errors. These
 all get run again when individual libs are installed below.
 */
 
-@config/demo/secret_arcsql_cfg.sql
-@config/demo/secret_apex_utl2_config.sql 
-@config/demo/secret_k2_config.sql
-@config/demo/secret_saas_auth_config.sql 
-@config/demo/secret_app_config.sql
-@lib/apex_utl2/schema.sql 
-@lib/saas_auth/saas_auth_schema.sql 
-@lib/k2/k2_schema.sql 
+@../../../config/demo/dev/secret_arcsql_cfg.sql
+@../../../config/demo/dev/secret_apex_utl2_config.sql 
+@../../../config/demo/dev/secret_k2_config.sql
+@../../../config/demo/dev/secret_saas_auth_config.sql 
+@../../../config/demo/dev/secret_app_config.sql
+@../../../lib/apex_utl2/schema.sql 
+@../../../lib/saas_auth/saas_auth_schema.sql 
+@../../../lib/k2/k2_schema.sql 
 
 /*
 APEX_UTL2 contains generic utilities for APEX.
 */
 
-@lib/apex_utl2/apex_utl2_install.sql
+@../../../lib/apex_utl2/apex_utl2_install.sql
 
 /*
 K2 lib is similiar in function to apex_utl2 but code here is more specific to the framework.
 */
 
-@lib/k2/k2_install.sql
+@../../../lib/k2/k2_install.sql
 
 /*
 Authorization code. Uses the login and verification pages.
 */
 
-@lib/saas_auth/saas_auth_install.sql 
+@../../../lib/saas_auth/saas_auth_install.sql 
 
 /*
-Install you application's code.
+Install your application's code.
 */
 
-@app/demo/app_install.sql
+@../../../app/demo/dev/app_install.sql
 
 
 /*
@@ -62,8 +62,3 @@ exec fix_identity_sequences;
 
 commit;
 
-
-select 'K2 framework install complete.' message from dual;
-
-
-@app/demo/app_install.sql

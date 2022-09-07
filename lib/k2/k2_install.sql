@@ -1,5 +1,4 @@
 
-@../../config/demo/secret_k2_config.sql
 @k2_schema.sql
 @k2_pkgh.sql 
 @k2_pkgb.sql 

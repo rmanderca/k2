@@ -1,6 +1,5 @@
 
 
-@../../config/demo/secret_arcsql_cfg.sql
 @arcsql_schema_support.sql
 @arcsql_schema.sql 
 @arcsql_send_email_prc.sql

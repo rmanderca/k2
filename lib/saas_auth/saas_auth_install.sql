@@ -21,7 +21,6 @@ Make sure you configure 'saas_auth_salt' in the saas_auth_config package.
 whenever sqlerror continue;
 -- set echo on
 
-@../../config/demo/secret_saas_auth_config.sql
 @saas_auth_schema.sql 
 @saas_auth_pkgh.sql 
 @saas_auth_pkgb.sql 
