@@ -28,7 +28,7 @@ prompt APPLICATION 102 - K2 (TEMPLATE)
 -- Application Export:
 --   Application:     102
 --   Name:            K2 (TEMPLATE)
---   Date and Time:   19:56 Tuesday September 6, 2022
+--   Date and Time:   19:09 Wednesday September 7, 2022
 --   Exported By:     APP
 --   Flashback:       0
 --   Export Type:     Application Export
@@ -151,7 +151,7 @@ wwv_flow_api.create_flow(
 ,p_substitution_string_02=>'LOGIN_FORM_MESSAGE'
 ,p_substitution_value_02=>'Login to begin the &APP_NAME. journey.'
 ,p_last_updated_by=>'APP'
-,p_last_upd_yyyymmddhh24miss=>'20220906195627'
+,p_last_upd_yyyymmddhh24miss=>'20220907190907'
 ,p_file_prefix => nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
 ,p_files_version=>52
 ,p_ui_type_name => null
@@ -17534,113 +17534,6 @@ wwv_flow_api.create_shortcut(
 ,p_shortcut_name=>'DELETE_CONFIRM_MSG'
 ,p_shortcut_type=>'TEXT_ESCAPE_JS'
 ,p_shortcut=>'Would you like to perform this delete action?'
-);
-end;
-/
-prompt --application/shared_components/automations/saas_auth_daily_automation
-begin
-wwv_flow_api.create_automation(
- p_id=>wwv_flow_api.id(65821793757199091)
-,p_name=>'saas_auth_daily_automation'
-,p_static_id=>'saas-auth-daily-automation'
-,p_trigger_type=>'POLLING'
-,p_polling_interval=>'FREQ=DAILY;INTERVAL=1;BYHOUR=0;BYMINUTE=0'
-,p_polling_status=>'ACTIVE'
-,p_result_type=>'ALWAYS'
-,p_use_local_sync_table=>false
-,p_include_rowid_column=>false
-,p_commit_each_row=>false
-,p_error_handling_type=>'IGNORE'
-);
-wwv_flow_api.create_automation_action(
- p_id=>wwv_flow_api.id(65822525066203846)
-,p_automation_id=>wwv_flow_api.id(65821793757199091)
-,p_name=>'Run daily saas auth automation'
-,p_execution_sequence=>20
-,p_action_type=>'NATIVE_PLSQL'
-,p_action_clob=>'saas_auth_pkg.automation_daily;'
-,p_action_clob_language=>'PLSQL'
-,p_location=>'LOCAL'
-,p_stop_execution_on_error=>true
-);
-end;
-/
-prompt --application/shared_components/automations/test_email
-begin
-wwv_flow_api.create_automation(
- p_id=>wwv_flow_api.id(65844817702594531)
-,p_name=>'test_email'
-,p_static_id=>'test-email'
-,p_trigger_type=>'API'
-,p_polling_interval=>'FREQ=HOURLY;INTERVAL=1;BYMINUTE=0'
-,p_polling_status=>'DISABLED'
-,p_result_type=>'ALWAYS'
-,p_use_local_sync_table=>false
-,p_include_rowid_column=>false
-,p_commit_each_row=>false
-,p_error_handling_type=>'IGNORE'
-);
-wwv_flow_api.create_automation_action(
- p_id=>wwv_flow_api.id(65845163149594547)
-,p_automation_id=>wwv_flow_api.id(65844817702594531)
-,p_name=>'New Action'
-,p_execution_sequence=>10
-,p_action_type=>'NATIVE_PLSQL'
-,p_action_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'begin ',
-'   arcsql.debug(''Sending weight in reminder for user 193.'');',
-'   saas_app_admin.send_weigh_in_reminder(193, sysdate);',
-'end;',
-''))
-,p_action_clob_language=>'PLSQL'
-,p_location=>'LOCAL'
-,p_stop_execution_on_error=>true
-);
-end;
-/
-prompt --application/shared_components/automations/run_these_admin_tasks_every_15_minutes
-begin
-wwv_flow_api.create_automation(
- p_id=>wwv_flow_api.id(115745090204159743)
-,p_name=>'run_these_admin_tasks_every_15_minutes'
-,p_static_id=>'run-these-admin-tasks-every-15-minutes'
-,p_trigger_type=>'POLLING'
-,p_polling_interval=>'FREQ=MINUTELY;INTERVAL=15'
-,p_polling_status=>'ACTIVE'
-,p_result_type=>'ALWAYS'
-,p_use_local_sync_table=>false
-,p_include_rowid_column=>false
-,p_commit_each_row=>false
-,p_error_handling_type=>'IGNORE'
-);
-wwv_flow_api.create_automation_action(
- p_id=>wwv_flow_api.id(115745376438159752)
-,p_automation_id=>wwv_flow_api.id(115745090204159743)
-,p_name=>'New Action'
-,p_execution_sequence=>10
-,p_action_type=>'NATIVE_PLSQL'
-,p_action_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'begin',
-'    null;',
-'end;'))
-,p_action_clob_language=>'PLSQL'
-,p_location=>'LOCAL'
-,p_stop_execution_on_error=>true
-);
-wwv_flow_api.create_automation_action(
- p_id=>wwv_flow_api.id(115745776614166915)
-,p_automation_id=>wwv_flow_api.id(115745090204159743)
-,p_name=>'run_these_admin_tasks_every_15_minutes'
-,p_execution_sequence=>20
-,p_action_type=>'NATIVE_PLSQL'
-,p_action_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'begin ',
-'    saas_app_admin.run_these_admin_tasks_every_15_minutes;',
-'    commit;',
-'end;'))
-,p_action_clob_language=>'PLSQL'
-,p_location=>'LOCAL'
-,p_stop_execution_on_error=>true
 );
 end;
 /
