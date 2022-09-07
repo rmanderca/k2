@@ -30,3 +30,7 @@ Note: This section could simply replace step 2 above and achieves the same thing
 Add scheduled tasks to the app_scheduler_jobs.sql file. If they need to be dynamically enabled/disabled by environment consider adding confg values to the app_config package and referencing them from your code in the jobs file.
 
 * [How I create recurring tasks using K2 instead of APEX Automations and why - 9/7/22](https://youtu.be/WxwzxSFhuS4)
+
+## Other helpful resources
+
+* [How I implemented Dark and Light theme selection in my Oracle APEX app](https://youtu.be/naY-bzWPxmM)

@@ -32,7 +32,7 @@ begin
 end;
 
 
-function get_current_theme_id_for_app return number is -- | Return current theme is using g_flow_theme_id.
+function get_current_theme_id_for_app return number is -- | Return current theme by using g_flow_theme_id.
 begin 
     return to_number(trim(apex_application.g_flow_theme_id));
 end;
