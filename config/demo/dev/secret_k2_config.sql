@@ -7,7 +7,7 @@ create or replace package k2_config as
 
     -- Can be referred to from install/upgrade scripts.
     -- ToDo: Replace this with app_version package.
-    schema_version number := 20220830;
+    schema_version number := 20220907;
 
     -- Application name. May want to include the env for non prod environments.
     app_name varchar2(120) := 'My Demo App (dev)';

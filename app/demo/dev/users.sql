@@ -9,9 +9,9 @@ This file contains test accounts which are set up when install.sql is run.
 
 begin 
     if k2_config.env = 'dev' then 
-        saas_auth_pkg.add_test_user(p_user_name=>'post.e.than@gmail.com');
+        saas_auth_pkg.add_test_user(p_user_name=>'donotreply@notmydomain.com');
     else
-        saas_auth_pkg.delete_user(p_user_name=>'post.e.than@gmail.com');
+        saas_auth_pkg.delete_user(p_user_name=>'donotreply@notmydomain.com');
     end if;
 end;
 /
