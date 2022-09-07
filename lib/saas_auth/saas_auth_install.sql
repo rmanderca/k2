@@ -27,6 +27,7 @@ whenever sqlerror continue;
 -- This file can be copied and modified within your app.
 @saas_auth_events.sql
 @saas_auth_post_install.sql
+@saas_auth_scheduler_jobs.sql
 
 
 select 'SAAS_AUTH install complete.' MESSAGE from dual;
