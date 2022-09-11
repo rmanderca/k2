@@ -8,7 +8,7 @@ begin
        job_action      => 'begin saas_auth_pkg.automation_daily; end;',
        start_date      => systimestamp,
        repeat_interval => 'freq=daily;byhour=23;byminute=55',
-       enabled         => false);
+       enabled         => true);
    end if;
 end;
 /

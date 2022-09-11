@@ -2,7 +2,7 @@
 -- IMPORTANT: The files below should be idempotent (https://en.wikipedia.org/wiki/Idempotence).
 
 /* 
-This section installs your custom application's files (replace 'app' with your app folder name).
+This section installs your custom application's files (replace 'demo' with your app folder name).
 */
 
 @../../../config/demo/dev/secret_arcsql_cfg.sql
