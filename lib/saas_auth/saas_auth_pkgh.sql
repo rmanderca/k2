@@ -4,6 +4,9 @@ create or replace package saas_auth_pkg as
 
    procedure automation_daily;
 
+   procedure purge_deleted_accounts ( 
+      p_days in number default 7);
+
    procedure check_auth_token_auto_login (
       p_auth_token in saas_auth_token.auth_token%type);
 
@@ -36,7 +39,7 @@ create or replace package saas_auth_pkg as
       p_user_id in number) return timestamp;
 
    procedure delete_user (
-      p_user_name in varchar2 default null,
+      p_email in varchar2 default null,
       p_user_id in number default null);
 
    procedure set_remove_date (
@@ -75,8 +78,7 @@ create or replace package saas_auth_pkg as
       p_is_test_user in boolean default false);
       
    procedure add_test_user (
-      p_user_name in varchar2,
-      p_email in varchar2 default null);
+      p_email in varchar2);
 
    procedure create_account (
       p_user_name in varchar2,

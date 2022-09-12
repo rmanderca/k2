@@ -34,7 +34,7 @@ begin
 end;
 /
 
--- uninstall: drop table saas_auth cascade constraints purge;
+-- uninstall: exec drop_table('saas_auth');
 begin
    if not does_table_exist('saas_auth') then 
       execute_sql('
@@ -78,6 +78,10 @@ begin
    if not does_constraint_exist('pk_saas_auth') then 
       execute_sql('
          alter table saas_auth add constraint pk_saas_auth primary key (user_id)', false);
+   end if;
+   if not does_index_exist('saas_auth_1') then 
+      execute_sql('
+         create unique index saas_auth_1 on saas_auth (user_name)', false);
    end if;
    if not does_constraint_exist('saas_auth_fk_role_id') then 
       execute_sql('

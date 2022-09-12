@@ -32,10 +32,9 @@ Datetime
 -----------------------------------------------------------------------------------
 */
 
-function secs_between_timestamps (time_start in timestamp, time_end in timestamp) return number is
-   -- Return the number of seconds between two timestamps.
-   -- Doing date math with date type is easy. This function tries to make it just as simple to 
-   -- work with a timestamp.
+function secs_between_timestamps ( -- | Return the number of seconds between two timestamps.
+   time_start in timestamp, 
+   time_end in timestamp) return number is
    total_secs number;
    d interval day(9) to second(6);
 begin
@@ -44,7 +43,8 @@ begin
    return total_secs;
 end;
 
-function secs_since_timestamp (time_stamp timestamp) return number is
+function secs_since_timestamp ( -- | Return number of seconds since a timestamp.
+   time_stamp timestamp) return number is
    now         timestamp;
    total_secs  number;
    d           interval day(9) to second(6);
@@ -367,7 +367,7 @@ exception
       raise;
 end get_token;
 
-function shift_list (
+function shift_list ( -- | Takes '1,2,3,4' and shifts it to '2,3,4'.
    p_list in varchar2,
    p_token in varchar2 default ',',
    p_shift_count in number default 1,
@@ -398,7 +398,7 @@ begin
    return trim(v_list);
 end;
 
-function str_eval_math (
+function str_eval_math ( -- | Evaluate a simple string expression like '2+2-1*2/2.2' and return a numeric value.
    p_expression in varchar2,
    p_decimals in number := 2) return number is 
    test_expression varchar2(120) := p_expression;
