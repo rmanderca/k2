@@ -3,6 +3,24 @@
 -- uninstall: exec drop_package('k2');
 create or replace package k2 as 
 
+
+    /*
+    LOGGING
+
+    These calls simply forward a single call here to both arcsql.debug* procedures as 
+    well as apex_debug.* procedures. There is a k2_config variable available which 
+    you can use to set a prefix which will help identify the apex_debug calls, it 
+    is only added to the apex_debug calls.
+    
+    */
+    procedure debug   (p_text in varchar2, p_key in varchar2 default null);
+    procedure debug2  (p_text in varchar2, p_key in varchar2 default null);
+    procedure debug3  (p_text in varchar2, p_key in varchar2 default null);
+    procedure log_err (p_text in varchar2, p_key in varchar2 default null);
+    procedure log     (p_text in varchar2, p_key in varchar2 default null);
+    procedure log_audit           (p_text in varchar2, p_key in varchar2 default null);
+    procedure log_security_event  (p_text in varchar2, p_key in varchar2 default null);
+
     /*
     -----------------------------------------------------------------------------------
     MONKEY PATCHES

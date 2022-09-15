@@ -15,7 +15,7 @@ create or replace package k2_config as
     -- This should be null or match the actual v('APP_ID') value. It is set here
     -- in order to support testing from SQL*Developer since the context of APP_ID
     -- does not otherwise exist.
-    app_id number := 100;
+    app_id number := 0;
 
     -- Used to form links to the application from the outside world.
     -- These values should not end with a slash /.
@@ -26,6 +26,11 @@ create or replace package k2_config as
 
     -- Set to a default timezone to use in cases when you don't know time zone.
     default_timezone varchar(120) := 'US/Eastern';
+
+    -- Adds prefix to message of k2.debug* calls when it forwards to apex_debug.
+    -- This makes it a little easier to see what calls are specifically yours when
+    -- viewing debug or querying apex_debug_messages. Set to blank or null to disable.
+    apex_debug_prefix varchar(12) := 'k2: ';
 
 end;
 /

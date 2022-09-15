@@ -1,6 +1,62 @@
 
 create or replace package body k2 as 
     
+procedure debug (
+   p_text in varchar2, 
+   p_key in varchar2) is 
+begin 
+   arcsql.debug(p_text=>p_text, p_key=>p_key);
+   apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_info);
+end;
+
+procedure debug2 (
+   p_text in varchar2, 
+   p_key in varchar2) is
+begin 
+   arcsql.debug2(p_text=>p_text, p_key=>p_key);
+   apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_app_trace);
+end;
+
+procedure debug3 (
+   p_text in varchar2, 
+   p_key in varchar2 default null) is
+begin 
+   arcsql.debug3(p_text=>p_text, p_key=>p_key);
+   apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_app_trace);
+end;
+
+procedure log_err (
+   p_text in varchar2, 
+   p_key in varchar2 default null) is
+begin 
+   arcsql.log_err(p_text=>p_text, p_key=>p_key);
+   apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_error);
+end;
+
+procedure log (
+   p_text in varchar2, 
+   p_key in varchar2 default null) is
+begin 
+   arcsql.log(p_text=>p_text, p_key=>p_key);
+   apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_info);
+end;
+
+procedure log_audit (
+   p_text in varchar2, 
+   p_key in varchar2 default null) is
+begin 
+   arcsql.log_audit(p_text=>p_text, p_key=>p_key);
+   apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_warn);
+end;
+
+procedure log_security_event (
+   p_text in varchar2, 
+   p_key in varchar2 default null) is
+begin 
+   arcsql.log_security_event(p_text=>p_text, p_key=>p_key);
+   apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_warn);
+end;
+
 
 /*
 -----------------------------------------------------------------------------------
