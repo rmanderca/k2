@@ -31,6 +31,8 @@ create or replace package k2_config as
     -- This makes it a little easier to see what calls are specifically yours when
     -- viewing debug or querying apex_debug_messages. Set to blank or null to disable.
     apex_debug_prefix varchar(12) := 'k2: ';
+    enable_apex_debug boolean := true;
+    enable_arcsql_logging boolean := true;
 
 end;
 /
