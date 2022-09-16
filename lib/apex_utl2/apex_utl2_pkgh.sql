@@ -1,5 +1,25 @@
 create or replace package apex_utl2 as
 
+    /* 
+    -----------------------------------------------------------------------------------
+    Setting and getting sys_context values.
+    -----------------------------------------------------------------------------------
+    */
+
+    -- I used this to have access to client identifier in FarmPulse but not sure why now :)
+    -- This might explain it: https://jeffkemponoracle.com/2013/02/apex-and-application-contexts
+    
+    procedure set_sys_context (
+        p_namespace in varchar2,
+        p_attribute in varchar2,
+        p_value in varchar2,
+        p_client_id in varchar2 default null);
+
+    function get_sys_context (
+        p_namespace in varchar2,
+        p_attribute in varchar2) return varchar2;
+   
+
     procedure enable_automations (p_app_id in number);
     function get_current_theme_id_for_app return number;
     function get_app_id return number;

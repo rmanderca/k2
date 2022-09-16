@@ -204,22 +204,6 @@ create or replace package arcsql as
 
    /* 
    -----------------------------------------------------------------------------------
-   Setting and getting sys_context values.
-   -----------------------------------------------------------------------------------
-   */
-
-   procedure set_sys_context (
-      p_namespace in varchar2,
-      p_attribute in varchar2,
-      p_value in varchar2,
-      p_client_id in varchar2 default null);
-
-   function get_sys_context (
-      p_namespace in varchar2,
-      p_attribute in varchar2) return varchar2;
-   
-   /* 
-   -----------------------------------------------------------------------------------
    Counters
    -----------------------------------------------------------------------------------
    */

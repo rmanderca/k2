@@ -1,3 +1,9 @@
+/*
+
+All jobs must start with ARCSQL or arcsql.start_arcsql and arcsql.stop_arcsql
+will not identify the jobs as belonging to arcsql.
+
+*/
 
 -- uninstall: exec drop_scheduler_job('arcsql_run_sql_log_update');
 begin

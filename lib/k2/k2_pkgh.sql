@@ -4,6 +4,8 @@
 create or replace package k2 as 
 
 
+    
+
     /*
     LOGGING
 
