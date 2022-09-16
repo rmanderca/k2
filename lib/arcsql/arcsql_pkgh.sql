@@ -38,11 +38,14 @@ create or replace package arcsql as
    -----------------------------------------------------------------------------------
    */
 
-   type table_type is table of date index by varchar2(120);
-
-   g_timer_start table_type;
-   procedure start_timer(p_key in varchar2);
-   function get_timer(p_key in varchar2) return number;
+   type timer_type is table of date index by varchar2(120);
+   g_timer_start timer_type;
+   procedure start_timer(
+      p_key in varchar2);
+   function get_timer (
+      p_key in varchar2, 
+      p_reset_start_time in boolean default false
+      ) return number;
 
    /* 
    -----------------------------------------------------------------------------------

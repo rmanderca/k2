@@ -66,18 +66,23 @@ Timer
 -----------------------------------------------------------------------------------
 */
 
-procedure start_timer(p_key in varchar2) is 
+procedure start_timer (p_key in varchar2) is 
 begin 
    -- Sets the timer variable to current time.
    g_timer_start(p_key) := sysdate;
 end;
 
-function get_timer(p_key in varchar2) return number is
+function get_timer ( -- | Return elap secs from timer and reset start time if desired.
+   p_key in varchar2, 
+   p_reset_start_time in boolean default false
+   ) return number is
    -- Returns seconds since last call to 'get_time' or 'start_time' (within the same session).
    r number;
 begin 
    r := round((sysdate-nvl(g_timer_start(p_key), sysdate))*24*60*60, 1);
-   g_timer_start(p_key) := sysdate;
+   if p_reset_start_time then
+      start_timer(p_key);
+   end if;
    return r;
 end;
 
