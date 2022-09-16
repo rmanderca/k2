@@ -1,14 +1,4 @@
 
-define username='xxxxxxxxxxxxxxxxxxx'
-define password='xxxxxxxxxxxxxxxxxxx'
-
-create user &username identified by &password;
-grant create session to &username;
-
--- One of these might work. Tablespace name depends on your env of courses
-alter user &username quota 20g on users;
--- alter user &username quota 20g on data;
-
 -- Direct grant required to create sequences from PL/SQL code.
 grant create sequence to &username;
 grant create session to &username;

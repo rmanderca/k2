@@ -3,7 +3,6 @@
 private*
 
 # I exlude any apps I am currently building and are using the files from this repo.
-statzilla*
 superloser*
 reflash*
 
