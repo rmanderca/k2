@@ -19,4 +19,4 @@ drop package statzilla;
 exec drop_procedure('on_create_account');
 exec drop_procedure('on_delete_account');
 exec drop_procedure('on_login');
-exec drop_package('app_version');
+exec drop_package('statzilla_version');

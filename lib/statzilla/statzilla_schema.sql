@@ -1,4 +1,5 @@
 
+exec drop_package('statzilla_b');
 
 /*
 
