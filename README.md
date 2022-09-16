@@ -8,8 +8,8 @@ Share K2 with others using the link [builtonapex.com/k2](builtonapex.com/k2) whi
 ## How to install the K2 framework (quick)
 
 1. Run the ./lib/arcsql/arcsql_user.sql script to create your application user.
-2. As the application user run ./install/demo/dev/demo_install.sql. 
-3. Import the APEX application from ./exports/demo folder.
+2. As the application user run ./install/default/dev/default_install.sql. 
+3. Import the APEX application from ./exports/default folder.
 
 * [How to install K2 updated - 9/6/22](https://youtu.be/FKdsuL_oYgw)
 
@@ -17,12 +17,12 @@ Share K2 with others using the link [builtonapex.com/k2](builtonapex.com/k2) whi
 
 Note: This section could simply replace step 2 above and achieves the same thing but in this case you end up with the folders you need to begin developing your app.
 
-* Copy ./app/demo folder ./app/your_app
-* Copy ./config/demo to ./config/your_app
-* Copy ./install/demo to ./install/your_app
+* Copy ./app/default folder ./app/your_app
+* Copy ./config/default to ./config/your_app
+* Copy ./install/default to ./install/your_app
 * Modify the settings for each config file in ./config/your_app folder.
-* Replace the 'demo' path in ./install/your_app/demo_install.sql and rename the file to your_app_install.sql.
-* Replace the 'demo' paths in ./app/your_app/app_install.sql with the path of your app.
+* Replace the 'default' path in ./install/your_app/default_install.sql and rename the file to your_app_install.sql.
+* Replace the 'default' paths in ./app/your_app/app_install.sql with the path of your app.
 * Consider filtering files starting with secret* from git. See the .gitignore file.
 * If everything is good you should be able to run ./install/your_app/dev/your_app_install.sql as your application user without errors. If there are errors try running again. If you still get errors open an issue here.
 

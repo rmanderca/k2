@@ -2,14 +2,14 @@
 -- IMPORTANT: The files below should be idempotent (https://en.wikipedia.org/wiki/Idempotence).
 
 /* 
-This section installs your custom application's files (replace 'demo' with your app folder name).
+This section installs your custom application's files (replace 'default' with your app folder name).
 */
 
-@../../../config/demo/dev/secret_arcsql_cfg.sql
-@../../../config/demo/dev/secret_apex_utl2_config.sql 
-@../../../config/demo/dev/secret_k2_config.sql
-@../../../config/demo/dev/secret_saas_auth_config.sql 
-@../../../config/demo/dev/secret_app_config.sql 
+@../../../config/default/dev/secret_arcsql_cfg.sql
+@../../../config/default/dev/secret_apex_utl2_config.sql 
+@../../../config/default/dev/secret_k2_config.sql
+@../../../config/default/dev/secret_saas_auth_config.sql 
+@../../../config/default/dev/secret_app_config.sql 
 
 /*
 saas_auth_events.sql - Override default procedures in SAAS_AUTH with your custom code.

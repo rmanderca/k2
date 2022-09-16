@@ -10,7 +10,7 @@ create or replace package k2_config as
     schema_version number := 20220907;
 
     -- Application name. May want to include the env for non prod environments.
-    app_name varchar2(120) := 'My Demo App (dev)';
+    app_name varchar2(120) := 'My Default App (dev)';
 
     -- This should be null or match the actual v('APP_ID') value. It is set here
     -- in order to support testing from SQL*Developer since the context of APP_ID
