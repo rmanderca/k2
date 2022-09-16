@@ -5,24 +5,24 @@ procedure automation_daily is -- | Tasks which should be scheduled to run daily.
    cursor remove_users is 
    select * from saas_auth where remove_date <= sysdate;
 begin
-   arcsql.debug('automation_daily: ');
+   k2.debug('automation_daily: ');
    for c in remove_users loop 
       delete_user(p_user_id=>c.user_id);
    end loop;
 exception 
    when others then
-      arcsql.log_err('automation_daily: '||dbms_utility.format_error_stack);
+      k2.log_err('automation_daily: '||dbms_utility.format_error_stack);
       raise;
 end;
 
 procedure purge_deleted_accounts ( -- Delete accounts from saas_auth where status = 'delete' for p_days days.
    p_days in number default 7) is 
 begin 
-   arcsql.debug('purge_deleted_accounts: ');
+   k2.debug('purge_deleted_accounts: ');
    delete from saas_auth where account_status='delete' and remove_date > sysdate + p_days;
 exception 
    when others then
-      arcsql.log_err('purge_deleted_accounts: '||dbms_utility.format_error_stack);
+      k2.log_err('purge_deleted_accounts: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -30,12 +30,12 @@ end;
 procedure logout is -- | Used to log a user out if called from the UI.
    -- WARNING: I think this may throw a rollback so anything that does work and calls this needs to commit first!
 begin 
-   arcsql.debug('logout: ');
+   k2.debug('logout: ');
    apex_authentication.logout(v('APP_SESSION'), v('APP_ID'));
    -- No not call fire_on_logout here! post_logout will run automatically and it will get called.
 exception 
    when others then
-      arcsql.log_err('logout: '||dbms_utility.format_error_stack);
+      k2.log_err('logout: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -45,13 +45,13 @@ procedure set_session_time_zone ( -- | Sets the time zone for user when logging 
    s saas_auth%rowtype;
    v_offset varchar2(12);
 begin 
-   arcsql.debug('set_session_time_zone: user_id='||p_user_id);
+   k2.debug('set_session_time_zone: user_id='||p_user_id);
    select * into s from saas_auth where user_id=p_user_id and account_status='active';
    select tz_offset(s.timezone_name) into v_offset from dual;
    apex_util.set_session_time_zone(p_time_zone=>v_offset);
 exception 
    when others then
-      arcsql.log_err('set_session_time_zone: '||dbms_utility.format_error_stack);
+      k2.log_err('set_session_time_zone: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -62,7 +62,7 @@ procedure fire_on_login_event ( -- | Fired when a login occurs.
    p_user_id in varchar2) is 
    n number;
 begin 
-   arcsql.debug('file_login_event: user='||p_user_id);
+   k2.debug('file_login_event: user='||p_user_id);
    update saas_auth 
       set reset_pass_token=null, 
           reset_pass_expire=null,
@@ -75,14 +75,14 @@ begin
     where name = 'ON_LOGIN'
       and type='PROCEDURE';
    if n > 0 then 
-      arcsql.debug('fire_on_login_event: '||p_user_id);
+      k2.debug('fire_on_login_event: '||p_user_id);
       execute immediate 'begin on_login('||p_user_id||'); end;';
    end if;
    set_session_time_zone(p_user_id);
    -- set_login_cookie;
 exception 
    when others then
-      arcsql.log_err('fire_on_login_event: '||dbms_utility.format_error_stack);
+      k2.log_err('fire_on_login_event: '||dbms_utility.format_error_stack);
       raise; 
    /*
    | This procedure looks for the on_login procedure and calls it if it exists.
@@ -97,7 +97,7 @@ function is_valid_auth_token ( -- | Return true if the token is valid.
    is 
    n number;
 begin 
-   arcsql.debug('is_valid_auth_token: '||p_auth_token);
+   k2.debug('is_valid_auth_token: '||p_auth_token);
    select count(*) into n 
      from saas_auth_token a,
           saas_auth b
@@ -107,11 +107,11 @@ begin
       and (a.expires_at is null or a.expires_at > sysdate)
       and a.use_count < a.max_use_count;
    return n = 1;
-   arcsql.log_security_event('is_valid_auth_token: Invalid authorization token.');
+   k2.log_security_event('is_valid_auth_token: Invalid authorization token.');
    raise_application_error(-20001, 'Invalid authorization token.');
 exception 
    when others then
-      arcsql.log_err('is_valid_auth_token: '||dbms_utility.format_error_stack);
+      k2.log_err('is_valid_auth_token: '||dbms_utility.format_error_stack);
       raise; 
 end;
 
@@ -122,7 +122,7 @@ function is_auth_token_auto_login_enabled ( -- | Is the token an auto-login toke
    is 
    v_auto_login saas_auth_token.auto_login%type;
 begin
-   arcsql.debug('is_auth_token_auto_login_enabled: ');
+   k2.debug('is_auth_token_auto_login_enabled: ');
    select a.auto_login into v_auto_login
      from saas_auth_token a,
           saas_auth b
@@ -132,7 +132,7 @@ begin
    return v_auto_login = 'Y';
 exception 
    when others then
-      arcsql.log_err('is_auth_token_auto_login_enabled: '||dbms_utility.format_error_stack);
+      k2.log_err('is_auth_token_auto_login_enabled: '||dbms_utility.format_error_stack);
       raise; 
 end;
 
@@ -143,7 +143,7 @@ procedure check_auth_token_auto_login ( -- | Called from the UI. If token is val
    v_user_id saas_auth.user_id%type;
    v_user_name saas_auth.user_name%type;
 begin 
-   arcsql.debug('check_auth_token_auto_login: ');
+   k2.debug('check_auth_token_auto_login: ');
    v_user_id := get_user_id_from_auth_token(p_auth_token);
    v_user_name := get_user_name(v_user_id);
    if is_auth_token_auto_login_enabled(p_auth_token) then 
@@ -154,7 +154,7 @@ begin
    end if;
 exception 
    when others then
-      arcsql.log_err('check_auth_token_auto_login: '||dbms_utility.format_error_stack);
+      k2.log_err('check_auth_token_auto_login: '||dbms_utility.format_error_stack);
       raise; 
 end;
 
@@ -164,13 +164,13 @@ procedure use_auth_token ( -- | Registers use of a token.
    p_auth_token in varchar2) 
    is 
 begin 
-   arcsql.debug('use_auth_token: ');
+   k2.debug('use_auth_token: ');
    update saas_auth_token 
       set use_count=use_count+1 
     where auth_token=p_auth_token;
 exception 
    when others then
-      arcsql.log_err('use_auth_token: '||dbms_utility.format_error_stack);
+      k2.log_err('use_auth_token: '||dbms_utility.format_error_stack);
       raise; 
 end;
 
@@ -179,7 +179,7 @@ function get_user_id_from_auth_token ( -- | Get the user id a token is linked to
    p_auth_token in varchar2) return number is 
    v_user_id saas_auth.user_id%type;
 begin 
-   arcsql.debug('get_user_id_from_auth_token: ');
+   k2.debug('get_user_id_from_auth_token: ');
    select user_id into v_user_id 
      from saas_auth_token 
     where auth_token = p_auth_token
@@ -188,7 +188,7 @@ begin
    return v_user_id;
 exception 
    when others then
-      arcsql.log_err('get_user_id_from_auth_token: '||dbms_utility.format_error_stack);
+      k2.log_err('get_user_id_from_auth_token: '||dbms_utility.format_error_stack);
       raise; 
 end;
 
@@ -205,7 +205,7 @@ function get_new_auth_token ( -- | Generates a new token for a user.
    new_token varchar2(120);
    v_auto_login saas_auth_token.auto_login%type := 'N';
 begin 
-   arcsql.debug('get_new_auth_token: ');
+   k2.debug('get_new_auth_token: ');
    if v_user_id is null and v_user_name is null then 
       raise_application_error(-20001, 'get_new_auth_token: Must provide a user name or user id.');
    elsif v_user_id is null then 
@@ -231,11 +231,11 @@ begin
       v_auto_login,
       p_max_use_count
       );
-   arcsql.log_security_event(p_text=>'get_new_auth_token: '||p_user_name, p_key=>'saas_auth');
+   k2.log_security_event(p_text=>'get_new_auth_token: '||p_user_name, p_key=>'saas_auth');
    return new_token;
 exception 
    when others then
-      arcsql.log_err('get_new_auth_token: '||dbms_utility.format_error_stack);
+      k2.log_err('get_new_auth_token: '||dbms_utility.format_error_stack);
       raise; 
 end;
 
@@ -245,7 +245,7 @@ procedure set_auto_login ( -- | Called from login form. Enables or disables auto
    is 
    v_auto_login_token varchar2(120) := sys_guid();
 begin 
-   arcsql.debug('set_auto_login: '||p_auto_login);
+   k2.debug('set_auto_login: '||p_auto_login);
    if nvl(saas_auth_config.enable_auto_login_days, 0) = 0 then 
       return;
    end if;
@@ -271,7 +271,7 @@ begin
    end if;
 exception 
    when others then
-      arcsql.log_err('set_auto_login: '||dbms_utility.format_error_stack);
+      k2.log_err('set_auto_login: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -279,11 +279,11 @@ end;
 function get_auto_login_token -- | Return the value of the auto_login_token cookie.
    return varchar2 is 
 begin 
-   arcsql.debug('get_auto_login_token: ');
+   k2.debug('get_auto_login_token: ');
    return k2.get_cookie('auto_login_token');
 exception 
    when others then
-      arcsql.log_err('get_auto_login_token: '||dbms_utility.format_error_stack);
+      k2.log_err('get_auto_login_token: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -292,13 +292,13 @@ function is_able_to_auto_login return boolean is
    n number;
    t saas_auth.auto_login_token%type := get_auto_login_token;
 begin 
-   arcsql.debug('is_able_to_auto_login: user='||v('APP_USER')||', session='||v('APP_SESSION'));
+   k2.debug('is_able_to_auto_login: user='||v('APP_USER')||', session='||v('APP_SESSION'));
    if v('APP_USER') != 'nobody' then 
-      arcsql.debug('App user is not nobody: '||v('APP_USER'));
+      k2.debug('App user is not nobody: '||v('APP_USER'));
       return false;
    end if;
    if t is null then 
-      arcsql.debug('auto_login_token cookie is null.');
+      k2.debug('auto_login_token cookie is null.');
       return false;
    end if;
    select count(*) into n 
@@ -306,18 +306,18 @@ begin
     where auto_login_token=t
       and (auto_login > sysdate or auto_login is null);
    if n = 0 then 
-      arcsql.debug('Auto login token not valid for this device or expired.');
+      k2.debug('Auto login token not valid for this device or expired.');
       return false;
    end if;
    if apex_custom_auth.session_id_exists then 
-      arcsql.debug('Session id exists.');
+      k2.debug('Session id exists.');
    else 
-      arcsql.debug('Session id does not exist.');
+      k2.debug('Session id does not exist.');
    end if;
    return true;
 exception 
    when others then
-      arcsql.log_err('is_able_to_auto_login: '||dbms_utility.format_error_stack);
+      k2.log_err('is_able_to_auto_login: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -327,7 +327,7 @@ procedure auto_login is
    v_user_name saas_auth.user_name%type;
    t saas_auth.auto_login_token%type := get_auto_login_token;
 begin 
-   arcsql.debug('auto_login: user='||v('APP_USER')||', session='||v('APP_SESSION'));
+   k2.debug('auto_login: user='||v('APP_USER')||', session='||v('APP_SESSION'));
 
    if not is_able_to_auto_login then 
       return;
@@ -339,14 +339,14 @@ begin
     where auto_login_token=t
       and auto_login > sysdate
       and account_status='active';
-   arcsql.log_security_event(p_text=>'auto_login: '||v_user_name, p_key=>'saas_auth');
+   k2.log_security_event(p_text=>'auto_login: '||v_user_name, p_key=>'saas_auth');
    apex_authentication.post_login (
       p_username=>lower(v_user_name), 
       p_password=>utl_raw.cast_to_raw(dbms_random.string('x',10)));
    -- fire_on_login_event(get_user_id_from_user_name(v_user_name));
 exception 
    when others then
-      arcsql.log_err('auto_login: '||dbms_utility.format_error_stack);
+      k2.log_err('auto_login: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -369,7 +369,7 @@ begin
    return t;
 exception 
    when others then
-      arcsql.log_err('get_current_time_for_user: '||dbms_utility.format_error_stack);
+      k2.log_err('get_current_time_for_user: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -378,14 +378,14 @@ procedure delete_user (
    p_email in varchar2 default null,
    p_user_id in number default null) is 
 begin 
-   arcsql.debug('delete_user: id='||p_user_id||', name='||p_email);
+   k2.debug('delete_user: id='||p_user_id||', name='||p_email);
    delete from saas_auth 
     where user_name=lower(p_email)
        or user_id=p_user_id;
-   arcsql.log_security_event(p_text=>'delete_user: '||p_email, p_key=>'saas_auth');
+   k2.log_security_event(p_text=>'delete_user: '||p_email, p_key=>'saas_auth');
 exception 
    when others then
-      arcsql.log_err('delete_user: '||dbms_utility.format_error_stack);
+      k2.log_err('delete_user: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -397,7 +397,7 @@ begin
    update saas_auth set remove_date=p_date where user_id=p_user_id;
 exception 
    when others then
-      arcsql.log_err('set_remove_date: '||dbms_utility.format_error_stack);
+      k2.log_err('set_remove_date: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -405,12 +405,12 @@ end;
 procedure set_status_delete (
    p_user_id in number) is 
 begin 
-   arcsql.debug('set_status_delete: '||p_user_id);
+   k2.debug('set_status_delete: '||p_user_id);
    update saas_auth set account_status='delete' where user_id=p_user_id;
-   arcsql.debug('set_status_delete: '||sql%rowcount);
+   k2.debug('set_status_delete: '||sql%rowcount);
 exception 
    when others then
-      arcsql.log_err('set_status_delete: '||dbms_utility.format_error_stack);
+      k2.log_err('set_status_delete: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -418,7 +418,7 @@ procedure ui_delete_account (
    p_auth_token in varchar2) is 
    v_user_id saas_auth.user_id%type;
 begin 
-   arcsql.log_security_event(p_text=>'ui_delete_account: '||p_auth_token, p_key=>'saas_auth');
+   k2.log_security_event(p_text=>'ui_delete_account: '||p_auth_token, p_key=>'saas_auth');
    if is_valid_auth_token (p_auth_token=>p_auth_token) then 
       v_user_id := get_user_id_from_auth_token(p_auth_token=>p_auth_token);
       set_remove_date(p_user_id=>v_user_id, p_date=>trunc(sysdate)+7);
@@ -433,7 +433,7 @@ begin
    end if;
 exception 
    when others then
-      arcsql.log_err('ui_delete_account: '||dbms_utility.format_error_stack);
+      k2.log_err('ui_delete_account: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -444,14 +444,14 @@ function does_user_name_exist ( -- Return true if the user name exists. Does not
    n number;
    v_user_name saas_auth.user_name%type := lower(p_user_name);
 begin 
-   arcsql.debug('does_user_name_exist: '||v_user_name);
+   k2.debug('does_user_name_exist: '||v_user_name);
    select count(*) into n 
       from v_saas_auth_available_accounts
      where user_name=v_user_name;
    return n = 1;
 exception 
    when others then
-      arcsql.log_err('does_user_name_exist: '||dbms_utility.format_error_stack);
+      k2.log_err('does_user_name_exist: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -462,12 +462,12 @@ procedure raise_user_name_not_found (
    p_user_name in varchar2 default null) is 
 begin 
    if not does_user_name_exist(p_user_name) then
-      arcsql.log_security_event(p_text=>'raise_user_name_not_found: '||p_user_name, p_key=>'saas_auth');
+      k2.log_security_event(p_text=>'raise_user_name_not_found: '||p_user_name, p_key=>'saas_auth');
       raise_application_error(-20001, 'raise_user_name_not_found: '||p_user_name);
    end if;
 exception 
    when others then
-      arcsql.log_err('raise_user_name_not_found: '||dbms_utility.format_error_stack);
+      k2.log_err('raise_user_name_not_found: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -484,7 +484,7 @@ begin
    return v_uuid;
 exception 
    when others then
-      arcsql.log_err('get_uuid: '||dbms_utility.format_error_stack);
+      k2.log_err('get_uuid: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -497,7 +497,7 @@ begin
    return nvl(trim(saas_auth_config.global_email_override), p_email);
 exception 
    when others then
-      arcsql.log_err('get_email_override_when_set: '||dbms_utility.format_error_stack);
+      k2.log_err('get_email_override_when_set: '||dbms_utility.format_error_stack);
       raise;
 end;  
 
@@ -509,7 +509,7 @@ begin
       p_display_location => apex_error.c_inline_in_notification );
 exception 
    when others then
-      arcsql.log_err('set_error_message: '||dbms_utility.format_error_stack);
+      k2.log_err('set_error_message: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -521,14 +521,14 @@ function does_email_exist (
    n number;
    v_email saas_auth.email%type := lower(p_email);
 begin 
-   arcsql.debug('does_email_exist: '||v_email);
+   k2.debug('does_email_exist: '||v_email);
    select count(*) into n 
       from v_saas_auth_available_accounts
      where email=v_email;
    return n = 1;
 exception 
    when others then
-      arcsql.log_err('does_email_exist: '||dbms_utility.format_error_stack);
+      k2.log_err('does_email_exist: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -554,7 +554,7 @@ begin
    end if;
 exception 
    when others then
-      arcsql.log_err('raise_password_failed_complexity_check: '||dbms_utility.format_error_stack);
+      k2.log_err('raise_password_failed_complexity_check: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -567,7 +567,7 @@ begin
    return arcsql.encrypt_sha256(saas_auth_config.saas_auth_salt || p_secret_string);
 exception 
    when others then
-      arcsql.log_err('get_hashed_password: '||dbms_utility.format_error_stack);
+      k2.log_err('get_hashed_password: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -577,15 +577,15 @@ procedure raise_email_not_found (
    -- Raises error if user is not found.
    n number;
 begin 
-   arcsql.debug('raise_email_not_found: ');
+   k2.debug('raise_email_not_found: ');
    if not does_email_exist(p_email) then
-      arcsql.log_security_event(p_text=>'raise_email_not_found: '||p_email, p_key=>'saas_auth');
+      k2.log_security_event(p_text=>'raise_email_not_found: '||p_email, p_key=>'saas_auth');
       set_error_message('Email not found.');
       raise_application_error(-20001, 'raise_email_not_found: '||p_email);
    end if;
 exception 
    when others then
-      arcsql.log_err('raise_email_not_found: '||dbms_utility.format_error_stack);
+      k2.log_err('raise_email_not_found: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -598,19 +598,19 @@ begin
     where name = 'ON_LOGOUT'
       and type='PROCEDURE';
    if n > 0 then 
-      arcsql.debug('fire_on_logout_event: '||p_user_id);
+      k2.debug('fire_on_logout_event: '||p_user_id);
       execute immediate 'begin on_logout('||p_user_id||'); end;';
    end if;
 exception 
    when others then
-      arcsql.log_err('fire_on_logout_event: '||dbms_utility.format_error_stack);
+      k2.log_err('fire_on_logout_event: '||dbms_utility.format_error_stack);
       raise;
 end;
 
 
 procedure post_logout is 
 begin 
-   arcsql.debug('post_logout: user='||v('APP_USER'));
+   k2.debug('post_logout: user='||v('APP_USER'));
    update saas_auth
       set auto_login=null,
           auto_login_token=null 
@@ -618,7 +618,7 @@ begin
    fire_on_logout_event(get_user_id_from_user_name(v('APP_USER')));
 exception 
    when others then
-      arcsql.log_err('post_logout: '||dbms_utility.format_error_stack);
+      k2.log_err('post_logout: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -632,7 +632,7 @@ procedure set_password (
    hashed_password varchar2(120);
    v_uuid saas_auth.uuid%type;
 begin 
-   arcsql.debug('set_password: '||p_user_name);
+   k2.debug('set_password: '||p_user_name);
    raise_user_name_not_found(p_user_name=>p_user_name);
    v_uuid := get_uuid(p_user_name=>p_user_name);
    hashed_password := get_hashed_password(p_secret_string=>v_uuid||p_password);
@@ -641,7 +641,7 @@ begin
     where user_name=lower(p_user_name);
 exception 
    when others then
-      arcsql.log_err('set_password: '||dbms_utility.format_error_stack);
+      k2.log_err('set_password: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -686,7 +686,7 @@ procedure raise_account_is_locked (
    n number;
 begin 
    if is_account_locked(p_user_name) then 
-      arcsql.log_security_event(p_text=>'raise_account_is_locked: '||p_user_name, p_key=>'saas_auth');
+      k2.log_security_event(p_text=>'raise_account_is_locked: '||p_user_name, p_key=>'saas_auth');
       raise_application_error(-20001, 'raise_account_is_locked: '||lower(p_user_name));
    end if;
 end;
@@ -696,13 +696,13 @@ procedure raise_too_many_auth_requests is
    -- Raises error if too many authorization requests are being made.
    --
 begin 
-   arcsql.debug('raise_too_many_auth_requests: ');
+   k2.debug('raise_too_many_auth_requests: ');
    if saas_auth_config.auth_request_rate_limit is null then 
       return;
    end if;
    -- If there have been more than 20 requests in the past minute raise an error.
    if arcsql.get_request_count(p_request_key=>'saas_auth', p_min=>10) > saas_auth_config.auth_request_rate_limit then
-      arcsql.log_security_event(p_text=>'raise_too_many_auth_requests: '||arcsql.get_request_count(p_request_key=>'saas_auth', p_min=>10), p_key=>'saas_auth');
+      k2.log_security_event(p_text=>'raise_too_many_auth_requests: '||arcsql.get_request_count(p_request_key=>'saas_auth', p_min=>10), p_key=>'saas_auth');
       set_error_message('Authorization request rate has been exceeded.');
       raise_application_error(-20001, 'Authorization request rate has been exceeded.');
       apex_util.pause(1);
@@ -716,27 +716,27 @@ function ui_branch_to_main_after_auth (
    p_email in varchar2) return boolean is  
    v_saas_auth saas_auth%rowtype;
 begin 
-   arcsql.debug('ui_branch_to_main_after_auth: ');
+   k2.debug('ui_branch_to_main_after_auth: ');
    select * into v_saas_auth from v_saas_auth_available_accounts 
     where email=lower(p_email);
    if v_saas_auth.email_verified is not null then 
-      arcsql.debug('true1');
+      k2.debug('true1');
       return true;
    end if;
    if saas_auth_config.allowed_logins_before_email_verification_is_required is null then 
-      arcsql.debug('true2');
+      k2.debug('true2');
       return true;
    end if;
    -- Register button was clicked
    if v_saas_auth.login_count = 0 then 
       if saas_auth_config.allowed_logins_before_email_verification_is_required > 0 then 
-         arcsql.debug('true3');
+         k2.debug('true3');
          return true;
       end if;
    else
       -- Login button was clicked
       if v_saas_auth.login_count > saas_auth_config.allowed_logins_before_email_verification_is_required then 
-         arcsql.debug('true4');
+         k2.debug('true4');
          return true;
       end if;
    end if;
@@ -818,7 +818,7 @@ m := m || '
 
 exception 
    when others then
-      arcsql.log_err('send_email_verification_code_to: '||dbms_utility.format_error_backtrace);
+      k2.log_err('send_email_verification_code_to: '||dbms_utility.format_error_backtrace);
       raise;
 end;  
 
@@ -839,7 +839,7 @@ begin
       and email_verified is null;
 exception 
    when others then
-      arcsql.log_err('verify_email: '||dbms_utility.format_error_stack);
+      k2.log_err('verify_email: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -850,7 +850,7 @@ procedure verify_email_using_token ( -- | Try to verify email using token and if
    n number;
    v_saas_auth saas_auth%rowtype;
 begin 
-   arcsql.debug('verify_email_using_token: '||p_auth_token);
+   k2.debug('verify_email_using_token: '||p_auth_token);
    arcsql.count_request(p_request_key=>'saas_auth');
    raise_too_many_auth_requests;   
    raise_email_not_found(p_email);
@@ -871,7 +871,7 @@ begin
    end if;
 exception 
    when others then
-      arcsql.log_err('verify_email_using_token: '||dbms_utility.format_error_stack);
+      k2.log_err('verify_email_using_token: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -883,9 +883,9 @@ procedure set_timezone_name (
    p_timezone_name in varchar2) is 
    v_offset varchar2(12);
 begin 
-   arcsql.debug('set_timezone_name: user='||p_user_name||', '||p_timezone_name);
+   k2.debug('set_timezone_name: user='||p_user_name||', '||p_timezone_name);
    if p_timezone_name is null then 
-      arcsql.log_err('set_timezone_name: Timezone name is null: user='||p_user_name);
+      k2.log_err('set_timezone_name: Timezone name is null: user='||p_user_name);
       return;
    end if;
    select tz_offset(p_timezone_name) into v_offset from dual;
@@ -896,7 +896,7 @@ begin
    set_session_time_zone(get_user_id_from_user_name(p_user_name));
 exception 
    when others then
-      arcsql.log_err('set_timezone_name: '||dbms_utility.format_error_stack);
+      k2.log_err('set_timezone_name: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -907,7 +907,7 @@ function does_email_already_exist (
    p_email in varchar2) return boolean is
    n number;
 begin
-   arcsql.debug('does_email_already_exist: email='||p_email);
+   k2.debug('does_email_already_exist: email='||p_email);
    select count(*) into n 
      from v_saas_auth_available_accounts
     where email=lower(p_email);
@@ -921,7 +921,7 @@ procedure raise_email_already_exists (
    n number;
 begin 
    if does_email_already_exist(p_email) then
-      arcsql.log_security_event(p_text=>'raise_email_already_exists: '||p_email, p_key=>'saas_auth');
+      k2.log_security_event(p_text=>'raise_email_already_exists: '||p_email, p_key=>'saas_auth');
       set_error_message('User is already registered.');
       raise_application_error(-20001, 'User is already registered.');
    end if;
@@ -934,7 +934,7 @@ procedure raise_duplicate_user_name (
    n number;
 begin 
    if does_user_name_exist(p_user_name) then
-      arcsql.log_security_event(p_text=>'raise_duplicate_user_name: '||p_user_name, p_key=>'saas_auth');
+      k2.log_security_event(p_text=>'raise_duplicate_user_name: '||p_user_name, p_key=>'saas_auth');
       set_error_message('User name already exists. Try using a different one.');
       raise_application_error(-20001, 'User name already exists.');
    end if;
@@ -949,7 +949,7 @@ begin
    p := saas_auth_config.saas_auth_pass_prefix;
    if trim(p) is not null then 
       if substr(p_password, 1, length(p)) != p then 
-         arcsql.log_security_event(p_text=>'raise_invalid_password_prefix:', p_key=>'saas_auth');
+         k2.log_security_event(p_text=>'raise_invalid_password_prefix:', p_key=>'saas_auth');
          set_error_message('This environment may not be available to the public (secret prefix defined).');
          raise_application_error(-20001, 'Secret prefix missing or did not match.');
       end if;
@@ -973,14 +973,14 @@ function get_user_id_from_user_name ( -- | Return the user id using the user nam
    n number;
    v_user_name saas_auth.user_name%type := lower(p_user_name);
 begin 
-   arcsql.debug3('get_user_id_from_user_name: user='||v_user_name);
+   k2.debug3('get_user_id_from_user_name: user='||v_user_name);
    select user_id into n 
      from v_saas_auth_available_accounts 
     where user_name = v_user_name;
    return n;
 exception 
    when others then
-      arcsql.log_err('get_user_id_from_user_name: '||dbms_utility.format_error_stack);
+      k2.log_err('get_user_id_from_user_name: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -991,7 +991,7 @@ function get_user_id_from_email (
    p_email in varchar2) return number is 
    n number;
 begin 
-   arcsql.debug('get_user_id_from_email: email='||lower(p_email));
+   k2.debug('get_user_id_from_email: email='||lower(p_email));
    raise_email_not_found(p_email);
    select user_id into n 
      from v_saas_auth_available_accounts 
@@ -999,7 +999,7 @@ begin
    return n;
 exception 
    when others then
-      arcsql.log_err('get_user_id_from_email: '||dbms_utility.format_error_stack);
+      k2.log_err('get_user_id_from_email: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -1034,7 +1034,7 @@ procedure add_test_user ( -- Add a user which is only accessible in dev mode.
    v_email varchar2(120) := lower(p_email);
    test_pass varchar2(120);
 begin
-   arcsql.debug('add_test_user: '||v_email);
+   k2.debug('add_test_user: '||v_email);
    test_pass := saas_auth_config.saas_auth_test_pass;
    if not does_user_name_exist(p_user_name=>v_email) then
       add_user (
@@ -1049,12 +1049,12 @@ end;
 procedure fire_create_account(p_user_id in varchar2) is 
    n number;
 begin 
-   arcsql.debug('saas_auth_pkg.fire_create_account: '||p_user_id);
+   k2.debug('saas_auth_pkg.fire_create_account: '||p_user_id);
    select count(*) into n from user_source 
     where name = 'ON_CREATE_ACCOUNT'
       and type='PROCEDURE';
    if n > 0 then 
-      arcsql.debug('fire_create_account: '||p_user_id);
+      k2.debug('fire_create_account: '||p_user_id);
       execute immediate 'begin on_create_account('||p_user_id||'); end;';
    end if;
 end;
@@ -1072,7 +1072,7 @@ procedure add_user (
    v_uuid saas_auth.uuid%type;
    v_hashed_password saas_auth.password%type;
 begin
-   arcsql.debug('add_user: '||v_email);
+   k2.debug('add_user: '||v_email);
    raise_does_not_appear_to_be_an_email_format(v_email);
    raise_duplicate_user_name(p_user_name=>v_email);
    if p_is_test_user then 
@@ -1095,7 +1095,7 @@ begin
       1,
       v('APP_SESSION'),
       v_is_test_user);
-   arcsql.log_security_event(p_text=>'add_user: '||v_email, p_key=>'saas_auth');
+   k2.log_security_event(p_text=>'add_user: '||v_email, p_key=>'saas_auth');
    set_password (
       p_user_name=>v_email,
       p_password=>p_password);
@@ -1110,25 +1110,25 @@ function is_email_verification_required (
    p_email in varchar2) return boolean is 
    v_saas_auth saas_auth%rowtype;
 begin 
-   arcsql.debug('is_email_verification_required: '||p_email);
+   k2.debug('is_email_verification_required: '||p_email);
    raise_email_not_found(p_email);
    select * into v_saas_auth 
      from v_saas_auth_available_accounts 
     where email=lower(p_email);
    if v_saas_auth.email_verified is not null then 
-      arcsql.debug('false1');
+      k2.debug('false1');
       return false;
    end if;
    if v_saas_auth.login_count >= saas_auth_config.allowed_logins_before_email_verification_is_required then 
-      arcsql.debug('true');
+      k2.debug('true');
       return true;
    else
-      arcsql.debug('false2');
+      k2.debug('false2');
       return false;
    end if;
 exception 
    when others then
-      arcsql.log_err('is_email_verification_required: '||dbms_utility.format_error_stack);
+      k2.log_err('is_email_verification_required: '||dbms_utility.format_error_stack);
       set_error_message('There was an error processing this request.');
       return true;
 end;
@@ -1146,7 +1146,7 @@ procedure create_account (
    v_email varchar2(120) := lower(p_email);
    v_user_id number;
 begin
-   arcsql.debug('create_account: '||lower(p_email));
+   k2.debug('create_account: '||lower(p_email));
    arcsql.count_request(p_request_key=>'saas_auth');
    raise_too_many_auth_requests;
 
@@ -1173,11 +1173,11 @@ begin
          p_password=>utl_raw.cast_to_raw(dbms_random.string('x',10)));
    end if;
    if saas_auth_config.send_email_on_create_account then 
-      arcsql.log_email('saas_auth_pkg.create_account: '||v_email);
+      k2.log_email('saas_auth_pkg.create_account: '||v_email);
    end if;
 exception 
    when others then
-      arcsql.log_err('create_account: '||dbms_utility.format_error_backtrace);
+      k2.log_err('create_account: '||dbms_utility.format_error_backtrace);
       raise;
 end;
 
@@ -1195,7 +1195,7 @@ function custom_auth (
    v_uuid                        saas_auth.uuid%type;
 
 begin
-   arcsql.debug('custom_auth: user='||v_user_name);
+   k2.debug('custom_auth: user='||v_user_name);
    arcsql.count_request(p_request_key=>'saas_auth');
    raise_too_many_auth_requests;
    raise_user_name_not_found(v_user_name);
@@ -1208,9 +1208,9 @@ begin
     where user_name=v_user_name;
    v_password := get_hashed_password(p_secret_string=>v_uuid||p_password);
 
-   arcsql.debug('v_password='||v_password||', v_stored_password='||v_stored_password);
+   k2.debug('v_password='||v_password||', v_stored_password='||v_stored_password);
    if v_password=v_stored_password then
-      arcsql.debug('custom_auth: true');
+      k2.debug('custom_auth: true');
       fire_on_login_event(v_user_id);
       return true;
    end if;
@@ -1223,12 +1223,12 @@ begin
           failed_login_count=failed_login_count+1,
           last_session_id=v('APP_SESSION')
     where user_name=v_user_name;
-   arcsql.debug('custom_auth: false');
+   k2.debug('custom_auth: false');
    return false;
    -- ToDo: May want to add fire_failed_login event here.
 exception 
    when others then
-      arcsql.log_err('custom_auth: '||dbms_utility.format_error_stack);
+      k2.log_err('custom_auth: '||dbms_utility.format_error_stack);
       return false;
 end;
 
@@ -1243,9 +1243,9 @@ procedure post_auth is
       and name not in ('SAAS_AUTH_PKG')
       and type='PACKAGE';
 begin
-   arcsql.debug('post_auth: saas_auth_pkg');
+   k2.debug('post_auth: saas_auth_pkg');
    for n in package_names loop 
-      arcsql.debug('post_auth: '||n.name||'.post_auth');
+      k2.debug('post_auth: '||n.name||'.post_auth');
       execute immediate 'begin '||n.name||'.post_auth; end;';
    end loop;
 end;
@@ -1260,13 +1260,13 @@ procedure send_reset_pass_token (
    v_app_name varchar2(120);
    m varchar2(1200);
 begin 
-   arcsql.debug('send_reset_pass_token: '||p_email);
+   k2.debug('send_reset_pass_token: '||p_email);
    arcsql.count_request(p_request_key=>'saas_auth');
    raise_too_many_auth_requests;
 
    -- Fail quietly. Querying emails is potential malicious activity.
    if not does_email_already_exist(lower(p_email)) then 
-      arcsql.log_err('send_reset_pass_token: Email address not found: '||lower(p_email));
+      k2.log_err('send_reset_pass_token: Email address not found: '||lower(p_email));
       return;
    end if;
 
@@ -1306,7 +1306,7 @@ Thanks,
       p_body=>m);
 exception 
    when others then
-      arcsql.log_err('send_reset_pass_token: '||dbms_utility.format_error_stack);
+      k2.log_err('send_reset_pass_token: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -1319,7 +1319,7 @@ procedure reset_password (
    n number;
    v_user_name varchar2(120);
 begin
-   arcsql.debug('reset_password: ');
+   k2.debug('reset_password: ');
    arcsql.count_request(p_request_key=>'saas_auth');
    raise_too_many_auth_requests;
 
@@ -1351,7 +1351,7 @@ begin
       and user_name=v_user_name;
 exception 
    when others then
-      arcsql.log_err('reset_password: '||dbms_utility.format_error_stack);
+      k2.log_err('reset_password: '||dbms_utility.format_error_stack);
       raise;
 end;
 

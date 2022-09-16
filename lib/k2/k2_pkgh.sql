@@ -19,6 +19,7 @@ create or replace package k2 as
     procedure log_err (p_text in varchar2, p_key in varchar2 default null);
     procedure log     (p_text in varchar2, p_key in varchar2 default null);
     procedure log_audit           (p_text in varchar2, p_key in varchar2 default null);
+    procedure log_email           (p_text in varchar2, p_key in varchar2 default null);
     procedure log_security_event  (p_text in varchar2, p_key in varchar2 default null);
 
     /*

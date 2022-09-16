@@ -31,7 +31,9 @@ create or replace package k2_config as
     -- This makes it a little easier to see what calls are specifically yours when
     -- viewing debug or querying apex_debug_messages. Set to blank or null to disable.
     apex_debug_prefix varchar(12) := 'k2: ';
+    -- Do you want messages forwarded to apex_debug?
     enable_apex_debug boolean := true;
+    -- Do you want messages forwards to arcsql_debug?
     enable_arcsql_logging boolean := true;
 
 end;

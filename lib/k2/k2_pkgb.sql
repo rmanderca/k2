@@ -73,6 +73,19 @@ begin
    end if;
 end;
 
+procedure log_email (
+   p_text in varchar2, 
+   p_key in varchar2 default null) is
+begin 
+   if k2_config.enable_arcsql_logging then
+      arcsql.log_email(p_text=>p_text, p_key=>p_key);
+   end if;
+   -- Apex won't send an email this way. This only works for Arcsql if configured to send emails.
+   if k2_config.enable_apex_debug then
+      apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_warn);
+   end if;
+end;
+
 procedure log_security_event (
    p_text in varchar2, 
    p_key in varchar2 default null) is
