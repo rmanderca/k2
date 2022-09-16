@@ -1,4 +1,4 @@
-define username='sldev'
+define username='x'
 --define password='xxxxxxxxxxxxxxxxxxx'
 --
 --create user &username identified by &password;
