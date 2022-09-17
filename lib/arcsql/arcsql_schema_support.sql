@@ -212,6 +212,15 @@ when others then
 end;
 /
 
+create or replace procedure drop_constraint (p_constraint_name varchar2) is 
+   x user_constraints%rowtype;
+begin 
+   if does_constraint_exist(p_constraint_name) then 
+      select table_name, constraint_name into x.table_name, x.constraint_name from user_constraints where constraint_name=p_constraint_name;
+      execute immediate 'alter table '||x.table_name||' drop constraint '||x.constraint_name;
+   end if;
+end;
+/
 
 -- uninstall: drop procedure drop_index;
 create or replace procedure drop_index(index_name varchar2) is 

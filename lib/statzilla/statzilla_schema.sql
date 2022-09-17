@@ -1,5 +1,6 @@
 
 exec drop_package('statzilla_b');
+exec drop_constraint('STAT_DEFAILT_FK_BUCKET_ID');
 
 /*
 
