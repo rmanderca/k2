@@ -38,8 +38,7 @@ We can use the properties to group/categorize/aggregate stats.
 They can made part of the stat name to ensure uniqueness or they can be passed in another field.
 */
 
--- uninstall: drop_table('stat');
-exec drop_table('stat');
+-- uninstall: exec drop_table('stat');
 begin 
    if not does_table_exist('stat') then
       execute_sql('
@@ -65,8 +64,7 @@ Dynamic properties will need to be each time stat_work is processed.
 For now we are not going to worry about dynamic properties and only allow static.
 */
 
--- uninstall: drop_table('stat_property');
-exec drop_table('stat_property');
+-- uninstall: exec drop_table('stat_property');
 begin 
    if not does_table_exist('stat_property') then
       execute_sql('
@@ -93,8 +91,7 @@ end;
 Buckets will get linked to an account. Not going to be stored here.
 */
 
--- uninstall: drop table stat_bucket cascade constraints purge;
-exec drop_table('stat_bucket');
+-- uninstall: exec drop_table('stat_bucket');
 begin 
    if not does_table_exist('stat_bucket') then
       execute_sql('
@@ -154,8 +151,7 @@ Anytime we act on behalf an account we will need to inject the account.
 Bucket are unique with accounts.
 */
 
--- uninstall: drop table stat_in cascade constraints purge;
-exec drop_table('stat_in');
+-- uninstall: exec drop_table('stat_in');
 begin 
    if not does_table_exist('stat_in') then
       execute_sql('create table stat_in (
@@ -176,8 +172,7 @@ begin
 end;
 /
 
--- uninstall: drop table stat_archive cascade constraints purge;
-exec drop_table('stat_archive');
+-- uninstall: exec drop_table('stat_archive');
 begin 
    if not does_table_exist('stat_archive') then 
       execute_sql('
@@ -234,8 +229,7 @@ end;
 -- uninstall: drop sequence seq_stat_work_id;
 exec create_sequence('seq_stat_work_id');
 
--- uninstall: drop table stat_work cascade constraints purge;
-exec drop_table('stat_work');
+-- uninstall: exec drop_table('stat_work');
 begin 
    if not does_table_exist('stat_work') then
       execute_sql('
@@ -313,8 +307,7 @@ begin
 end;
 /
 
--- uninstall: drop table stat_avg_val_hist_ref cascade constraints purge;
-exec drop_table('stat_avg_val_hist_ref');
+-- uninstall: exec drop_table('stat_avg_val_hist_ref');
 begin
    if not does_table_exist('stat_avg_val_hist_ref') then 
       execute_sql('
@@ -332,8 +325,7 @@ begin
 end;
 /
 
--- uninstall: drop table stat_percentiles_ref cascade constraints purge;
-exec drop_table('stat_percentiles_ref');
+-- uninstall: exec drop_table('stat_percentiles_ref');
 begin
    if not does_table_exist('stat_percentiles_ref') then 
       execute_sql('
@@ -414,8 +406,7 @@ select 'DY',
        stat_name;
 
 
--- uninstall: drop_table('stat_detail');
-exec drop_table('stat_detail');
+-- uninstall: exec drop_table('stat_detail');
 begin 
    if not does_table_exist('stat_detail') then 
       execute_sql('

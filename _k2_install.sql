@@ -50,6 +50,13 @@ Stazilla
 
 @./lib/statzilla/statzilla_install.sql
 
+/*
+Delivered K2 metrics (uses Statzilla).
+*/
+
+@./lib/k2/k2_metrics_pkgh.sql 
+@./lib/k2/k2_metrics_pkgb.sql
+
 create or replace package k2_app as 
     version number := 20220916;
 end;
