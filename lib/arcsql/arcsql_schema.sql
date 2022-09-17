@@ -565,6 +565,9 @@ begin
       )', false);
       execute_sql('alter table arcsql_log_type add constraint pk_arcsql_log_type primary key (log_type)', false);
    end if;
+   if not does_column_exist('arcsql_log', 'process_id') then 
+      execute_sql('alter table arcsql_log add process_id varchar2(120) default null', false);
+   end if;
 end;
 /
 
@@ -865,3 +868,16 @@ begin
    end if;
 end;
 /
+
+-- uninstall: drop_view('arcsql_test_result');
+create or replace view arcsql_test_result as 
+   select process_id,
+        log_type,
+        count(*) total_rows
+   from arcsql_log
+   where process_id like 'test: %'
+   group 
+     by process_id,
+        log_type
+   order
+     by max(log_entry);

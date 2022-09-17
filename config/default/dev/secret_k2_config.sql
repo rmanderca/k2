@@ -5,10 +5,6 @@ create or replace package k2_config as
     -- Used to determine which env we are working in. Usually dev, tst, prd.
     env varchar2(12) := 'dev';
 
-    -- Can be referred to from install/upgrade scripts.
-    -- ToDo: Replace this with app_version package.
-    schema_version number := 20220907;
-
     -- Application name. May want to include the env for non prod environments.
     app_name varchar2(120) := 'My Default App (dev)';
 

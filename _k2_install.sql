@@ -3,6 +3,19 @@
 WARNING: THIS FILE NOT TYPICALLY RUN DIRECTLY. IT IS RUN FROM ONE OF THE FILES IN THE ./install.
 */
 
+declare 
+   n number;
+begin 
+   select count(*) into n from user_source where name='K2_APP';
+   if n = 0 then 
+      execute immediate 'create or replace package k2_app as 
+    version number := 0;
+end;
+';
+   end if;
+end;
+/
+
 @./config/default/dev/secret_arcsql_cfg.sql
 @./config/default/dev/secret_apex_utl2_config.sql 
 @./config/default/dev/secret_k2_config.sql
@@ -37,4 +50,7 @@ Stazilla
 
 @./lib/statzilla/statzilla_install.sql
 
-
+create or replace package k2_app as 
+    version number := 20220916;
+end;
+/

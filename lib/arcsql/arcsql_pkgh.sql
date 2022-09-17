@@ -267,6 +267,8 @@ create or replace package arcsql as
 
    g_log_type arcsql_log_type%rowtype;
 
+   g_process_id varchar2(120);
+
    procedure set_log_type (p_log_type in varchar2);
 
    procedure raise_log_type_not_set;

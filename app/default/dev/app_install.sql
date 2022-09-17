@@ -2,8 +2,10 @@
 -- IMPORTANT: The files below should be idempotent (https://en.wikipedia.org/wiki/Idempotence).
 
 /* 
-This section installs your custom application's files (replace 'default' with your app folder name).
+This section installs your customized config files (replace 'default' with your app folder name).
 */
+
+-- WARNING: You may want to exclude files starting with secret* from git. See the .gitignore file.
 
 @../../../config/default/dev/secret_arcsql_cfg.sql
 @../../../config/default/dev/secret_apex_utl2_config.sql 
@@ -11,47 +13,24 @@ This section installs your custom application's files (replace 'default' with yo
 @../../../config/default/dev/secret_saas_auth_config.sql 
 @../../../config/default/dev/secret_app_config.sql 
 
-/*
-saas_auth_events.sql - Override default procedures in SAAS_AUTH with your custom code.
-
-These events allow you to tie in things like a LOGIN to your application's code.
-*/
-
+-- Authentication (create account, verify email, login, forgot password) features.
 @saas_auth_events.sql
 
-/*
-user.sql - This is meant to contain any users you generate by default.
-*/
-
+-- Automatically pre-create users you need for your app.
 @users.sql
 
-/*
-send_email.sql - Override the default send_email procedure with your code.
-
-This enables you to hook email send code to the email service provider you are using.
-*/
-
+-- send_email procedure over-ride. Replace the delivery proc with your proc to interface with your email solution.
 @send_email.sql
 
-/*
-
-Anything you want to run at the end of the install/upgrade. Can be patching code.
-
-*/
-
+-- Things that need to run towards the end of the install.
 @saas_app_post_install.sql
 
-/*
-Create the contact groups for this application.
-*/
-
+-- Create ArcSQL contact groups, like admins, for alerting, monitoring and other purposes.
 @arcsql_contact_groups.sql
 
--- Install scheduled jobs using the dbms job scheduler.
+-- Install any scheduled jobs using the dbms job scheduler.
 @app_scheduler_jobs.sql
-
-@app_version.sql
 
 commit;
 
-select 'APP install complete.' MESSAGE from dual;
+select 'APP install complete.' message from dual;
