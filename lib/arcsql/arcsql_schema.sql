@@ -565,9 +565,6 @@ begin
       )', false);
       execute_sql('alter table arcsql_log_type add constraint pk_arcsql_log_type primary key (log_type)', false);
    end if;
-   if not does_column_exist('arcsql_log', 'process_id') then 
-      execute_sql('alter table arcsql_log add process_id varchar2(120) default null', false);
-   end if;
 end;
 /
 
@@ -589,6 +586,7 @@ begin
       metric_1 number default null,
       metric_name_2 varchar2(120) default null,
       metric_2 number default null,
+      process_id varchar2(120) default null,
       audsid varchar2(120),
       username varchar2(120))', false);
       execute_sql('
@@ -607,6 +605,9 @@ begin
    end if;
    if not does_column_exist('arcsql_log', 'metric_2') then 
       execute_sql('alter table arcsql_log add (metric_2 number default null)', false);
+   end if;
+   if not does_column_exist('arcsql_log', 'process_id') then 
+      execute_sql('alter table arcsql_log add process_id varchar2(120) default null', false);
    end if;
 end;
 /

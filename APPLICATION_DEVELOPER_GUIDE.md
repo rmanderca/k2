@@ -3,6 +3,10 @@
 
 9/17/2022 – This document is a work in progress.
 
+### Environments
+
+The name you assign your environment should be maintained in the ```k2_config.env``` configuration value. It can be used to conditionally apply code to particular environments. K2 has no opinion on what you use here. 
+
 ### Soft versioning
 
 Soft versioning means that the version numbers are not “real” versions. They are used and advanced as needed. They are number. My preferred format is ```YYYYMMDD```.
