@@ -1,6 +1,6 @@
 # K2 
 
-The fastest way to build and prototype applications on Oracle APEX. Subscribe to the [APEX Reloaded]](https://www.youtube.com/channel/UC8cIGO-lRvWM-mPtJdO_9XQ) YouTube channel for updates.
+The fastest way to build and prototype applications on Oracle APEX. Subscribe to the [APEX Reloaded](https://www.youtube.com/channel/UC8cIGO-lRvWM-mPtJdO_9XQ) YouTube channel for updates.
 
 Share K2 with others using the link [builtonapex.com/k2](builtonapex.com/k2) which redirects here!
 
