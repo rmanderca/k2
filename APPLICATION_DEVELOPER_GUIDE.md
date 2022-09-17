@@ -27,6 +27,10 @@ You could optionally reference the ```app_grants.sql``` script from ```./k2_gran
 
 ### How do I add test users to my application?
 
+### Oracle metrics
+
+Statzilla (a component of K2) installs a job to collect Oracle metrics into the stat* tables. See config variables in ```K2_CONFIG``` package. Stats are associated with the 'oracle (local)' Statzilla bucket. Also see the ```./lib/statzilla/statzilla_get_oracle_metrics.prc``` file.
+
 # Available libraries
 
 ## APEX utility package

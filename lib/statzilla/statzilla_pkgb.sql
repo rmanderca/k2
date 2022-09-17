@@ -197,7 +197,9 @@ procedure process_buckets is
    cursor buckets is 
    select distinct bucket_name from stat_in;
 begin
-   -- arcsql_cfg.log_level := 1;
+   if not k2_config.enable_statzilla then
+      return;
+   end if;
    for b in buckets loop
       process_bucket(p_bucket_name=>b.bucket_name);
    end loop;

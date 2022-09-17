@@ -1,8 +1,12 @@
 
-create or replace procedure get_statzilla_test_stats is 
+create or replace procedure statzilla_get_oracle_metrics is 
 	b stat_bucket%rowtype;
-	v_bucket_name varchar2(100) := 'statzilla {"account": 123}';
+	v_bucket_name varchar2(100) := 'oracle (local)';
 begin
+
+	if not k2_config.enable_statzilla_get_oracle_metrics then
+	   return;
+	end if;
 
 	if not statzilla.does_bucket_exist(v_bucket_name) then 
 		statzilla.add_bucket(v_bucket_name);
@@ -53,9 +57,7 @@ begin
 	    gv$system_event
 	);
 
-	statzilla.process_buckets;
+	commit;
 
 end;
 /
-
-

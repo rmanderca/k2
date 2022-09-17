@@ -32,6 +32,11 @@ create or replace package k2_config as
     -- Do you want messages forwards to arcsql_debug?
     enable_arcsql_logging boolean := true;
 
+    -- Do you want to enable the statzilla job which processes buckets?
+    enable_statzilla boolean := true;
+    -- Do you want to collect oracle metrics?
+    enable_statzilla_get_oracle_metrics boolean := true;
+
 end;
 /
 
