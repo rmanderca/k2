@@ -2441,24 +2441,27 @@ begin
 end;
 
 -- | -----------------------------------------------------------------------------------
--- | Unit testing 
+-- | ## Unit testing 
+-- | 
+-- | Test results are stored in arcsql_log. If you want to see those or evaluate those
+-- | then make sure you have ArcSQL logging enabled.
 -- | -----------------------------------------------------------------------------------
 
-procedure pass_test is 
+procedure pass_test is -- | Pass the current test.
 begin 
    test_passed := 1;
    test;
 end;
 
 
-procedure fail_test(fail_message in varchar2 default null) is 
+procedure fail_test(fail_message in varchar2 default null) is -- | Fail the current test which will result in an error being raised.
 begin 
    test_passed := 0;
    test;
 end;
 
 
-procedure test is 
+procedure test is -- | Closes out a test if pass_test or fail_test has not already been called.
 begin
    if test_passed = 1 then 
       dbms_output.put_line('passed: '||arcsql.test_name);
