@@ -427,7 +427,7 @@ begin
       execute_sql('alter table stat_detail add constraint pk_stat_detail primary key (stat_detail_id)', false);
    end if;
    if not does_constraint_exist('stat_fk_bucket_id') then
-      execute_sql('alter table stat_detail add constraint stat_defailt_fk_bucket_id foreign key (bucket_id) references stat_bucket (bucket_id) on delete cascade', false);
+      execute_sql('alter table stat_detail add constraint stat_fk_bucket_id foreign key (bucket_id) references stat_bucket (bucket_id) on delete cascade', false);
    end if;
 end;
 /

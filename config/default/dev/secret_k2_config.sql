@@ -34,8 +34,12 @@ create or replace package k2_config as
 
     -- Do you want to enable the statzilla job which processes buckets?
     enable_statzilla boolean := true;
+    
     -- Do you want to collect oracle metrics?
     enable_statzilla_get_oracle_metrics boolean := true;
+
+    -- Do you want K2 to collect metrics?
+    enable_k2_metrics boolean := true;
 
 end;
 /
