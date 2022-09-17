@@ -25,6 +25,8 @@ You could optionally reference the ```app_grants.sql``` script from ```./k2_gran
 
 ### How do I write unit tests?
 
+### How do I add test users to my application?
+
 # Available libraries
 
 ## APEX utility package
