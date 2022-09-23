@@ -5,9 +5,6 @@
 -- ToDo: Raise error if any line is >1000 characters long.
 -- ToDo: Add a quick proc to test email.
 
-begin 
-   if not does_procedure_exist('send_email') then 
-      execute immediate '
 create or replace procedure send_email (
    -- Valid email address to which the email is sent (required). For multiple email addresses, use a comma-separated list
    p_to in varchar2,
@@ -21,17 +18,16 @@ begin
    if arcsql_cfg.disable_email then 
       return;
    end if;
-   apex_mail.send(
-      p_to=>p_to,
-      p_from=>p_from,
-      p_subj=>p_subject,
-      p_body=>p_body
-      );
-   apex_mail.push_queue;
-end;
-';
-   end if;
+   -- apex_mail.send(
+   --    p_to=>p_to,
+   --    p_from=>p_from,
+   --    p_subj=>p_subject,
+   --    p_body=>p_body
+   --    );
+   -- apex_mail.push_queue;
 end;
 /
+
+
 
 

@@ -1462,17 +1462,17 @@ procedure set_counter (
 begin
    if not does_counter_exist(counter_group=>set_counter.counter_group, subgroup=>set_counter.subgroup, name=>set_counter.name) then 
       insert into arcsql_counter (
-      id,
-      counter_group,
-      subgroup,
-      name,
-      value,
-      update_time) values (
-      seq_counter_id.nextval,
-      set_counter.counter_group,
-      set_counter.subgroup,
-      set_counter.name,
-      nvl(set_counter.equal, 0),
+         id,
+         counter_group,
+         subgroup,
+         name,
+         value,
+         update_time) values (
+         seq_counter_id.nextval,
+         set_counter.counter_group,
+         set_counter.subgroup,
+         set_counter.name,
+         nvl(set_counter.equal, 0),
       sysdate);
    end if;
    update arcsql_counter 

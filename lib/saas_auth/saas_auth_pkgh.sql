@@ -2,6 +2,9 @@
 -- uninstall: drop package saas_auth_pkg;
 create or replace package saas_auth_pkg as
 
+   procedure increment_email_count (
+      p_email_address in varchar2);
+
    function days_since_last_login ( 
       p_user_id in number) return number;
 

@@ -1,5 +1,18 @@
 create or replace package body saas_auth_pkg as
 
+procedure increment_email_count (
+   p_email_address in varchar2) is 
+begin 
+   update saas_auth
+      set email_count=email_count+1,
+          last_email=systimestamp
+    where email=lower(p_email_address);
+exception
+   when others then 
+      k2.log_err('increment_email_count: '||dbms_utility.format_error_stack);
+      raise;
+end;  
+
 function days_since_last_login ( -- | Return the number of days since the user has logged in.
    p_user_id in number) return number as
    l_days_since_last_login number;

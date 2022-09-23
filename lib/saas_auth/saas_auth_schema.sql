@@ -65,6 +65,9 @@ begin
       is_test_user varchar2(1) default ''n'',
       auto_login date default null,
       auto_login_token varchar2(120) default null,
+      -- Counts how many emails have been sent to the user. Developer is responsible for maintaining this value.
+      email_count number default 0,
+      last_email timestamp default null,
       created date not null,
       created_by varchar2(120) not null,
       updated date not null,
@@ -122,6 +125,14 @@ begin
    if not does_column_exist('saas_auth', 'remove_date') then 
       execute_sql('
          alter table saas_auth add (remove_date date default null)', false);
+   end if;
+   if not does_column_exist('saas_auth', 'email_count') then 
+      execute_sql('
+         alter table saas_auth add (email_count number default 0)', false);
+   end if;
+   if not does_column_exist('saas_auth', 'last_email') then 
+      execute_sql('
+         alter table saas_auth add (last_email timestamp default null)', false);
    end if;
 end;
 /
