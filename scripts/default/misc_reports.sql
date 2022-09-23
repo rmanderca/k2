@@ -1,4 +1,7 @@
 
+select * from arcsql_counter order by 1, 2;
+
+select * from arcsql_event order by 1, 2, 3;
 
 select count(*) total_messages,
        message

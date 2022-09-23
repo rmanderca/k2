@@ -1,5 +1,4 @@
-
-create or replace procedure send_email (
+create or replace procedure send_email ( -- | Primary email interface for sending an email.
    -- Valid email address to which the email is sent (required). For multiple email addresses, use a comma-separated list
    p_to in varchar2,
    -- Email address from which the email is sent (required). This email address must be a valid address. Otherwise, the message is not sent.
@@ -35,3 +34,15 @@ begin
       add=>1);
 end;
 /
+
+create or replace procedure send_test_email is -- | Send a test email.
+begin 
+   arcsql_cfg.disable_email := false;
+   -- send_email (
+   --    p_to=>app_config.public_user_name,
+   --    p_from=>arcsql_cfg.default_email_from_address,
+   --    p_subject=>'Test email sent at '||to_char(sysdate,'MM/DD/YYYY HH24:MI:SS'),
+   --    p_body=>'This is a test email sent at '||to_char(sysdate,'MM/DD/YYYY HH24:MI:SS'));
+end;
+/
+
