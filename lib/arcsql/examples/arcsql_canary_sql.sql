@@ -20,7 +20,7 @@ begin
      dbms_scheduler.create_job (
        job_name        => 'arcsql_run_canary_sql',
        job_type        => 'PLSQL_BLOCK',
-       job_action      => 'begin arcsql_canary_sql; end;',
+       job_action      => 'begin arcsql_canary_sql; commit; end;',
        start_date      => systimestamp,
        repeat_interval => 'freq=hourly;interval=1',
        enabled         => true);

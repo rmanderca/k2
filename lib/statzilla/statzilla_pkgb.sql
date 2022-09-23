@@ -1,10 +1,10 @@
 create or replace package body statzilla as 
 
-/*
-Stats are stored in buckets. This is how you create a new bucket.
-*/
+-- | --------------------------------------------------------------------------
+-- | Stats are stored in buckets. 
+-- | --------------------------------------------------------------------------
 
-procedure add_bucket ( 
+procedure add_bucket ( -- | Create a bucket to store stats in.
    p_bucket_name in varchar2,
    p_calc_type in varchar2 default 'none',
    p_ignore_negative in varchar2 default 'N',
@@ -28,7 +28,7 @@ exception
       raise;
 end;
 
-function get_bucket (
+function get_bucket ( -- | Returns a bucket rowtype for the given bucket id.
    p_bucket_id in number) return stat_bucket%rowtype is 
    v_bucket stat_bucket%rowtype;
 begin 
@@ -40,7 +40,7 @@ exception
       raise;
 end;
 
-function get_bucket_by_name (
+function get_bucket_by_name ( -- | Returns a bucket rowtype for the given bucket name.
    p_bucket_name in varchar2) return stat_bucket%rowtype is 
    v_bucket stat_bucket%rowtype;
 begin 
@@ -52,7 +52,7 @@ exception
       raise;
 end;
 
-procedure save_bucket (
+procedure save_bucket ( -- | Save a bucket record if bucket rowtype.
    p_bucket in stat_bucket%rowtype) is 
 begin 
    update stat_bucket set row=p_bucket where bucket_id=p_bucket.bucket_id;
@@ -62,7 +62,7 @@ exception
       raise;
 end;
 
-function does_bucket_exist (
+function does_bucket_exist ( -- | Return true if the given bucket name exists.
    p_bucket_name in varchar2) return boolean is 
    n number;
 begin 
@@ -74,11 +74,7 @@ begin
    end if;
 end;
 
-/*
-Refreshes the data for a stat which is used to determine what it's historical value is.
-*/
-
-procedure refresh_avg_val_hist_ref (
+procedure refresh_avg_val_hist_ref ( -- | Refresh the references for the stat's average value.
    p_bucket_id in varchar2,
    p_stat_name in varchar2) is 
 begin 
@@ -106,11 +102,8 @@ begin
        and stat_name=p_stat_name);
 end;
 
-/*
-The highest level of stat detail is stored here. Optional and short term only usually.
-*/
 
-procedure save_bucket_stat_detail (
+procedure save_bucket_stat_detail ( -- | Writes out stat detail record.
    p_bucket in stat_bucket%rowtype) is 
 begin
    insert into stat_detail (
@@ -147,10 +140,9 @@ exception
       raise;
 end;
 
-procedure refresh_stat_percentiles_ref (
+procedure refresh_stat_percentiles_ref ( -- | Refreshes the percentiles reference for given bucket and stat.
    p_bucket_id in varchar2,
    p_stat_name in varchar2) is 
-   -- Refresh all of the data in stat_percentiles_ref for a stat.
 begin 
    delete 
      from stat_percentiles_ref 
@@ -193,7 +185,7 @@ begin
       a.stat_name);
 end;
 
-procedure process_buckets is
+procedure process_buckets is -- | Process all buckets.
    cursor buckets is 
    select distinct bucket_name from stat_in;
 begin
@@ -211,17 +203,52 @@ exception
       raise;
 end;
 
-procedure get_new_stats (p_bucket_id in number) is -- | Checks stat_work for new stats and adds to stat table if any found.
-   v_created timestamp with time zone := current_timestamp;
+procedure get_properties_from_new_stats ( -- | Parse the properties from the static_json column for new stats.
+   p_created timestamp with time zone) is 
    cursor c_new_stats is 
    select static_json, stat_id
     from stat
-   where created=v_created;
+   where created=p_created;
    j json_object_t;
    keys json_key_list;
    v_property_name varchar2(250);
    v_property_value varchar2(250);
 begin 
+   -- Example of data: {"instance_id": 1, "statistic#": 653, "class": 1, "type": "oracle"}
+   for c in c_new_stats loop
+      begin
+         j := json_object_t (c.static_json);
+         keys := j.get_keys;
+         for ki in 1..keys.count loop
+            v_property_name := keys(ki);
+            v_property_value := j.get_string(keys(ki));
+            insert into stat_property (
+               stat_id,
+               property_name,
+               property_value,
+               property_type,
+               is_num,
+               created) values (
+               c.stat_id,
+               v_property_name,
+               v_property_value,
+               'static',
+               arcsql.str_is_number_y_or_n(v_property_value),
+               p_created);
+         end loop;
+      exception 
+         when others then 
+            arcsql.log_err('get_properties_from_new_stats: stat_id='||c.stat_id);
+            arcsql.log_err('get_properties_from_new_stats: '||dbms_utility.format_error_stack);
+      end;
+   end loop;
+end;
+
+procedure get_new_stats ( -- | Checks stat_work for new stats and adds to stat table if any found.
+   p_bucket_id in number) is 
+   v_created timestamp with time zone := systimestamp;
+begin 
+   arcsql.debug('get_new_stats: '||p_bucket_id);
    insert into stat s (
       stat_name,
       bucket_id,
@@ -239,36 +266,15 @@ begin
         from stat s
        where bucket_id=p_bucket_id
          and s.stat_name=sw.stat_name));
-
-   -- Example of data: {"instance_id": 1, "statistic#": 653, "class": 1, "type": "oracle"}
-   for c in c_new_stats loop
-      j := json_object_t (c.static_json);
-      keys := j.get_keys;
-      for ki in 1..keys.count loop
-         v_property_name := keys(ki);
-         v_property_value := j.get_string(keys(ki));
-         insert into stat_property (
-            stat_id,
-            property_name,
-            property_value,
-            property_type,
-            is_num,
-            created) values (
-            c.stat_id,
-            v_property_name,
-            v_property_value,
-            'static',
-            arcsql.str_is_number_y_or_n(v_property_value),
-            v_created);
-      end loop;
-   end loop;
+   get_properties_from_new_stats(v_created);
 exception 
    when others then 
       arcsql.log_err('get_new_stats: '||dbms_utility.format_error_stack);
       raise;
 end;
 
-procedure process_bucket (p_bucket_name in varchar2) is 
+procedure process_bucket ( -- | Process records in stat_in for the given bucket name.
+   p_bucket_name in varchar2) is 
    cursor stat_times is 
    select distinct stat_time 
      from stat_in 
@@ -296,11 +302,12 @@ exception
       raise;
 end;
 
-procedure process_bucket_time (
+procedure process_bucket_time ( -- | Process the records in stat_in for given bucket and given time.
    p_bucket_name in varchar2, 
-   p_stat_time in timestamp) is
+   p_stat_time in timestamp with time zone) is
    -- Updates stat_work table, then inserts new rows from stat_in.
 begin
+   arcsql.debug('process_bucket_time: '||p_bucket_name||', '||to_char(p_stat_time, 'HH24:MI:SS'));
    if g_bucket.bucket_id is null then 
       raise_application_error(-20001, 'g_bucket not set');
    end if;
@@ -312,7 +319,7 @@ begin
           updated) = (
    select si.received_val,
           si.stat_time,
-          current_timestamp
+          systimestamp
      from stat_in si 
     where si.bucket_name=p_bucket_name
       and si.stat_time=p_stat_time
@@ -338,7 +345,7 @@ begin
       statzilla.g_bucket.calc_type,
       received_val,
       stat_time,
-      current_timestamp
+      systimestamp
      from stat_in b
     where b.bucket_name=p_bucket_name
       and b.stat_time=p_stat_time
@@ -352,6 +359,7 @@ begin
    delete from stat_in 
     where bucket_name=p_bucket_name
       and stat_time=p_stat_time;
+   arcsql.debug('Deleted '||sql%rowcount||' rows from stat_in.');
 
    update stat_bucket 
       set last_stat_time=p_stat_time, 
@@ -364,11 +372,7 @@ exception
       raise;
 end;
 
-/*
-Delete aged out data from the detail table (stat) and the archive (stat_archive).
-*/
-
-procedure purge_stats (
+procedure purge_stats ( -- | Delete old data from stat_detail and stat_archive.
    p_bucket_id in varchar2, 
    p_stat_name in varchar2,
    p_stat_time in timestamp) is 
@@ -386,7 +390,7 @@ begin
       and stat_time < p_stat_time-statzilla.g_bucket.save_archive_days;
 end;
 
-procedure delete_bucket ( 
+procedure delete_bucket ( -- | Delete a bucket for the given bucket id.
    p_bucket_id in varchar2) is
 begin 
   delete from stat_bucket 

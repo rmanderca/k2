@@ -14,7 +14,7 @@ begin
      dbms_scheduler.create_job (
        job_name        => 'arcsql_run_sql_log_update',
        job_type        => 'PLSQL_BLOCK',
-       job_action      => 'begin arcsql.run_sql_log_update; end;',
+       job_action      => 'begin arcsql.run_sql_log_update; commit; end;',
        start_date      => systimestamp,
        repeat_interval => 'freq=minutely;interval=5',
        enabled         => false);
@@ -32,7 +32,7 @@ begin
      dbms_scheduler.create_job (
        job_name        => 'arcsql_purge_events',
        job_type        => 'PLSQL_BLOCK',
-       job_action      => 'begin arcsql.purge_events; end;',
+       job_action      => 'begin arcsql.purge_events; commit; end;',
        start_date      => systimestamp,
        repeat_interval => 'freq=hourly;interval=1',
        enabled         => true);
@@ -63,7 +63,7 @@ begin
      dbms_scheduler.create_job (
        job_name        => 'arcsql_check_contact_groups',
        job_type        => 'PLSQL_BLOCK',
-       job_action      => 'begin arcsql.check_contact_groups; end;',
+       job_action      => 'begin arcsql.check_contact_groups; commit; end;',
        start_date      => systimestamp,
        repeat_interval => 'freq=minutely;interval=1',
        enabled         => true);

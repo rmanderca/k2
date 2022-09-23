@@ -1,5 +1,5 @@
 
-/*
-Add grants your app user needs here. Make sure you run this file at least once against your app user account.
-*/
+-- | app_grants.sql - Add your creants here. Make sure you run them from an admin account.
+
+-- grant foo to &username;
 

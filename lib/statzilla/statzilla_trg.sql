@@ -4,7 +4,7 @@ create or replace trigger statzilla_stat_ins_trg
    for each row
 begin
    -- If static json was not provided then see if it is embeded 
-   if :new.static_json is null then
+   if :new.static_json is null and instr(:new.stat_name, '{"') > 0 then
       -- :new.static_json := json_scalar(trim(substr(:new.stat_name, instr(:new.stat_name, '{"'))));
       :new.static_json := trim(substr(:new.stat_name, instr(:new.stat_name, '{"')));
    end if;
@@ -22,7 +22,7 @@ create or replace trigger statzilla_stat_in_ins_trg
 declare
 begin
    if :new.stat_time is null then 
-      :new.stat_time := current_timestamp;
+      :new.stat_time := systimestamp;
    end if;
 exception
    when others then
@@ -107,7 +107,7 @@ begin
       statzilla.refresh_stat_percentiles_ref (p_bucket_id=>:new.bucket_id, p_stat_name=>:new.stat_name);
       -- Purge aged out data from stat and stat_archive.
       statzilla.purge_stats (p_bucket_id=>:new.bucket_id, p_stat_name=>:new.stat_name, p_stat_time=>:new.stat_time);
-   elsif :new.created > current_timestamp-4/24 then 
+   elsif :new.created > systimestamp-4/24 then 
       -- Let's refresh this fairly frequently for the first 4 hours of it's existence.
       statzilla.refresh_stat_percentiles_ref(p_bucket_id=>:new.bucket_id, p_stat_name=>:new.stat_name);
    end if;

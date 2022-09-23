@@ -1,4 +1,5 @@
 
+-- | saas_auth_events.sql
 
 -- uninstall: exec drop_procedure('on_create_account');
 create or replace procedure on_create_account (

@@ -23,7 +23,7 @@ begin
 	select
 	    name ||' {"instance_id": '||inst_id||', "statistic#": '||statistic#||', "class": '||class||', "type": "oracle"}',
 	    v_bucket_name,
-	    current_timestamp,
+	    systimestamp,
 	    value
 	from
 	    gv$sysstat
@@ -37,7 +37,7 @@ begin
 	select
 	    event ||' (total waits) {"instance_id": '||inst_id||', "wait_class": "'||wait_class||'"}', 
 	    v_bucket_name,
-	    current_timestamp,
+	    systimestamp,
 	    total_waits
 	from
 	    gv$system_event
@@ -51,7 +51,7 @@ begin
 	select
 	    event ||' (time_waited) {"instance_id": '||inst_id||', "wait_class": "'||wait_class||'"}', 
 	    v_bucket_name,
-	    current_timestamp,
+	    systimestamp,
 	    time_waited
 	from
 	    gv$system_event

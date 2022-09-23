@@ -1428,7 +1428,6 @@ begin
    sql_log_analyze_sql_log_data;
    sql_log_save_active_sess_hist;
    stop_event(p_event_key=>'arcsql', p_sub_key=>'sql_log', p_name=>'run_sql_log_update');
-
 end;
 
 -- | -----------------------------------------------------------------------------------
@@ -2119,7 +2118,7 @@ ToDo:
    * log_type sends_email/sms should support cron type values.
 */
 
-function get_contact_group (
+function get_contact_group ( -- | Returns an contact group record.
    p_group_name in varchar2) return arcsql_contact_group%rowtype is 
    r arcsql_contact_group%rowtype;
 begin 
@@ -2130,7 +2129,7 @@ begin
 end;
 
 
-function does_contact_group_exist (
+function does_contact_group_exist ( -- | Return true if context group exists.
    p_group_name in varchar2) return boolean is 
    n number;
 begin 
@@ -2141,7 +2140,7 @@ begin
 end;
 
 
-procedure create_contact_group (
+procedure create_contact_group ( -- | Create a new contact group.
    p_group_name in varchar2,
    p_is_group_enabled in boolean default true,
    p_is_group_on_hold in boolean default false,
@@ -2186,7 +2185,7 @@ begin
 end;
 
 
-procedure add_contact_to_contact_group (
+procedure add_contact_to_contact_group ( -- | Add a contact to the contact group.
    p_group_name in varchar2,
    p_email_address in varchar2,
    p_sms_address in varchar2) is 
@@ -2210,9 +2209,7 @@ begin
 end;
 
 
-function is_sms_possible (
-   -- Return true the sms is enabled for the group and the group is enabled and not on hold.
-   --
+function is_sms_possible ( -- | Return true if sms enabled for group, group is enabled, and not on hold.
    p_group_name in varchar2) return boolean is 
    n number;
 begin 
@@ -2232,9 +2229,7 @@ begin
 end;
 
 
-function is_email_possible (
-   -- Return true if the group is enabled and not on hold.
-   -- 
+function is_email_possible ( -- | Return true if the group is enabled and not on hold.
    p_group_name in varchar2) return boolean is 
    n number;
 begin 
@@ -2253,7 +2248,7 @@ begin
 end;
 
 
-function has_sms_messages (
+function has_sms_messages ( -- | Return true if contact group has SMS messages that need to be sent.
    p_group_name in varchar2) return boolean is 
    n number;
    g arcsql_contact_group%rowtype;
@@ -2275,7 +2270,7 @@ begin
 end;
 
 
-function has_email_messages (
+function has_email_messages ( -- | Return true if contact group has email messages queued.
    p_group_name in varchar2) return boolean is 
    n number;
    g arcsql_contact_group%rowtype;

@@ -4,7 +4,7 @@ begin
       dbms_scheduler.create_job (
          job_name        => 'statzilla_process_buckets_job',
          job_type        => 'PLSQL_BLOCK',
-         job_action      => 'begin statzilla.process_buckets; end;',
+         job_action      => 'begin statzilla.process_buckets; commit; end;',
          start_date      => systimestamp,
          repeat_interval => 'freq=minutely;interval=1',
          enabled         => false);
@@ -23,9 +23,9 @@ begin
       dbms_scheduler.create_job (
          job_name        => 'statzilla_get_oracle_metrics_job',
          job_type        => 'PLSQL_BLOCK',
-         job_action      => 'begin statzilla_get_oracle_metrics; end;',
+         job_action      => 'begin statzilla_get_oracle_metrics; commit; end;',
          start_date      => systimestamp,
-         repeat_interval => 'freq=minutely;interval=1',
+         repeat_interval => 'freq=minutely;interval=5',
          enabled         => false);
    end if;
    if k2_config.enable_statzilla_get_oracle_metrics then 

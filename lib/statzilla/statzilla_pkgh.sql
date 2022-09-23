@@ -34,7 +34,7 @@ procedure process_buckets;
 
 procedure process_bucket (p_bucket_name in varchar2);
 
-procedure process_bucket_time (p_bucket_name in varchar2, p_stat_time in timestamp);
+procedure process_bucket_time (p_bucket_name in varchar2, p_stat_time in timestamp with time zone);
 
 procedure get_new_stats (p_bucket_id in number);
 

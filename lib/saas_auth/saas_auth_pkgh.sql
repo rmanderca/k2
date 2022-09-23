@@ -2,6 +2,9 @@
 -- uninstall: drop package saas_auth_pkg;
 create or replace package saas_auth_pkg as
 
+   function days_since_last_login ( 
+      p_user_id in number) return number;
+
    procedure automation_daily;
 
    procedure purge_deleted_accounts ( 

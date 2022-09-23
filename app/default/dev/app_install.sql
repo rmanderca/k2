@@ -1,10 +1,6 @@
 
 -- IMPORTANT: The files below should be idempotent (https://en.wikipedia.org/wiki/Idempotence).
 
-/* 
-This section installs your customized config files (replace 'default' with your app folder name).
-*/
-
 -- WARNING: You may want to exclude files starting with secret* from git. See the .gitignore file.
 
 @../../../config/default/dev/secret_arcsql_cfg.sql

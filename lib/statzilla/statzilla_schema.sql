@@ -50,11 +50,10 @@ begin
          bucket_id number not null,
          static_json varchar2(250) default null,
          dynamic_json varchar2(250) default null,
-         created timestamp with time zone default current_timestamp
+         created timestamp(0) with time zone default systimestamp
          )', false);
       execute_sql('alter table stat add constraint pk_stat primary key (stat_id)', false);
       execute_sql('create unique index stat_1 on stat(stat_name, bucket_id)', false);
-      execute_sql('alter table stat add constraint static_json_check check (static_json is json)', false);
    end if;
 end;
 /
@@ -81,7 +80,7 @@ begin
          property_value varchar2(255) default null,
          -- Y if a number, N if not.
          is_num varchar2(1) not null,
-         created timestamp with time zone default current_timestamp
+         created timestamp(0) with time zone default systimestamp
          )', false);
       execute_sql('alter table stat_property add constraint pk_stat_property primary key (stat_property_id)', false);
    end if;
@@ -114,7 +113,7 @@ begin
       -- ToDo: See above, may want the reverse of this?
       skip_archive_hours number default 0,
       -- Last time this bucket was calc.
-      last_stat_time timestamp with time zone,
+      last_stat_time timestamp(0) with time zone,
       -- Number of times calc has been run on this bucket.
       calc_count number default 0,
       -- If a counter rolls you can see a big negative value. We may want to ignore these.
@@ -134,7 +133,7 @@ begin
       -- Must be one of HH24, DY, or ALL.
       avg_val_ref_group varchar2(12) default ''HH24'',
       -- bucket_description varchar2(100),
-      created timestamp with time zone default current_timestamp
+      created timestamp(0) with time zone default systimestamp
       )', false);
 
       execute_sql('alter table stat_bucket add constraint pk_stat_bucket primary key (bucket_id)', false);
@@ -161,9 +160,9 @@ begin
       static_json varchar2(250) default null,
       dynamic_json varchar2(250) default null,
       bucket_name varchar2(250) not null,
-      stat_time timestamp with time zone default current_timestamp,
+      stat_time timestamp(0) with time zone default systimestamp,
       received_val number not null,
-      created timestamp with time zone default current_timestamp)', false);
+      created timestamp(0) with time zone default systimestamp)', false);
       execute_sql('
       alter table stat_in add constraint pk_stat_in primary key (stat_in_id)', false);
    end if;
@@ -185,8 +184,8 @@ begin
       calc_count number default 0,
       calc_type varchar2(12),
       avg_val number,
-      stat_time timestamp with time zone not null,
-      last_non_zero_val timestamp with time zone not null,
+      stat_time timestamp(0) with time zone not null,
+      last_non_zero_val timestamp(0) with time zone not null,
       pctile0x number default 0,
       pctile10x number default 0,
       pctile20x number default 0,
@@ -212,7 +211,7 @@ begin
       avg_val_ref number default 0,
       avg_val_ref_group varchar2(12) default null,
       avg_pct_of_avg_val_ref number default 0,
-      created timestamp with time zone default current_timestamp
+      created timestamp(0) with time zone default systimestamp
       )', false);
    end if;
    if not does_constraint_exist('stat_archive_fk_bucket_id') then
@@ -261,11 +260,11 @@ begin
       -- Total # of updates for the current hour.
       calc_count number default 0,
       -- Time the stat was sampled.
-      stat_time timestamp with time zone,
+      stat_time timestamp(0) with time zone,
       -- The stat_time this record was updated.
-      updated timestamp with time zone default current_timestamp,
+      updated timestamp(0) with time zone default systimestamp,
       -- Last time a non-zero value was calculated.
-      last_non_zero_val timestamp with time zone,
+      last_non_zero_val timestamp(0) with time zone,
       pctile0x number default 0,
       pctile10x number default 0,
       pctile20x number default 0,
@@ -295,7 +294,7 @@ begin
       avg_val_ref_calc_count number default 0 not null,
       -- Provides the name of the group which avg_val_ref is pulled from.
       avg_val_ref_group varchar2(12) default null,
-      created timestamp with time zone default current_timestamp
+      created timestamp(0) with time zone default systimestamp
       )', false);
       execute_sql('
       alter table stat_work add constraint pk_stat_work primary key (stat_work_id)', false);
@@ -319,7 +318,7 @@ begin
       stat_name varchar2(250),
       row_count number,
       avg_val number,
-      created timestamp with time zone default current_timestamp
+      created timestamp(0) with time zone default systimestamp
       )', false);
       execute_sql('alter table stat_avg_val_hist_ref add constraint pk_stat_avg_val_hist_ref primary key (avg_val_ref_group, hist_key, bucket_id, stat_name)', false);
    end if;
@@ -344,7 +343,7 @@ begin
       pctile80 number default 0,
       pctile90 number default 0,
       pctile100 number default 0,
-      created timestamp with time zone default current_timestamp
+      created timestamp(0) with time zone default systimestamp
       )', false);
       execute_sql('alter table stat_percentiles_ref add constraint pk_stat_percentiles_ref primary key (bucket_id, stat_name)', false);
    end if;
@@ -422,8 +421,8 @@ begin
       calc_val number,
       pct_of_avg_val_ref number,
       avg_val_ref number,
-      stat_time timestamp with time zone,
-      created timestamp with time zone default current_timestamp
+      stat_time timestamp(0) with time zone,
+      created timestamp(0) with time zone default systimestamp
       )', false);
       execute_sql('alter table stat_detail add constraint pk_stat_detail primary key (stat_detail_id)', false);
    end if;

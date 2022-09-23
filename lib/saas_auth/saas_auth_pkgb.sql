@@ -1,5 +1,15 @@
 create or replace package body saas_auth_pkg as
 
+function days_since_last_login ( -- | Return the number of days since the user has logged in.
+   p_user_id in number) return number as
+   l_days_since_last_login number;
+begin 
+   select (sysdate - last_login) into l_days_since_last_login from saas_auth where user_id = p_user_id;
+   return round(l_days_since_last_login);
+exception 
+   when others then
+      k2.log_err('days_since_last_login: '||dbms_utility.format_error_stack);
+end;
 
 procedure automation_daily is -- | Tasks which should be scheduled to run daily.
    cursor remove_users is 

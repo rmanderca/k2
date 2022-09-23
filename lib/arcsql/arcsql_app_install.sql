@@ -10,9 +10,9 @@ show errors
 alter package arcsql compile body;
 show errors
 @arcsql_seed_data.sql
-@arcsql_jobs.sql
+@arcsql_scheduler_jobs.sql
 @arcsql_default_setting.sql
 commit;
 
-select 'ARCSQL install complete.' MESSAGE from dual;
+select 'ARCSQL install complete.' message from dual;
 

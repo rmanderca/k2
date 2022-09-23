@@ -31,6 +31,8 @@ begin
         dual
     );
 
+    commit;
+
 end;
 
 end;
