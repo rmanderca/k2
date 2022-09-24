@@ -1,1 +1,9 @@
 @archive_log_distribution.sql
+@accounts_of_interest.sql
+@resource_limits.sql
+@source_stats.sql
+@table_stats.sql
+@all_sorts.sql
+@sort_info.sql 
+@tsinfo.sql
+@tablespace_space_monitor.sql

@@ -87,4 +87,14 @@ grant execute on dbms_session to &username;
 
 
 -- Additional grants for admin level type scripts in sql folder of ArcSQL.
-grant select on gv_$archived_log to sldev;
+grant select on gv_$archived_log to &username;
+grant select on gv_$resource_limit to &username;
+grant select on gv_$db_object_cache to &username;
+grant select on gv_$object_dependency to &username;
+grant select on gv_$sort_usage to &username;
+grant select on gv_$sqlarea to &username;
+-- Not a mistake to use v_ instead of gv_, see use in sort_info view for more info.
+grant select on v_$tempfile to &username;
+grant select on dba_free_space to &username;
+grant select on dba_data_files to &username;
+grant select on dba_segments to &username;

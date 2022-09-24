@@ -1,6 +1,12 @@
 
 -- Only works if ./arcsql/sql scripts are installed.
 select * from archive_log_distribution;
+select * from accounts_of_interest;
+select * from resource_limits;
+select * from all_sorts;
+select * from sort_info;
+select * from tsinfo;
+select * from tablespace_space_monitor;
 
 select * from arcsql_counter order by 1, 2;
 

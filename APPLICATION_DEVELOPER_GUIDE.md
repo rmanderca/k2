@@ -35,6 +35,10 @@ You could optionally reference the ```app_grants.sql``` script from ```./k2_gran
 
 ArcSQL installs a procedure called ```send_email``` which should be your primary interface for sending email. It is up to you to replace the procedure with one that "works". Use ```./app/${app}/${env}/send_email.sql``` as your template.
 
+The default procedure increments an email counter in the saas_auth table and also uses the ArcSQL counter interface to count emails for each email address.
+
+The send email file template also includes a procedure called ```send_test_email``` which can be used to test your email configuration.
+
 ### Oracle metrics
 
 Statzilla (a component of K2) installs a job to collect Oracle metrics into the stat* tables. See config variables in ```K2_CONFIG``` package. Stats are associated with the 'oracle (local)' Statzilla bucket. Also see the ```./lib/statzilla/statzilla_get_oracle_metrics.prc``` file.
