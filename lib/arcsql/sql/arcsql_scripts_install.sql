@@ -7,3 +7,4 @@
 @./views/sort_info.sql 
 @./views/tsinfo.sql
 @./views/tablespace_space_monitor.sql
+@./views/data_file_stats.sql

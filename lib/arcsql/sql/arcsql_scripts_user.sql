@@ -98,3 +98,5 @@ grant select on v_$tempfile to &username;
 grant select on dba_free_space to &username;
 grant select on dba_data_files to &username;
 grant select on dba_segments to &username;
+grant select on gv_$filestat to &username;
+grant select on v_$filestat to &username;
