@@ -1434,67 +1434,28 @@ end;
 -- | Counters 
 -- | -----------------------------------------------------------------------------------
 
-function does_counter_exist (
-   counter_group varchar2, 
-   subgroup varchar2, 
-   name varchar2) return boolean is 
-   n number;
-begin
-   select count(*) into n 
-     from arcsql_counter 
-    where counter_group=does_counter_exist.counter_group 
-      and nvl(subgroup, '~')=nvl(does_counter_exist.subgroup, '~')
-      and name=does_counter_exist.name;
-   if n > 0 then 
-      return true;
-   else 
-      return false;
-   end if;
-end;
-
-procedure set_counter (
-  counter_group varchar2, 
-  subgroup varchar2, 
-  name varchar2, 
-  equal number default null, 
-  add number default null, 
-  subtract number default null) is
-begin
-   if not does_counter_exist(counter_group=>set_counter.counter_group, subgroup=>set_counter.subgroup, name=>set_counter.name) then 
-      insert into arcsql_counter (
-         id,
-         counter_group,
-         subgroup,
-         name,
-         value,
-         update_time) values (
-         seq_counter_id.nextval,
-         set_counter.counter_group,
-         set_counter.subgroup,
-         set_counter.name,
-         nvl(set_counter.equal, 0),
-      sysdate);
-   end if;
-   update arcsql_counter 
-      set value=nvl(set_counter.equal, value)+nvl(set_counter.add, 0)-nvl(set_counter.subtract, 0),
-          update_time = sysdate
-    where counter_group=set_counter.counter_group 
-      and nvl(subgroup, '~')=nvl(set_counter.subgroup, '~')
-      and name=set_counter.name;
-end;
-
-procedure delete_counter (
-  counter_group varchar2, 
-  subgroup varchar2, 
-  name varchar2) is
+procedure increment_counter ( -- | Increment a counter by 1. Creates the counter if it does not exist.
+   p_counter_id varchar2) is 
 begin 
-   if does_counter_exist(counter_group=>delete_counter.counter_group, subgroup=>delete_counter.subgroup, name=>delete_counter.name) then 
-      delete from arcsql_counter 
-       where counter_group=delete_counter.counter_group 
-         and nvl(subgroup, '~')=nvl(delete_counter.subgroup, '~')
-         and name=delete_counter.name;
+   update arcsql_counter
+      set value=value+1
+    where counter_id=lower(p_counter_id); 
+   if sql%rowcount = 0 then 
+      insert into arcsql_counter (
+         counter_id,
+         value) values (
+         lower(p_counter_id),
+         1);
    end if;
 end;
+
+function get_counter ( --  | Get the value of a counter.
+   p_counter_id varchar2) return number is 
+   n number;
+begin 
+   select value into n from arcsql_counter where counter_id=lower(p_counter_id); 
+   return n;
+end;  
 
 /*
 -----------------------------------------------------------------------------------

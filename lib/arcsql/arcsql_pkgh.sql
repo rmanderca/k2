@@ -211,11 +211,11 @@ create or replace package arcsql as
    -----------------------------------------------------------------------------------
    */
 
-   function does_counter_exist (counter_group varchar2, subgroup varchar2, name varchar2) return boolean;
-   -- Sets a counter to a value. Is created if it doesn't exist.
-   procedure set_counter (counter_group varchar2, subgroup varchar2, name varchar2, equal number default null, add number default null, subtract number default null);
-    -- Deletes a counter. Nothing happens if it doesn't exist.
-   procedure delete_counter (counter_group varchar2, subgroup varchar2, name varchar2);
+   procedure increment_counter (
+      p_counter_id varchar2) ;
+
+   function get_counter (
+      p_counter_id varchar2) return number;
 
    /*
    -----------------------------------------------------------------------------------

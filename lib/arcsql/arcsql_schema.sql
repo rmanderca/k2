@@ -453,26 +453,27 @@ create or replace view sql_snap_view as (
 
 /* COUNTERS */
 
--- uninstall: drop sequence seq_counter_id;
--- uninstall: drop table arcsql_counter;
-begin
-   if not does_sequence_exist('seq_counter_id') then 
-      execute_sql('create sequence seq_counter_id');
+exec drop_sequence('seq_counter_id');
+exec drop_table('arcsql_counter2');
+
+-- | arcsql_counter2 - New version of the counter table. Simpler.
+-- uninstall: exec drop_table('arcsql_counter2');
+begin 
+   if does_column_exist('arcsql_counter', 'subgroup') then 
+      drop_table('arcsql_counter');
    end if;
-   if not does_table_exist('arcsql_counter') then
-       execute_sql('
-       create table arcsql_counter (
-       id number not null,
-       counter_group varchar2(100) not null,
-       subgroup varchar2(100) default null,
-       name varchar2(100) not null,
-       value number default 0,
-       update_time date default sysdate
-       )', false);
-    
-      execute_sql('create index arcsql_counter_1 on arcsql_counter (name)', true);
-    
-    end if;
+   if not does_table_exist('arcsql_counter') then 
+      execute_sql('
+      create table arcsql_counter (
+      counter_id varchar2(250) not null,
+      value number default 0,
+      updated timestamp default systimestamp,
+      created timestamp default systimestamp
+      )', false);
+   end if;
+   if not does_index_exist('pk_arcsql_counter') then 
+      execute_sql('alter table arcsql_counter add constraint pk_arcsql_counter primary key (counter_id)', false);
+   end if;
 end;
 /
 

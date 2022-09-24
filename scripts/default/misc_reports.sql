@@ -1,4 +1,7 @@
 
+-- Only works if ./arcsql/sql scripts are installed.
+select * from archive_log_history;
+
 select * from arcsql_counter order by 1, 2;
 
 select * from arcsql_event order by 1, 2, 3;

@@ -26,12 +26,8 @@ begin
    apex_mail.push_queue;
    -- This should not raise an error if email does not exist since devs could use send_email to send emails to users not in saas_auth table.
    saas_auth_pkg.increment_email_count(p_email_address=>p_to);
-   -- This counts emails for all emails even if not in saas_auth table.
-   arcsql.set_counter (
-      counter_group=>'k2',
-      subgroup=>'send_email',
-      name=>p_to,
-      add=>1);
+   arcsql.increment_counter(k2_config.app_name||', send_email, '||p_to);
+   commit;
 end;
 /
 
