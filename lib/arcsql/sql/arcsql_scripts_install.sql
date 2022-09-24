@@ -1,1 +1,1 @@
-@archive_log_history.sql
+@archive_log_distribution.sql

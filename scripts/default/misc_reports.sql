@@ -1,6 +1,6 @@
 
 -- Only works if ./arcsql/sql scripts are installed.
-select * from archive_log_history;
+select * from archive_log_distribution;
 
 select * from arcsql_counter order by 1, 2;
 

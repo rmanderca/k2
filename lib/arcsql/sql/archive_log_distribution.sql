@@ -1,5 +1,5 @@
 
-create or replace view archive_log_history as (
+create or replace view archive_log_distribution as (
 select to_char(dt, 'YYYY-MM-DD') "DATE",
 sum(decode(hh,0,1,0)) "00",
 sum(decode(hh,1,1,0)) "01",
