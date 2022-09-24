@@ -21,7 +21,7 @@ create or replace package saas_auth_config as
    -- Null to disable.
    auth_request_rate_limit number := 1000;
 
-   -- How long is a new password token good for?
+   -- How long is a new token good for?
    -- Null or 0 makes the limit unlimited.
    token_good_for_minutes number := 60*24;
 

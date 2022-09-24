@@ -6,4 +6,3 @@ while read file_name; do
    echo "grep \"^\-\- uninstall:\" \"${file_name}\""
    grep "^\-\- uninstall:" "${file_name}" | cut -d" " -f3- >> ./app_uninstall.sql
 done 
-

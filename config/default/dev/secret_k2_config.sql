@@ -26,7 +26,7 @@ create or replace package k2_config as
     -- Adds prefix to message of k2.debug* calls when it forwards to apex_debug.
     -- This makes it a little easier to see what calls are specifically yours when
     -- viewing debug or querying apex_debug_messages. Set to blank or null to disable.
-    apex_debug_prefix varchar(12) := 'k2: ';
+    apex_debug_prefix varchar(25) := 'k2: ';
     -- Do you want messages forwarded to apex_debug?
     enable_apex_debug boolean := true;
     -- Do you want messages forwards to arcsql_debug?
