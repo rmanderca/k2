@@ -12,12 +12,13 @@ The name you assign your environment should be maintained in the ```k2_config.en
 Soft versioning means that the version numbers are not “real” versions. They are used and advanced as needed. They are number. My preferred format is ```YYYYMMDD```.
 
 K2 version is maintained by K2 team and referenced from ```K2_APP.VERSION```. Located in ```./_k2_install.sql```.
-The version for the application is maintained by the developer and referenced from ```APP_CONFIG.VERSION```. Located in ```./config/${app}/${env}/secret_app_config.sql.```
+The version for the application is maintained by the developer and referenced from ```K2_CONFIG.APP_VERSION```. Located in ```./config/${app}/${env}/secret_k2_config.sql.```
 
 Soft versions are used in app code or install code, something like this…**"do this if app_config.version < 20220916"**. Then change the version number in secret_app_config.sql to 20220916 and the block will run the next time the app is deployed and only run once.
 
 In most cases it is best if you avoid referencing versions all together to patch/upgrade code and just write idempotent code.
-Soft versioning might also be needed to feature flag features. Example, **"if app_config.version < 20220916 then call “the old code” else call “the new code”**.
+
+Soft versioning might also be needed to feature flag features. Example, **"if k2_config.version < 20220916 then call “the old code” else call “the new code”**.
 
 ### What if your application needs specific permissions/grants?
 
