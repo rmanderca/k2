@@ -17,7 +17,7 @@ end;
 /
 
 @./config/default/dev/secret_arcsql_cfg.sql
-@./config/default/dev/secret_apex_utl2_config.sql 
+exec drop_package('apex_utl2_config');
 @./config/default/dev/secret_k2_config.sql
 @./config/default/dev/secret_saas_auth_config.sql 
 @./config/default/dev/secret_app_config.sql

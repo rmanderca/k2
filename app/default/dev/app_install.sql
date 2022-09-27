@@ -3,11 +3,10 @@
 
 -- WARNING: You may want to exclude files starting with secret* from git. See the .gitignore file.
 
-@../../../config/default/dev/secret_arcsql_cfg.sql
-@../../../config/default/dev/secret_apex_utl2_config.sql 
-@../../../config/default/dev/secret_k2_config.sql
-@../../../config/default/dev/secret_saas_auth_config.sql 
-@../../../config/default/dev/secret_app_config.sql 
+@../../../config/&k2_app_dir/&k2_env_dir/secret_arcsql_cfg.sql
+@../../../config/&k2_app_dir/&k2_env_dir/secret_k2_config.sql
+@../../../config/&k2_app_dir/&k2_env_dir/secret_saas_auth_config.sql 
+@../../../config/&k2_app_dir/&k2_env_dir/secret_app_config.sql
 
 -- Authentication (create account, verify email, login, forgot password) features.
 @saas_auth_events.sql

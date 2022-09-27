@@ -8,9 +8,9 @@ Share K2 with others using the link [builtonapex.com/k2](builtonapex.com/k2) whi
 
 * [How to install K2 updated - 9/17/22](https://youtu.be/b5jL91Kej7E)
 
-Edit and run ```./ks_user.sql``` as an **administrator** to create an app user
+Edit and run ```./ks_user.sql``` as an **administrator** to create the database application user
 
-Edit and run ```./ks_grants.sql``` as an **administrator**  to grant permissions to the app user.
+Edit and run ```./ks_grants.sql``` as an **administrator**  to grant permissions to the user you just created.
 
 ```
 # Run the script to create the folders and files for your new app.

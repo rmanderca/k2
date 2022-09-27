@@ -26,19 +26,11 @@ done
 
 if [[ -f ./app/${APP_NAME}/dev/app_install.sql ]]; then
 	mv ./app/${APP_NAME}/dev/app_install.sql ./app/${APP_NAME}/dev/${APP_NAME}_install.sql
-	sed -i "s/\/default\//\/${APP_NAME}\//g" ./app/${APP_NAME}/dev/${APP_NAME}_install.sql
 fi
 
-if [[ ! -f ./install/${APP_NAME}/dev/${APP_NAME}_install.sql ]]; then
-	rm ./install/${APP_NAME}/dev/default_install.sql 2>/dev/null
-	(
-	cat <<EOF
-@../../../_k2_install.sql
-@../../../app/${APP_NAME}/dev/${APP_NAME}_install.sql
--- exec fix_identity_sequences;
-commit;
-EOF
-	) > ./install/${APP_NAME}/dev/${APP_NAME}_install.sql
+if [[ -f ./install/${APP_NAME}/dev/default_install.sql ]]; then
+	mv  ./install/${APP_NAME}/dev/default_install.sql ./install/${APP_NAME}/dev/${APP_NAME}_install.sql 
+	sed -i "s/default/${APP_NAME}/g" ./install/${APP_NAME}/dev/${APP_NAME}_install.sql
 fi
 
 
