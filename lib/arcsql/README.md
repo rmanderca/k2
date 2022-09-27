@@ -1,6 +1,6 @@
 ### ArcSQL
 
-A large/rich library for features for doing many things.
+A large/rich library for features for doing many things. This library is installed by default when you install K2.
 
 #### Installation
 
