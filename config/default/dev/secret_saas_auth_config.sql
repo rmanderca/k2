@@ -15,7 +15,7 @@ create or replace package saas_auth_config as
    saas_auth_test_pass varchar2(120) := 'ION_ZAR_AG_IN_38';
 
    -- Prevent users from creating account unless thier passwords start with this secret prefix.
-   saas_auth_pass_prefix varchar2(120) := 'ABBA';
+   saas_auth_pass_prefix varchar2(120) := null;
 
    -- Limits the rate of auth requests within any 10 minute window.
    -- Null to disable.
@@ -35,7 +35,7 @@ create or replace package saas_auth_config as
    password_reset_token_good_for_minutes number := 15;
 
    -- Route all emails to this address instead of using the address for the account. Used for dev/test.
-   global_email_override varchar2(120) := 'donotreply@notmydomain.com';
+   global_email_override varchar2(120) := null;
 
    send_email_on_create_account boolean := true;
 
