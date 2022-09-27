@@ -21,7 +21,7 @@ exec drop_package('apex_utl2_config');
 @./config/default/dev/secret_k2_config.sql
 @./config/default/dev/secret_saas_auth_config.sql 
 @./config/default/dev/secret_app_config.sql
-@./lib/arcsql/arcsql_app_install.sql
+@./lib/arcsql/arcsql_install.sql
 @./lib/apex_utl2/schema.sql 
 @./lib/saas_auth/saas_auth_schema.sql 
 @./lib/k2/k2_schema.sql 

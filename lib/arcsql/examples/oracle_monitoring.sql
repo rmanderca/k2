@@ -4,7 +4,7 @@
 This file contains objects related to Oracle monitoring and should be considered
 a work in progress. There are a number of ways to monitor things and I am 
 trying to include a wide range of examples below. Grants required for this 
-are included in the default arcsql_user.sql file.
+are included in the default arcsql_grants.sql file.
 
 */
 
