@@ -24,4 +24,4 @@ As the new **database application user** run ```./install/foo/dev/foo_install.sq
 
 As an **APEX admin** link the app user schema to an APEX workspace.
 
-As an **APEX user** Import the starter app from ```./exports/default``` folder into your APEX workspace.
+As an **APEX user** Import the starter app from ```./exports/k2``` folder into your APEX workspace.
