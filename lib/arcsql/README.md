@@ -1,26 +1,11 @@
-# Readme 
+### ArcSQL
 
-Generic utility library for Oracle that I use to build things.
+A large/rich library for features for doing many things.
 
-## Installation
+#### Installation
 
-Super easy to install. Instructions found here...
+Create a user if you don't have one. 
 
-https://e-t-h-a-n.com/how-to-install-arcsql
+Grant the user permissions  (```arcsql_user.sql```) .
 
-## Starting and Stopping
-
-Start/stop DBMS_SCHEDULER jobs associated with ArcSQL (any job name that begins with ARCSQL).
-
-```
-exec arcsql.start_arcsql;
-exec arcsql.stop_arcsql;
-```
-
-## Uninstall
-
-As the user who owns the ArcSQL objects run the arcsql_uninstall.sql script or drop the user and any related scheduled jobs.
-
-Thanks,
-Ethan 
-https://e-t-h-a-n.com/ 
+As the user install ArcSQL (```arcsql_app_install.sql```).

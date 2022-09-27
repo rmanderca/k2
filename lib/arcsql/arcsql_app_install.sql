@@ -14,5 +14,5 @@ show errors
 @arcsql_default_setting.sql
 commit;
 
-select 'ARCSQL install complete.' message from dual;
+select 'ArcSQL install complete.' message from dual;
 
