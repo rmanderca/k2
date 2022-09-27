@@ -33,7 +33,6 @@ end;
 
 create or replace procedure send_test_email is -- | Send a test email.
 begin 
-   arcsql.debug('send_test_email: '||app_config.public_user_name);
    arcsql_cfg.disable_email := false;
    -- send_email (
    --    p_to=>app_config.public_user_name,

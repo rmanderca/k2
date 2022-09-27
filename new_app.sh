@@ -31,6 +31,7 @@ fi
 if [[ -f ./install/${APP_NAME}/dev/default_install.sql ]]; then
 	mv  ./install/${APP_NAME}/dev/default_install.sql ./install/${APP_NAME}/dev/${APP_NAME}_install.sql 
 	sed -i "s/default/${APP_NAME}/g" ./install/${APP_NAME}/dev/${APP_NAME}_install.sql
+	sed -i "s/app_install.sql/${APP_NAME}_install.sql/g" ./install/${APP_NAME}/dev/${APP_NAME}_install.sql
 fi
 
 
