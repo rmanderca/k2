@@ -1,3 +1,4 @@
+-- | A bunch of SQL you may want to run now and then. Here as a quick reference or reminder.
 
 -- Only works if ./arcsql/sql scripts are installed.
 select * from archive_log_distribution;

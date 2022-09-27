@@ -1,3 +1,4 @@
+# -- | Deletes the folders associated with an application.
 
 function usage {
 	cat <<EOF

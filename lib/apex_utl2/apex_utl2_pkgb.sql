@@ -38,7 +38,7 @@ begin
 end;
 
 
-procedure enable_automations ( -- | Enable any disabled automations.
+procedure enable_automations ( -- | Enable all automations for the given application id.
    p_app_id in number) is 
    cursor c_automations is
    select application_id, static_id
