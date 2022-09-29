@@ -43,5 +43,8 @@ create or replace package saas_auth_config as
    -- Set to zero or null to disable and hide the checkbox.
    enable_auto_login_days number := 30;
 
+   -- This is the message that appears on the login page. This is optional. You can modify the page directly to over-ride this message.
+   login_form_banner varchar2(200) := 'Login to access this application.';
+
 end;
 /
