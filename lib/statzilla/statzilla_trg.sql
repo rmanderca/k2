@@ -1,4 +1,16 @@
 
+
+create or replace trigger statzilla_stat_bucket_trg 
+   before insert or update on stat_bucket 
+   for each row
+begin
+   :new.ignore_negative := upper(:new.ignore_negative);
+   :new.calc_type := lower(:new.calc_type);
+   :new.date_format := upper(:new.date_format);
+   :new.avg_val_ref_group := upper(:new.avg_val_ref_group);
+end;
+/
+
 create or replace trigger statzilla_stat_ins_trg
    before insert on stat
    for each row
@@ -99,17 +111,10 @@ begin
    :new.pctile90x := :old.pctile90x;
    :new.pctile100x := :old.pctile100x;
 
-   -- Update stuff anytime the hour we are working in has changed.
-   if trunc(:old.stat_time, 'HH24') < trunc(:new.stat_time, 'HH24') then  
-      -- Refresh the stat_avg_val_hist_ref table.
-      statzilla.refresh_avg_val_hist_ref (p_bucket_id=>:new.bucket_id, p_stat_name=>:new.stat_name);
-      -- Refresh the stat_percentiles_ref table.
-      statzilla.refresh_stat_percentiles_ref (p_bucket_id=>:new.bucket_id, p_stat_name=>:new.stat_name);
-      -- Purge aged out data from stat and stat_archive.
-      statzilla.purge_stats (p_bucket_id=>:new.bucket_id, p_stat_name=>:new.stat_name, p_stat_time=>:new.stat_time);
-   elsif :new.created > systimestamp-4/24 then 
-      -- Let's refresh this fairly frequently for the first 4 hours of it's existence.
-      statzilla.refresh_stat_percentiles_ref(p_bucket_id=>:new.bucket_id, p_stat_name=>:new.stat_name);
+   -- FOR THE FIRST 14 DAYS UPDATE REFERENCES ANY TIME THE HOUR CHANGES
+   -- A SCHEDULED TASK WILL HANDLE IT FROM THEN ON
+   if :new.created > systimestamp-14 and trunc(:old.stat_time, 'HH24') < trunc(:new.stat_time, 'HH24') then
+      statzilla.refresh_references(p_bucket_id=>:new.bucket_id, p_stat_name=>:new.stat_name);
    end if;
 
    if trunc(:old.stat_time, statzilla.g_bucket.date_format) < trunc(:new.stat_time, statzilla.g_bucket.date_format) and 

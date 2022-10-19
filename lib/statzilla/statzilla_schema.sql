@@ -141,6 +141,18 @@ begin
       execute_sql('create unique index stat_bucket_1 on stat_bucket (bucket_name)', false);
       
    end if;
+   if not does_constraint_exist('stat_bucket_check_1') then
+      execute_sql('alter table stat_bucket add constraint stat_bucket_check_1 check (calc_type in (''none'', ''delta'', ''rate/s'', ''rate/m'', ''rate/d'', ''rate/m''))', false);
+   end if;
+   if not does_constraint_exist('stat_bucket_check_2') then
+      execute_sql('alter table stat_bucket add constraint stat_bucket_check_2 check (ignore_negative in (''Y'', ''N''))', false);
+   end if;
+   if not does_constraint_exist('stat_bucket_check_3') then
+      execute_sql('alter table stat_bucket add constraint stat_bucket_check_3 check (date_format in (''HH24'', ''DY'', ''MM''))', false);
+   end if;
+   if not does_constraint_exist('stat_bucket_check_4') then
+      execute_sql('alter table stat_bucket add constraint stat_bucket_check_4 check (avg_val_ref_group in (''HH24'', ''DY'', ''ALL''))', false);
+   end if;
 end;
 /
 

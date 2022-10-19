@@ -1829,7 +1829,6 @@ begin
       p_metric_2=>metric_2);
 end;
 
-
 procedure notify (
    p_text in varchar2, 
    p_key in varchar2 default null, 
@@ -1850,7 +1849,6 @@ begin
       p_metric_name_2=>metric_name_2,
       p_metric_2=>metric_2);
 end;
-
 
 procedure log_deprecated (
    p_text in varchar2, 
@@ -2019,7 +2017,6 @@ begin
       p_metric_name_2=>metric_name_2,
       p_metric_2=>metric_2);
 end;
-
 
 procedure log_fail (
    p_text in varchar2, 

@@ -12,6 +12,7 @@ begin
 		statzilla.add_bucket(v_bucket_name);
 	    b := statzilla.get_bucket_by_name(v_bucket_name);
 	    b.calc_type := 'rate/m';
+	    b.ignore_negative := 'y';
 	    statzilla.save_bucket(b);
 	end if;
 

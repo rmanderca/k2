@@ -22,6 +22,12 @@ procedure save_bucket (
 function does_bucket_exist (
    p_bucket_name in varchar2) return boolean;
 
+procedure refresh_references (
+   p_bucket_id in varchar2,
+   p_stat_name in varchar2);
+
+procedure refresh_all_references;
+
 procedure refresh_avg_val_hist_ref (
    p_bucket_id in varchar2,
    p_stat_name in varchar2);

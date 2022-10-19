@@ -1,3 +1,10 @@
+
+## Should track metrics for stat groups
+	- How many are elevated
+	- How many key metrics are elevated/depressed
+	- What is distribution of high to normal to low?
+	- Do above by metrics class.
+
 ## Need to do the UTC timezone thing.
 
 ## Add internal metrics

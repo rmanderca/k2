@@ -6,7 +6,7 @@ exec drop_package('statzilla_b');
 @statzilla_pkgh.sql
 @statzilla_pkgb.sql
 @statzilla_trg.sql
-@statzilla_get_oracle_metrics.prc
-@app_scheduler_jobs.sql
+@statzilla_get_oracle_metrics.sql
+@statzilla_scheduler_jobs.sql
 
 select 'Statzilla install complete.' message from dual;

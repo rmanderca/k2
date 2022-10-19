@@ -74,6 +74,37 @@ begin
    end if;
 end;
 
+procedure refresh_references (
+   p_bucket_id in varchar2,
+   p_stat_name in varchar2) is 
+begin 
+   refresh_avg_val_hist_ref (p_bucket_id, p_stat_name);
+   refresh_stat_percentiles_ref (p_bucket_id, p_stat_name);
+   refresh_stat_percentiles_ref(p_bucket_id, p_stat_name);
+exception
+   when others then
+      arcsql.log_err(p_text=>'refresh_references: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      raise;
+end;
+
+procedure refresh_all_references is -- | Scheduled job runs this to refresh all references periodically.
+   cursor all_metrics is 
+   select bucket_id, stat_name
+     from stat_work
+    order
+       by bucket_id, stat_name;
+begin 
+   arcsql.start_event(p_event_key=>'statzilla', p_sub_key=>'refresh_all_references', p_name=>'refresh_all_references');
+   for x in all_metrics loop 
+      refresh_references (x.bucket_id, x.stat_name);
+   end loop;
+   arcsql.stop_event(p_event_key=>'statzilla', p_sub_key=>'refresh_all_references', p_name=>'refresh_all_references');
+exception
+   when others then
+      arcsql.log_err(p_text=>'refresh_all_references: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      raise;
+end;
+
 procedure refresh_avg_val_hist_ref ( -- | Refresh the references for the stat's average value.
    p_bucket_id in varchar2,
    p_stat_name in varchar2) is 
@@ -100,6 +131,10 @@ begin
       from v_stat_avg_val_hist_ref 
      where bucket_id=p_bucket_id
        and stat_name=p_stat_name);
+exception
+   when others then 
+      arcsql.log_err(p_text=>'refresh_avg_val_hist_ref: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      raise;
 end;
 
 
@@ -136,7 +171,7 @@ begin
       and calc_count > 0;
 exception 
    when others then 
-      arcsql.log_err('save_bucket_stat_detail: '||dbms_utility.format_error_stack);
+      arcsql.log_err(p_text=>'save_bucket_stat_detail: '||dbms_utility.format_error_stack, p_key=>'statzilla');
       raise;
 end;
 
@@ -183,6 +218,10 @@ begin
    group by
       a.bucket_id, 
       a.stat_name);
+exception
+   when others then 
+      arcsql.log_err(p_text=>'refresh_stat_percentiles_ref: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      raise;
 end;
 
 procedure process_buckets is -- | Process all buckets.
@@ -198,7 +237,7 @@ begin
    commit;
 exception 
    when others then 
-      arcsql.log_err('process_buckets: '||dbms_utility.format_error_stack);
+      arcsql.log_err(p_text=>'process_buckets: '||dbms_utility.format_error_stack, p_key=>'statzilla');
       rollback;
       raise;
 end;
@@ -242,6 +281,10 @@ begin
             arcsql.log_err('get_properties_from_new_stats: '||dbms_utility.format_error_stack);
       end;
    end loop;
+exception
+   when others then 
+      arcsql.log_err(p_text=>'get_properties_from_new_stats: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      raise;
 end;
 
 procedure get_new_stats ( -- | Checks stat_work for new stats and adds to stat table if any found.
@@ -269,7 +312,7 @@ begin
    get_properties_from_new_stats(v_created);
 exception 
    when others then 
-      arcsql.log_err('get_new_stats: '||dbms_utility.format_error_stack);
+      arcsql.log_err(p_text=>'get_new_stats: '||dbms_utility.format_error_stack, p_key=>'statzilla');
       raise;
 end;
 
@@ -298,7 +341,7 @@ begin
    arcsql.stop_event(p_event_key=>'statzilla', p_sub_key=>'process_bucket', p_name=>p_bucket_name);
 exception 
    when others then 
-      arcsql.log_err('process_bucket: '||dbms_utility.format_error_stack);
+      arcsql.log_err(p_text=>'process_bucket: '||dbms_utility.format_error_stack, p_key=>'statzilla');
       raise;
 end;
 
@@ -368,7 +411,7 @@ begin
 
 exception 
    when others then 
-      arcsql.log_err('process_bucket_time: '||dbms_utility.format_error_stack);
+      arcsql.log_err(p_text=>'process_bucket_time: '||dbms_utility.format_error_stack, p_key=>'statzilla');
       raise;
 end;
 

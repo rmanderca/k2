@@ -18,8 +18,12 @@ Contact groups can be enabled or disabled. Contact groups can be put on hold. Yo
 
 Each contact in the group can have a single email and/or SMS address (which also needs to be an email for now). Most mobile providers have a way of sending texts to your phone via an email address. Google it. Use ```arcsql.add_contact_to_contact_group``` to add a contact to the contact group.
 
-#### ArcSQL Views
+#### ArcSQL views
 
 The ./arcsql_views folder contains a number of views which may be helpful. There are some additional grants required for these views which is why they are not necessarily installed by default. 
 
 To install run ```./arcsql_views_grants.sql``` as an administor. Then Run ```./arcsql_views_install.sql``` as the schema owner.
+
+#### ArcSQL logging
+
+Log entries made with one of the ArcSQL logging calls (i.e debug, info, warn, error, fatal) are stored in the ```arcsql_log``` table. 
