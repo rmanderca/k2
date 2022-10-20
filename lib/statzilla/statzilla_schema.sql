@@ -195,6 +195,7 @@ begin
       received_val number not null,
       calc_count number default 0,
       calc_type varchar2(12),
+      neg_calc_count number default 0,
       avg_val number,
       stat_time timestamp(0) with time zone not null,
       last_non_zero_val timestamp(0) with time zone,
@@ -237,7 +238,7 @@ begin
    if not does_index_exist('stat_archive_1') then 
       execute_sql('create unique index stat_archive_1 on stat_archive (stat_name, stat_time, bucket_id)', false);
    end if;
-   if is_column_nullable('stat_archive', 'last_non_zero_val') then
+   if not is_column_nullable('stat_archive', 'last_non_zero_val') then
       execute_sql('
       alter table stat_archive modify last_non_zero_val timestamp(0) with time zone null', false);
    end if;
@@ -246,6 +247,9 @@ begin
    end if;
    if not does_column_exist('stat_archive', 'pct_score') then 
       execute_sql('alter table stat_archive add pct_score number default 0', false);
+   end if;
+   if not does_column_exist('stat_archive', 'neg_calc_count') then 
+      execute_sql('alter table stat_archive add neg_calc_count number default 0', false);
    end if;
 end;
 /
@@ -273,6 +277,7 @@ begin
       rate_per_second number,
       -- This is mirrored from the bucket, this does not control the calc_type.
       calc_type varchar2(12),
+      neg_calc_count number default 0,
       -- The value we care about after processing it per "calc_type".
       calc_val number default 0,
       -- Average of calc_val for the current hour. This needs to be null to begin
@@ -336,6 +341,9 @@ begin
    end if;
    if not does_column_exist('stat_work', 'pct_score') then 
       execute_sql('alter table stat_work add pct_score number default 0', false);
+   end if;
+   if not does_column_exist('stat_work', 'neg_calc_count') then 
+      execute_sql('alter table stat_work add neg_calc_count number default 0', false);
    end if;
 end;
 /
