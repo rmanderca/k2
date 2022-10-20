@@ -277,6 +277,8 @@ begin
       static_json varchar2(250) default null,
       -- The value taken from the STAT_IN table.
       received_val number not null,
+      -- String used to convert the received value when calculating.
+      convert_eval varchar2(250) default null,
       -- The delta is equal to current value minus last value.
       delta_val number default 0 not null,
       -- Seconds elapsed between the current value and last value.
@@ -361,6 +363,9 @@ begin
    end if;
    if not does_column_exist('stat_work', 'stat_level') then 
       execute_sql('alter table stat_work add stat_level number default 0', false);
+   end if;
+   if not does_column_exist('stat_work', 'convert_eval') then 
+      execute_sql ('alter table stat_work add convert_eval varchar2(250) default null', false);
    end if;
 end;
 /
