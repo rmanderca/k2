@@ -209,6 +209,7 @@ begin
       pctile80x number default 0,
       pctile90x number default 0,
       pctile100x number default 0,
+      pctile_score number default 0,
       pct10x number default 0,
       pct20x number default 0,
       pct40x number default 0,
@@ -220,6 +221,7 @@ begin
       pct960x number default 0,
       pct1920x number default 0,
       pct9999x number default 0,
+      pct_score number default 0,
       avg_val_ref number default 0,
       avg_val_ref_group varchar2(12) default null,
       avg_pct_of_avg_val_ref number default 0,
@@ -239,8 +241,15 @@ begin
       execute_sql('
       alter table stat_archive modify last_non_zero_val timestamp(0) with time zone null', false);
    end if;
+   if not does_column_exist('stat_archive', 'pctile_score') then 
+      execute_sql('alter table stat_archive add pctile_score number default 0', false);
+   end if;
+   if not does_column_exist('stat_archive', 'pct_score') then 
+      execute_sql('alter table stat_archive add pct_score number default 0', false);
+   end if;
 end;
 /
+
 
 -- uninstall: drop sequence seq_stat_work_id;
 exec create_sequence('seq_stat_work_id');
@@ -292,6 +301,7 @@ begin
       pctile80x number default 0,
       pctile90x number default 0,
       pctile100x number default 0,
+      pctile_score number default 0,
       -- # of times value is in range compared to the avg_val_ref.
       pct10x number default 0,
       pct20x number default 0,
@@ -304,6 +314,7 @@ begin
       pct960x number default 0,
       pct1920x number default 0,
       pct9999x number default 0,
+      pct_score number default 0,
       -- Historical max, min, and avg values are periodically updated here for reference.
       avg_val_ref number default 0 not null,
       -- Total number of calcs used to determine the avg_val_ref. Gives some idea of the sample size.
@@ -319,6 +330,12 @@ begin
    end if;
    if not does_constraint_exist('stat_work_fk_bucket_id') then
       execute_sql('alter table stat_work add constraint stat_work_fk_bucket_id foreign key (bucket_id) references stat_bucket (bucket_id) on delete cascade', false);
+   end if;
+   if not does_column_exist('stat_work', 'pctile_score') then 
+      execute_sql('alter table stat_work add pctile_score number default 0', false);
+   end if;
+   if not does_column_exist('stat_work', 'pct_score') then 
+      execute_sql('alter table stat_work add pct_score number default 0', false);
    end if;
 end;
 /
