@@ -46,8 +46,7 @@ procedure get_new_stats (p_bucket_id in number);
 
 procedure purge_stats (
    p_bucket_id in varchar2, 
-   p_stat_name in varchar2,
-   p_stat_time in timestamp);
+   p_stat_name in varchar2);
 
 procedure delete_bucket (
    p_bucket_id in varchar2);

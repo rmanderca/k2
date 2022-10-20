@@ -163,8 +163,28 @@ begin
       return false;
    end if;
 exception 
-when others then
-   raise;
+   when others then
+      raise;
+end;
+/
+
+
+-- uninstall: drop function is_column_nullable;
+create or replace function is_column_nullable (table_name varchar2, column_name varchar2) return boolean is
+   n number;
+begin 
+   select count(*) into n from user_tab_columns 
+    where table_name=upper(is_column_nullable.table_name)
+      and column_name=upper(is_column_nullable.column_name)
+      and nullable='Y';
+   if n > 0 then
+      return true;
+   else
+      return false;
+   end if;
+exception 
+   when others then
+      raise;
 end;
 /
 
@@ -179,6 +199,9 @@ begin
       table_name, column_name) then 
       execute_sql('alter table '||table_name||' drop column '||column_name);
    end if;
+exception 
+   when others then
+      raise;
 end;
 /
 
@@ -192,7 +215,7 @@ begin
       return false;
    end if;
 exception
-when others then
+   when others then
    raise;
 end;
 /
@@ -207,7 +230,7 @@ begin
       return false;
    end if;
 exception
-when others then
+   when others then
    raise;
 end;
 /

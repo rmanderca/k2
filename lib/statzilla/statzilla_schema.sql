@@ -197,7 +197,7 @@ begin
       calc_type varchar2(12),
       avg_val number,
       stat_time timestamp(0) with time zone not null,
-      last_non_zero_val timestamp(0) with time zone not null,
+      last_non_zero_val timestamp(0) with time zone,
       pctile0x number default 0,
       pctile10x number default 0,
       pctile20x number default 0,
@@ -234,6 +234,10 @@ begin
    end if;
    if not does_index_exist('stat_archive_1') then 
       execute_sql('create unique index stat_archive_1 on stat_archive (stat_name, stat_time, bucket_id)', false);
+   end if;
+   if is_column_nullable('stat_archive', 'last_non_zero_val') then
+      execute_sql('
+      alter table stat_archive modify last_non_zero_val timestamp(0) with time zone null', false);
    end if;
 end;
 /
@@ -329,10 +333,14 @@ begin
       bucket_id number,
       stat_name varchar2(250),
       row_count number,
+      calc_count number,
       avg_val number,
       created timestamp(0) with time zone default systimestamp
       )', false);
       execute_sql('alter table stat_avg_val_hist_ref add constraint pk_stat_avg_val_hist_ref primary key (avg_val_ref_group, hist_key, bucket_id, stat_name)', false);
+   end if;
+   if not does_column_exist('stat_avg_val_hist_ref', 'calc_count') then 
+      execute_sql('alter table stat_avg_val_hist_ref add calc_count number', false);
    end if;
 end;
 /

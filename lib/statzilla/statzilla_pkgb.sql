@@ -72,15 +72,18 @@ begin
    else
       return false;
    end if;
+exception 
+   when others then 
+      arcsql.log_err(p_text=>'does_bucket_exist: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      raise;
 end;
 
-procedure refresh_references (
+procedure refresh_references ( -- | Refresh references for a stat.
    p_bucket_id in varchar2,
    p_stat_name in varchar2) is 
 begin 
    refresh_avg_val_hist_ref (p_bucket_id, p_stat_name);
    refresh_stat_percentiles_ref (p_bucket_id, p_stat_name);
-   refresh_stat_percentiles_ref(p_bucket_id, p_stat_name);
 exception
    when others then
       arcsql.log_err(p_text=>'refresh_references: '||dbms_utility.format_error_stack, p_key=>'statzilla');
@@ -96,6 +99,7 @@ procedure refresh_all_references is -- | Scheduled job runs this to refresh all 
 begin 
    arcsql.start_event(p_event_key=>'statzilla', p_sub_key=>'refresh_all_references', p_name=>'refresh_all_references');
    for x in all_metrics loop 
+      purge_stats (x.bucket_id, x.stat_name);
       refresh_references (x.bucket_id, x.stat_name);
    end loop;
    arcsql.stop_event(p_event_key=>'statzilla', p_sub_key=>'refresh_all_references', p_name=>'refresh_all_references');
@@ -121,12 +125,14 @@ begin
       bucket_id,
       stat_name,
       row_count,
+      calc_count,
       avg_val) (select 
       avg_val_ref_group,
       hist_key,
       bucket_id,
       stat_name,
       row_count,
+      calc_count,
       avg_val 
       from v_stat_avg_val_hist_ref 
      where bucket_id=p_bucket_id
@@ -136,7 +142,6 @@ exception
       arcsql.log_err(p_text=>'refresh_avg_val_hist_ref: '||dbms_utility.format_error_stack, p_key=>'statzilla');
       raise;
 end;
-
 
 procedure save_bucket_stat_detail ( -- | Writes out stat detail record.
    p_bucket in stat_bucket%rowtype) is 
@@ -179,6 +184,7 @@ procedure refresh_stat_percentiles_ref ( -- | Refreshes the percentiles referenc
    p_bucket_id in varchar2,
    p_stat_name in varchar2) is 
 begin 
+   g_bucket := get_bucket(p_bucket_id);
    delete 
      from stat_percentiles_ref 
     where bucket_id=p_bucket_id 
@@ -417,20 +423,20 @@ end;
 
 procedure purge_stats ( -- | Delete old data from stat_detail and stat_archive.
    p_bucket_id in varchar2, 
-   p_stat_name in varchar2,
-   p_stat_time in timestamp) is 
+   p_stat_name in varchar2) is 
    max_save_stat_hours number;
 begin 
+   g_bucket := get_bucket(p_bucket_id);
    -- We may need to keep data to calculate percentiles.
    max_save_stat_hours := greatest(g_bucket.percentile_calc_days*24, g_bucket.save_stat_hours);
    delete from stat_detail
     where bucket_id=p_bucket_id 
       and stat_name=p_stat_name 
-      and stat_time < p_stat_time-(max_save_stat_hours/24);
+      and stat_time < systimestamp-(max_save_stat_hours/24);
    delete from stat_archive
     where bucket_id=p_bucket_id 
       and stat_name=p_stat_name 
-      and stat_time < p_stat_time-statzilla.g_bucket.save_archive_days;
+      and stat_time < systimestamp-statzilla.g_bucket.save_archive_days;
 end;
 
 procedure delete_bucket ( -- | Delete a bucket for the given bucket id.

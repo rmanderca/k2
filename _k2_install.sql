@@ -58,6 +58,6 @@ Delivered K2 metrics (uses Statzilla).
 @./lib/k2/app_scheduler_jobs.sql
 
 create or replace package k2_app as 
-    version number := 20220924;
+    version number := 20221019;
 end;
 /
