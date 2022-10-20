@@ -117,6 +117,7 @@ begin
    :new.pctile100x := :old.pctile100x;
    :new.pct_score := :old.pct_score;
    :new.neg_calc_count := :old.neg_calc_count;
+   :new.zero_calc_count := :old.zero_calc_count;
 
    -- IN ADDITION TO SCHEDULED TASK REFRESH REFERENCES ON HOUR SWITCH FOR FIRST 14 DAYS
    if :new.created > systimestamp-14 and trunc(:old.stat_time, 'HH24') < trunc(:new.stat_time, 'HH24') then
@@ -130,6 +131,7 @@ begin
       insert into stat_archive (
       stat_work_id,
       stat_name,
+      stat_level,
       bucket_id,
       calc_count,
       calc_type,
@@ -164,10 +166,12 @@ begin
       avg_pct_of_avg_val_ref,
       avg_val_ref,
       avg_val_ref_group,
-      neg_calc_count
+      neg_calc_count,
+      zero_calc_count
       ) values (
       :old.stat_work_id,
       :old.stat_name,
+      :old.stat_level,
       :old.bucket_id,
       :old.calc_count,
       :old.calc_type,
@@ -202,7 +206,8 @@ begin
       :old.avg_pct_of_avg_val_ref,
       :old.avg_val_ref,
       :old.avg_val_ref_group,
-      :old.neg_calc_count
+      :old.neg_calc_count,
+      :old.zero_calc_count
       );
 
       try_again := true;
@@ -291,6 +296,7 @@ begin
       :new.pctile90x := to_number('.'||floor(:old.pctile90x));
       :new.pctile100x := to_number('.'||floor(:old.pctile100x));
       :new.neg_calc_count := 0;
+      :new.zero_calc_count := 0;
 
    end if;
 
@@ -327,6 +333,10 @@ begin
 
    if :new.calc_val < 0 then 
       :new.neg_calc_count := :new.neg_calc_count+1;
+   end if;
+
+   if :new.calc_val = 0 then 
+      :new.zero_calc_count := :new.zero_calc_count+1;
    end if;
 
    if statzilla.g_bucket.ignore_negative = 'Y' and :new.calc_val < 0 then

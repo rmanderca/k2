@@ -191,11 +191,13 @@ begin
       create table stat_archive (
       stat_work_id number,
       stat_name varchar2(250) not null,
+      stat_level number default 0,
       bucket_id number not null,
       received_val number not null,
       calc_count number default 0,
       calc_type varchar2(12),
       neg_calc_count number default 0,
+      zero_calc_count number default 0,
       avg_val number,
       stat_time timestamp(0) with time zone not null,
       last_non_zero_val timestamp(0) with time zone,
@@ -251,9 +253,14 @@ begin
    if not does_column_exist('stat_archive', 'neg_calc_count') then 
       execute_sql('alter table stat_archive add neg_calc_count number default 0', false);
    end if;
+   if not does_column_exist('stat_archive', 'zero_calc_count') then 
+      execute_sql('alter table stat_archive add zero_calc_count number default 0', false);
+   end if;
+   if not does_column_exist('stat_archive', 'stat_level') then 
+      execute_sql('alter table stat_archive add stat_level number default 0', false);
+   end if;
 end;
 /
-
 
 -- uninstall: drop sequence seq_stat_work_id;
 exec create_sequence('seq_stat_work_id');
@@ -265,6 +272,7 @@ begin
       create table stat_work (
       stat_work_id number default seq_stat_work_id.nextval not null,
       stat_name varchar2(250) not null,
+      stat_level number default 0,
       bucket_id number not null,
       static_json varchar2(250) default null,
       -- The value taken from the STAT_IN table.
@@ -277,7 +285,10 @@ begin
       rate_per_second number,
       -- This is mirrored from the bucket, this does not control the calc_type.
       calc_type varchar2(12),
+      -- Tracks the # of times the calc_val was negative.
       neg_calc_count number default 0,
+      -- Tracks the # of times the calc_val was zero.
+      zero_calc_count number default 0,
       -- The value we care about after processing it per "calc_type".
       calc_val number default 0,
       -- Average of calc_val for the current hour. This needs to be null to begin
@@ -344,6 +355,12 @@ begin
    end if;
    if not does_column_exist('stat_work', 'neg_calc_count') then 
       execute_sql('alter table stat_work add neg_calc_count number default 0', false);
+   end if;
+   if not does_column_exist('stat_work', 'zero_calc_count') then 
+      execute_sql('alter table stat_work add zero_calc_count number default 0', false);
+   end if;
+   if not does_column_exist('stat_work', 'stat_level') then 
+      execute_sql('alter table stat_work add stat_level number default 0', false);
    end if;
 end;
 /
