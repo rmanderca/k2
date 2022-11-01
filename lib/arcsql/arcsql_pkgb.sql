@@ -335,6 +335,52 @@ begin
    return v_text;
 end;
 
+-- https://stackoverflow.com/questions/23126455/how-to-call-replace-with-clob-without-exceeding-32k
+function clob_replace (
+   p_clob                 in clob, 
+   p_pattern              in varchar2, 
+   p_replacement_string   in clob,
+   p_offset               in integer default 1,
+   p_occurance_number     in integer default 1) return clob is
+   v_clob                       clob;
+   v_clob_position              pls_integer;
+   v_clob_length                pls_integer;
+   v_pattern_length             pls_integer;
+   v_replacement_string_length  pls_integer;
+begin
+   if p_clob is null
+      or p_pattern is null
+      or p_offset < 1
+      or p_offset > dbms_lob.lobmaxsize
+      or p_occurance_number < 1
+      or p_occurance_number > dbms_lob.lobmaxsize then
+         return null;
+   end if;
+
+   v_clob_position              := nvl( dbms_lob.instr( p_clob, p_pattern, p_offset, p_occurance_number ), 0 );
+   v_clob_length                := dbms_lob.getlength( p_clob );
+   v_pattern_length             := length( p_pattern );
+   v_replacement_string_length  := nvl( dbms_lob.getlength( p_replacement_string ), 0 );
+
+   dbms_lob.createtemporary( v_clob, false );
+   if v_clob_position > 0 then
+      if v_clob_position > 1 then
+         dbms_lob.copy( v_clob, p_clob, v_clob_position-1, 1, 1 );
+      end if;
+
+      if v_replacement_string_length > 0 then
+         dbms_lob.append( v_clob, p_replacement_string ); 
+      end if;
+
+      if v_clob_position + v_pattern_length <= v_clob_length then
+         dbms_lob.copy( v_clob, p_clob, v_clob_length - v_clob_position - v_pattern_length + 1, v_clob_position + v_replacement_string_length, v_clob_position + v_pattern_length );
+      end if;
+   else
+      dbms_lob.append( v_clob, p_clob );
+   end if;
+   return v_clob;
+end; 
+
 function get_token (
    p_list  varchar2,
    p_index number,

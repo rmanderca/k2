@@ -50,10 +50,11 @@ begin
 	    stat_time,
 	    received_val) (
 	select
-	    event ||' (time_waited) {"instance_id": '||inst_id||', "wait_class": "'||wait_class||'"}', 
+	    event ||' (seconds waited) {"instance_id": '||inst_id||', "wait_class": "'||wait_class||'"}', 
 	    v_bucket_name,
 	    systimestamp,
-	    time_waited
+	    -- Conversion to seconds can be done here or later using convert_eval column.
+	    round(time_waited/100, 2)
 	from
 	    gv$system_event
 	);

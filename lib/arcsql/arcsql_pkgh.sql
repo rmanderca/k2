@@ -110,6 +110,13 @@ create or replace package arcsql as
 
    procedure str_raise_not_defined(p_str in varchar2 default null);
 
+   function clob_replace (
+      p_clob                 in clob, 
+      p_pattern              in varchar2, 
+      p_replacement_string   in clob,
+      p_offset               in integer default 1,
+      p_occurance_number     in integer default 1) return clob;
+
    /* 
    -----------------------------------------------------------------------------------
    Numbers

@@ -1,5 +1,9 @@
 create or replace package body statzilla as 
 
+
+
+
+
 -- | --------------------------------------------------------------------------
 -- | Stats are stored in buckets. 
 -- | --------------------------------------------------------------------------
@@ -291,6 +295,14 @@ exception
    when others then 
       arcsql.log_err(p_text=>'get_properties_from_new_stats: '||dbms_utility.format_error_stack, p_key=>'statzilla');
       raise;
+end;
+
+procedure apply_profile_to_new_stats (
+   p_bucket_id in number,
+   p_created_timestamp timestamp with time zone) is 
+   v_profile_id number;
+begin 
+   null;
 end;
 
 procedure get_new_stats ( -- | Checks stat_work for new stats and adds to stat table if any found.
