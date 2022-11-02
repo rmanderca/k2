@@ -14,7 +14,7 @@ g_charts clob;
 g_callbacks clob;
 g_series_in_progress boolean := false;
 
--- Reset for each new chart.
+-- Most reset for each new chart.
 g_function clob;
 g_function_name clob;
 g_columns clob;
@@ -29,6 +29,8 @@ g_width number;
 g_height number;
 g_div clob;
 g_chart_in_progress boolean := false;
+g_vaxis_title varchar2(100) := '';
+g_haxis_title varchar2(100) := '';
 
 procedure raise_column_count_is_locked is
 begin
@@ -107,10 +109,17 @@ begin
    var data = new google.visualization.DataTable();
    #COLUMNS#
    data.addRows([#DATA#]);
-   var options = {''title'':''#TITLE#'',
-                  ''width'': #WIDTH#,
-                  ''height'': #HEIGHT#,
-                  ''legend'': ''none''};
+   var options = {
+      title:''#TITLE#'',
+      width: #WIDTH#,
+      height: #HEIGHT#,
+      legend: ''none'',
+      hAxis: {
+         title: ''#HAXIS_TITLE#''
+      },
+      vAxis: {
+         title: ''#VAXIS_TITLE#''
+      }};
    var chart = new google.visualization.LineChart(document.getElementById(''#DIV_NAME#''));
    chart.draw(data, options);
 }
@@ -131,6 +140,8 @@ begin
    g_div := null;
    g_row_count := 0;
    g_chart_in_progress := true;
+   g_vaxis_title := '';
+   g_haxis_title := '';
 end;
 
 -- Everything above this line is private.
@@ -151,7 +162,9 @@ begin
 end;
 
 procedure add_chart ( -- | Start creating a new chart.
-   p_title in varchar2) is 
+   p_title in varchar2,
+   p_vaxis_title in varchar2 default '',
+   p_haxis_title in varchar2 default '') is 
 begin
    arcsql.debug2('add_chart: ' || p_title);
    raise_series_not_in_progress;
@@ -170,6 +183,8 @@ begin
    g_divs := g_divs ||'<div id="'||g_div_name||'"></div>
 ';
    g_callbacks := g_callbacks || arcsql.clob_replace(callback_template, to_clob('#FUNCTION_NAME#'), g_function_name);
+   g_vaxis_title := p_vaxis_title;
+   g_haxis_title := p_haxis_title;
 end;
 
 procedure add_column (
@@ -210,6 +225,8 @@ begin
    g_function := arcsql.clob_replace(g_function, to_clob('#TITLE#'), g_title);
    g_function := arcsql.clob_replace(g_function, to_clob('#WIDTH#'), to_clob(g_width));
    g_function := arcsql.clob_replace(g_function, to_clob('#HEIGHT#'), to_clob(g_height));
+   g_function := arcsql.clob_replace(g_function, to_clob('#VAXIS_TITLE#'), to_clob(g_vaxis_title));
+   g_function := arcsql.clob_replace(g_function, to_clob('#HAXIS_TITLE#'), to_clob(g_haxis_title));
    g_functions := g_functions || g_function;
    g_chart_in_progress := false;
 end;

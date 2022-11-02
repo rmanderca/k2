@@ -1,9 +1,7 @@
 
-
-
+create or replace procedure gc_test_1 is
 begin
-
-   gc.start_series('gc_test');
+   gc.start_series('gc_test_1');
 
    gc.add_column( 
       p_data_type=>'timeofday',
@@ -36,6 +34,9 @@ begin
 end;
 /
 
+exec gc_test_1;
+
+
 set wrap off
 set trimout ON
 set trimspool on
@@ -47,3 +48,4 @@ set linesize 4000
 
 select gc.get_js from dual;
 select gc.get_divs from dual;
+

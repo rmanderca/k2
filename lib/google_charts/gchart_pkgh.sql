@@ -4,7 +4,9 @@ create or replace package gc is
          p_series_id in varchar2);
 
    procedure add_chart (
-      p_title in varchar2);
+      p_title in varchar2,
+      p_vaxis_title in varchar2 default '',
+      p_haxis_title in varchar2 default '');
 
    procedure add_column (
       p_data_type in varchar2,
