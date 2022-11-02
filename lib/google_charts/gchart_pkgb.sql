@@ -33,6 +33,7 @@ g_vaxis_title varchar2(100) := '';
 g_haxis_title varchar2(100) := '';
 g_scale_type varchar2(100) := 'linear';
 g_line_width number default 1;
+g_line_color varchar2(100) := 'black';
 
 procedure raise_column_count_is_locked is
 begin
@@ -115,6 +116,7 @@ begin
       title:''#TITLE#'',
       width: #WIDTH#,
       height: #HEIGHT#,
+      colors: [''#LINE_COLOR#''],
       legend: ''none'',
       scaleType: ''#SCALE_TYPE#'',
       lineWidth: #LINE_WIDTH#,
@@ -148,6 +150,7 @@ begin
    g_haxis_title := '';
    g_scale_type := 'linear';
    g_line_width := 1;
+   g_line_color := 'black';
 end;
 
 -- Everything above this line is private.
@@ -172,7 +175,8 @@ procedure add_chart ( -- | Start creating a new chart.
    p_vaxis_title in varchar2 default '',
    p_haxis_title in varchar2 default '',
    p_scale_type in varchar2 default 'linear',
-   p_line_width in number default 1) is 
+   p_line_width in number default 1,
+   p_line_color in varchar2 default 'black') is 
 begin
    arcsql.debug2('add_chart: ' || p_title);
    raise_series_not_in_progress;
@@ -195,6 +199,7 @@ begin
    g_haxis_title := p_haxis_title;
    g_scale_type := p_scale_type;
    g_line_width := p_line_width;
+   g_line_color := p_line_color;
 end;
 
 procedure add_column (
@@ -239,6 +244,7 @@ begin
    g_function := arcsql.clob_replace(g_function, to_clob('#HAXIS_TITLE#'), to_clob(g_haxis_title));
    g_function := arcsql.clob_replace(g_function, to_clob('#SCALE_TYPE#'), to_clob(g_scale_type));
    g_function := arcsql.clob_replace(g_function, to_clob('#LINE_WIDTH#'), to_clob(g_line_width));
+   g_function := arcsql.clob_replace(g_function, to_clob('#LINE_COLOR#'), to_clob(g_line_color));
    g_functions := g_functions || g_function;
    g_chart_in_progress := false;
 end;
