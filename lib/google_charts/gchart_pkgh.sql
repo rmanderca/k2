@@ -6,7 +6,9 @@ create or replace package gc is
    procedure add_chart (
       p_title in varchar2,
       p_vaxis_title in varchar2 default '',
-      p_haxis_title in varchar2 default '');
+      p_haxis_title in varchar2 default '',
+      p_scale_type in varchar2 default 'linear',
+      p_line_width in number default 1);
 
    procedure add_column (
       p_data_type in varchar2,
