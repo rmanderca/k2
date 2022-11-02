@@ -1,4 +1,16 @@
 
+-- uninstall: exec drop_view('gc_demo_view');
+create or replace view gc_demo_view as
+ select * from (
+        select stat_name, 
+                to_number(to_char(stat_time, 'DDDHH24')) datehour,
+                round(avg_val) value
+            from stat_archive
+            where stat_time >= systimestamp - 2
+              and stat_name in (select stat_name from stat_work where stat_level=1)
+            order 
+            by stat_name, stat_time) where rownum < 2000;
+
 create or replace procedure gc_test_1 is
 begin
    gc.start_series('gc_test_1');
@@ -13,7 +25,8 @@ begin
 
    -- Default chart type is line.
    gc.add_chart (
-	  p_title=>'CPU Usage');
+	  p_title=>'CPU Usage',
+     p_vaxis_title=>'Microseconds');
 
    -- [Hours, Minutes, Seconds]
    gc.add_data(p_data=>'[[8, 0, 0], 35.5]');

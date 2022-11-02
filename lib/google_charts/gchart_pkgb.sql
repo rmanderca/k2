@@ -25,8 +25,8 @@ g_row_count number := 0;
 g_options clob;
 g_div_name clob;
 g_title clob;
-g_width number;
-g_height number;
+g_width number := 600;
+g_height number := 400;
 g_div clob;
 g_chart_in_progress boolean := false;
 g_vaxis_title varchar2(100) := '';
@@ -176,7 +176,9 @@ procedure add_chart ( -- | Start creating a new chart.
    p_haxis_title in varchar2 default '',
    p_scale_type in varchar2 default 'linear',
    p_line_width in number default 1,
-   p_line_color in varchar2 default 'black') is 
+   p_line_color in varchar2 default 'black',
+   p_width in number default 600,
+   p_height in number default 400) is 
 begin
    arcsql.debug2('add_chart: ' || p_title);
    raise_series_not_in_progress;
@@ -200,6 +202,8 @@ begin
    g_scale_type := p_scale_type;
    g_line_width := p_line_width;
    g_line_color := p_line_color;
+   g_width := p_width;
+   g_height := p_height;
 end;
 
 procedure add_column (

@@ -9,7 +9,9 @@ create or replace package gc is
       p_haxis_title in varchar2 default '',
       p_scale_type in varchar2 default 'linear',
       p_line_width in number default 1,
-      p_line_color in varchar2 default 'black');
+      p_line_color in varchar2 default 'black',
+      p_width in number default 600,
+      p_height in number default 400);
 
    procedure add_column (
       p_data_type in varchar2,
