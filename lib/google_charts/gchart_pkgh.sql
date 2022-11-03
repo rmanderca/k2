@@ -11,7 +11,8 @@ create or replace package gc is
       p_line_width in number default 1,
       p_line_color in varchar2 default 'black',
       p_width in number default 600,
-      p_height in number default 400);
+      p_height in number default 400,
+      p_background_color in varchar2 default 'white');
 
    procedure add_column (
       p_data_type in varchar2,

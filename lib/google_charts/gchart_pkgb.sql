@@ -34,6 +34,7 @@ g_haxis_title varchar2(100) := '';
 g_scale_type varchar2(100) := 'linear';
 g_line_width number default 1;
 g_line_color varchar2(100) := 'black';
+g_background_color varchar2(100) := 'white';
 
 procedure raise_column_count_is_locked is
 begin
@@ -90,7 +91,7 @@ begin
    <script src="https://www.gstatic.com/charts/loader.js"></script>
    <script>
    console.log("Loading Google Charts...");
-   google.charts.load(''current'', {''packages'':[''corechart'']});
+   google.charts.load(''current'', {''packages'':[''corechart'', ''line'']});
    #CALLBACKS#
    #FUNCTIONS#
    </script>
@@ -118,6 +119,7 @@ begin
       height: #HEIGHT#,
       colors: [''#LINE_COLOR#''],
       legend: ''none'',
+      backgroundColor: ''#BACKGROUND_COLOR#'',
       scaleType: ''#SCALE_TYPE#'',
       lineWidth: #LINE_WIDTH#,
       hAxis: {
@@ -151,6 +153,7 @@ begin
    g_scale_type := 'linear';
    g_line_width := 1;
    g_line_color := 'black';
+   g_background_color := 'white';
 end;
 
 -- Everything above this line is private.
@@ -178,7 +181,8 @@ procedure add_chart ( -- | Start creating a new chart.
    p_line_width in number default 1,
    p_line_color in varchar2 default 'black',
    p_width in number default 600,
-   p_height in number default 400) is 
+   p_height in number default 400,
+   p_background_color in varchar2 default 'white') is 
 begin
    arcsql.debug2('add_chart: ' || p_title);
    raise_series_not_in_progress;
@@ -204,6 +208,7 @@ begin
    g_line_color := p_line_color;
    g_width := p_width;
    g_height := p_height;
+   g_background_color := p_background_color;
 end;
 
 procedure add_column (
@@ -249,6 +254,8 @@ begin
    g_function := arcsql.clob_replace(g_function, to_clob('#SCALE_TYPE#'), to_clob(g_scale_type));
    g_function := arcsql.clob_replace(g_function, to_clob('#LINE_WIDTH#'), to_clob(g_line_width));
    g_function := arcsql.clob_replace(g_function, to_clob('#LINE_COLOR#'), to_clob(g_line_color));
+   g_function := arcsql.clob_replace(g_function, to_clob('#BACKGROUND_COLOR#'), to_clob(g_background_color));
+
    g_functions := g_functions || g_function;
    g_chart_in_progress := false;
 end;
