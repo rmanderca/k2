@@ -110,6 +110,7 @@ create or replace package arcsql as
 
    procedure str_raise_not_defined(p_str in varchar2 default null);
 
+   -- ToDo: Only replaces first occurrance, change to replace all occurrences.
    function clob_replace (
       p_clob                 in clob, 
       p_pattern              in varchar2, 

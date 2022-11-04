@@ -12,7 +12,9 @@ create or replace package gc is
       p_line_color in varchar2 default 'black',
       p_width in number default 600,
       p_height in number default 400,
-      p_background_color in varchar2 default 'white');
+      p_background_color in varchar2 default 'white',
+      p_tags in varchar2 default null,
+      p_div_group in number default 0);
 
    procedure add_column (
       p_data_type in varchar2,
@@ -29,6 +31,11 @@ create or replace package gc is
 
    function get_js return clob;
 
-   function get_divs return clob;
+   function get_divs (
+      p_series_id in varchar2,
+      p_div_group in number default null,
+      p_set_class in varchar2 default 'gc',
+      p_having_tags in varchar2 default null) return clob;
+   
 end;
 /
