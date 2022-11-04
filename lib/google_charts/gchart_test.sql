@@ -1,15 +1,18 @@
 
 -- uninstall: exec drop_view('gc_demo_view');
 create or replace view gc_demo_view as
- select * from (
-        select stat_name, 
-                to_number(to_char(stat_time, 'DDDHH24')) datehour,
-                round(avg_val) value
-            from stat_archive
-            where stat_time >= systimestamp - 2
-              and stat_name in (select stat_name from stat_work where stat_level=1)
-            order 
-            by stat_name, stat_time) where rownum < 2000;
+select stat_name, 
+       round(arcsql.secs_between_timestamps(stat_time, localtimestamp)/60/60)*-1 hours_ago,
+       round(avg_val) value
+   from (select stat_name, stat_time, avg_val 
+           from stat_archive
+          union all
+         select stat_name, stat_time, avg_val 
+           from stat_work)
+  where stat_time >= systimestamp - 2
+    and stat_name in (select stat_name from stat_work where stat_level=1)
+  order 
+     by stat_name, stat_time;
 
 create or replace procedure gc_test_1 is
 begin
@@ -26,7 +29,9 @@ begin
    -- Default chart type is line.
    gc.add_chart (
 	  p_title=>'CPU Usage',
-     p_vaxis_title=>'Microseconds');
+     p_vaxis_title=>'Microseconds',
+     p_div_group=>1,
+     p_tags=>'foo, bar');
 
    -- [Hours, Minutes, Seconds]
    gc.add_data(p_data=>'[[8, 0, 0], 35.5]');
@@ -60,5 +65,9 @@ set longchunksize 20000000
 set linesize 4000
 
 select gc.get_js from dual;
-select gc.get_divs from dual;
+select gc.get_divs(
+          p_series_id=>'gc_test_1', 
+          p_div_group=>null,
+          p_set_class=>'google_charts',
+          p_having_tags=>'bar') from dual;
 

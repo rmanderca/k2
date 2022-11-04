@@ -1,5 +1,9 @@
 create or replace package body gc is 
 
+type table_type is table of varchar2(100) index by binary_integer;
+g_divs_array table_type;
+g_divs clob;
+
 g_series_id varchar2(100);
 
 g_chunk_pos number := 1;
@@ -8,7 +12,7 @@ g_chunk_amount number := 20000;
 -- Reset for each new series.
 g_js clob;
 g_chart_count number := 0;
-g_divs clob;
+
 g_functions clob;
 g_charts clob;
 g_callbacks clob;
@@ -27,7 +31,6 @@ g_div_name clob;
 g_title clob;
 g_width number := 600;
 g_height number := 400;
-g_div clob;
 g_chart_in_progress boolean := false;
 g_vaxis_title varchar2(100) := '';
 g_haxis_title varchar2(100) := '';
@@ -36,52 +39,53 @@ g_line_width number default 1;
 g_line_color varchar2(100) := 'black';
 g_background_color varchar2(100) := 'white';
 
-procedure raise_column_count_is_locked is
+procedure assert_column_count_is_not_locked is
 begin
    if g_lock_column_count then
       raise_application_error(-20001, 'Column count is locked.');
    end if;
 end;
 
-procedure raise_series_not_in_progress is 
+procedure assert_series_is_started is 
 begin 
    if not g_series_in_progress then 
       raise_application_error(-20001, 'Google Chart series not in progress!');
    end if;
 end;
 
-procedure raise_chart_not_in_progress is 
+procedure assert_chart_is_defined is 
 begin
    if not g_chart_in_progress then 
       raise_application_error(-20002, 'Google Chart not in progress!');
    end if;
 end;
 
-procedure raise_column_count_is_zero is 
+procedure assert_columns_are_defined is 
 begin
    if g_column_count = 0 then 
-      raise_application_error(-20001, 'Column count is zero!');
+      raise_application_error(-20001, 'Columns need to be defined first!');
    end if;
 end;
 
-procedure raise_row_count_is_zero is 
+procedure assert_chart_has_data is 
 begin
    if g_row_count = 0 then 
-      raise_application_error(-20001, 'Row count is zero!');
+      raise_application_error(-20001, 'Chart does not have any date points!');
    end if;
 end;
 
-procedure raise_row_count_is_not_zero is 
+procedure assert_chart_count_is_not_zero is 
 begin
-   if g_row_count <> 0 then 
-      raise_application_error(-20001, 'Row count is not zero!');
+   if g_chart_count = 0 then 
+      raise_application_error(-20001, 'Chart count is zero!');
    end if;
 end;
 
-procedure raise_chart_count_is_not_zero is 
-begin
-   if g_chart_count <> 0 then 
-      raise_application_error(-20001, 'Chart count is not zero!');
+procedure assert_series_id_has_not_changed (
+   p_series_id in varchar2) is 
+begin 
+   if p_series_id != g_series_id then 
+      raise_application_error(-20001, 'Series id has changed!');
    end if;
 end;
 
@@ -107,6 +111,10 @@ end;
 
 function function_template return varchar2 is
 begin 
+   -- ToDo:
+   -- trendlines: {
+   --    0: {type: ''polynomial'', color: ''gray'', opacity: 1, degree: 5},
+   -- },
    return 
 'function #FUNCTION_NAME#() {
    console.log("#FUNCTION_NAME#");
@@ -134,9 +142,9 @@ begin
 ';
 end;
 
-procedure init_chart is 
+procedure init_chart_defaults is 
 begin
-   arcsql.debug2('init_chart');
+   arcsql.debug2('init_chart_defaults');
    g_function := null;
    g_function_name := null;
    g_data := null;
@@ -145,15 +153,31 @@ begin
    g_title := null;
    g_width := 600;
    g_height := 400;
-   g_div := null;
    g_row_count := 0;
-   g_chart_in_progress := true;
    g_vaxis_title := '';
    g_haxis_title := '';
    g_scale_type := 'linear';
    g_line_width := 1;
    g_line_color := 'black';
    g_background_color := 'white';
+   g_chart_in_progress := false;
+end;
+
+procedure init_series_defaults is 
+begin 
+   arcsql.debug2('init_series_defaults');
+   g_series_id := null;
+   g_js := null;
+   g_chart_count := 0;
+   g_divs_array.delete;
+   g_divs := null;
+   g_functions := null;
+   g_charts := null;
+   g_callbacks := null;
+   g_columns := null;
+   g_series_in_progress := false;
+   g_lock_column_count := false;
+   init_chart_defaults;
 end;
 
 -- Everything above this line is private.
@@ -162,15 +186,9 @@ procedure start_series (
    p_series_id in varchar2) is 
 begin
    arcsql.debug2('start_series');
+   init_series_defaults;
    g_series_id := p_series_id;
-   g_js := null;
-   g_divs := null;
-   g_functions := null;
-   g_chart_count := 0;
-   g_callbacks := null;
    g_series_in_progress := true;
-   g_lock_column_count := false;
-   g_columns := null;
 end;
 
 procedure add_chart ( -- | Start creating a new chart.
@@ -182,23 +200,25 @@ procedure add_chart ( -- | Start creating a new chart.
    p_line_color in varchar2 default 'black',
    p_width in number default 600,
    p_height in number default 400,
-   p_background_color in varchar2 default 'white') is 
+   p_background_color in varchar2 default 'white',
+   p_tags in varchar2 default null,
+   p_div_group in number default 0) is 
 begin
    arcsql.debug2('add_chart: ' || p_title);
-   raise_series_not_in_progress;
-   -- Columns must be defined before adding charts.
-   raise_column_count_is_zero;
+   assert_series_is_started;
+   assert_columns_are_defined;
    if g_chart_in_progress then
       end_chart;
    end if;
-   init_chart;
+   init_chart_defaults;
    g_chart_in_progress := true;
-   g_lock_column_count := true;
    g_chart_count := g_chart_count + 1;
+   -- Lock columns if not already locked.
+   g_lock_column_count := true;
    g_function_name := arcsql.str_to_key_str(g_series_id) || '_' || g_chart_count;
    g_div_name := g_function_name || '_div';
    g_title := p_title;
-   g_divs := g_divs ||'<div id="'||g_div_name||'"></div>
+   g_divs_array(g_chart_count) := '<div id="'||g_div_name||'"><!-- tags=['||lower(p_tags)||'], group='||p_div_group||' --></div>
 ';
    g_callbacks := g_callbacks || arcsql.clob_replace(callback_template, to_clob('#FUNCTION_NAME#'), g_function_name);
    g_vaxis_title := p_vaxis_title;
@@ -216,8 +236,8 @@ procedure add_column (
    p_column_name in varchar2) is 
 begin
    arcsql.debug2('add_column');
-   raise_series_not_in_progress;
-   raise_column_count_is_locked;
+   assert_series_is_started;
+   assert_column_count_is_not_locked;
    g_column_count := g_column_count + 1;
    g_columns := g_columns || 'data.addColumn('''||p_data_type||''', '''||p_column_name||''');
 ';
@@ -227,9 +247,9 @@ procedure add_data (
    p_data in varchar2) is
 begin
    arcsql.debug2('add_data: '||p_data);
-   raise_series_not_in_progress;
-   raise_column_count_is_zero;
-   raise_chart_not_in_progress;
+   assert_series_is_started;
+   assert_columns_are_defined;
+   assert_chart_is_defined;
    g_row_count := g_row_count + 1;
    g_data := g_data ||
 p_data || ',';
@@ -238,10 +258,10 @@ end;
 procedure end_chart is 
 begin 
    arcsql.debug2('end_chart');
-   raise_series_not_in_progress;
-   raise_chart_not_in_progress;
-   raise_column_count_is_zero;
-   raise_row_count_is_zero;
+   assert_series_is_started;
+   assert_columns_are_defined;
+   assert_chart_is_defined;
+   assert_chart_has_data;
    g_function := arcsql.clob_replace(function_template, to_clob('#FUNCTION_NAME#'), g_function_name);
    g_function := arcsql.clob_replace(g_function, to_clob('#DIV_NAME#'), g_div_name);
    g_function := arcsql.clob_replace(g_function, to_clob('#COLUMNS#'), g_columns);
@@ -255,7 +275,6 @@ begin
    g_function := arcsql.clob_replace(g_function, to_clob('#LINE_WIDTH#'), to_clob(g_line_width));
    g_function := arcsql.clob_replace(g_function, to_clob('#LINE_COLOR#'), to_clob(g_line_color));
    g_function := arcsql.clob_replace(g_function, to_clob('#BACKGROUND_COLOR#'), to_clob(g_background_color));
-
    g_functions := g_functions || g_function;
    g_chart_in_progress := false;
 end;
@@ -263,15 +282,13 @@ end;
 procedure end_series is 
 begin 
    arcsql.debug2('end_series');
-   raise_series_not_in_progress;
-   raise_column_count_is_zero;
-   raise_row_count_is_zero;
+   assert_series_is_started;
+   assert_chart_count_is_not_zero;
    if g_chart_in_progress then
       end_chart;
    end if;
    g_js := arcsql.clob_replace(series_template, to_clob('#CALLBACKS#'), g_callbacks);
    g_js := arcsql.clob_replace(g_js, to_clob('#FUNCTIONS#'), g_functions);
-   g_js := arcsql.clob_replace(g_js, to_clob('#DIVS#'), g_divs);
    g_series_in_progress := false;
 end;
 
@@ -300,13 +317,59 @@ begin
    return g_js;
 end;
 
-function get_divs return clob is 
+function get_divs (
+   p_series_id in varchar2,
+   p_div_group in number default null,
+   p_set_class in varchar2 default 'gc',
+   p_having_tags in varchar2 default null) return clob is 
+   g_div_index number;
+   add_div boolean default false;
+   start_of_tags number;
+   end_of_tags number;
+   tags_list varchar2(100) default null;
+   n number;
 begin
-   arcsql.debug2('get_divs');
+   arcsql.debug2('get_divs: '||p_series_id);
+   assert_series_id_has_not_changed(p_series_id);
    if g_series_in_progress then
       end_series;
    end if;
-   return g_divs;
+   g_div_index := g_divs_array.first;
+   while g_div_index is not null loop 
+      add_div := true;
+
+      if p_div_group is not null then 
+         if not instr(g_divs_array(g_div_index), 'group='||p_div_group) > 0 then 
+            add_div := false;
+         end if;
+      end if;
+
+      if p_having_tags is not null then 
+         -- Get the list of tags from the div
+         start_of_tags := instr(g_divs_array(g_div_index), 'tags=[')+6;
+         end_of_tags := instr(g_divs_array(g_div_index), ']', start_of_tags);
+         tags_list := substr(g_divs_array(g_div_index), start_of_tags, end_of_tags-start_of_tags);
+
+         select count(*) into n from (
+         select trim(regexp_substr(p_having_tags,'[^,]+', 1, level)) col1 from dual
+                connect by level <= regexp_count(p_having_tags, ',') + 1
+         minus
+         select trim(regexp_substr(tags_list,'[^,]+', 1, level)) col1 from dual
+                connect by level <= regexp_count(tags_list, ',') + 1);
+         if n > 0 then 
+            add_div := false;
+         end if;
+      end if;
+
+      if add_div then
+            g_divs := g_divs || '   ' ||g_divs_array(g_div_index);
+      end if;
+
+      g_div_index := g_divs_array.next(g_div_index);
+   end loop;
+   return '
+<div class="'||p_set_class||'">
+'||g_divs||'</div>';
 end;
 
 end;
