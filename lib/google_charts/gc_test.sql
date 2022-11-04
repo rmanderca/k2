@@ -27,7 +27,7 @@ begin
       p_column_name=>'Value');
 
    -- Default chart type is line.
-   gc.add_chart (
+   gc.add_line_chart (
 	  p_title=>'CPU Usage',
      p_vaxis_title=>'Microseconds',
      p_div_group=>1,
@@ -39,7 +39,7 @@ begin
    gc.add_data(p_data=>'[[10, 0, 0], 65]');
    gc.add_data(p_data=>'[[11, 0, 0], 21.9]');
 
-   gc.add_chart (
+   gc.add_line_chart (
      p_title=>'Disk IO');
 
    gc.add_data(p_data=>'[[8, 0, 0], 50000]');

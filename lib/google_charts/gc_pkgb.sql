@@ -10,7 +10,7 @@ g_chunk_pos number := 1;
 g_chunk_amount number := 20000;
 
 -- Reset for each new series.
-g_js clob;
+g_charts_js clob;
 g_chart_count number := 0;
 
 g_functions clob;
@@ -19,25 +19,25 @@ g_callbacks clob;
 g_series_in_progress boolean := false;
 
 -- Most reset for each new chart.
-g_function clob;
-g_function_name clob;
-g_columns clob;
+g_function varchar2(4000);
+g_function_name varchar2(200);
+g_columns varchar2(2000);
 g_column_count number := 0;
 g_lock_column_count boolean := false;
 g_data clob;
 g_row_count number := 0;
 g_options clob;
 g_div_name clob;
-g_title clob;
+g_title varchar2(200);
 g_width number := 600;
 g_height number := 400;
 g_chart_in_progress boolean := false;
-g_vaxis_title varchar2(100) := '';
-g_haxis_title varchar2(100) := '';
-g_scale_type varchar2(100) := 'linear';
+g_vaxis_title varchar2(200) := '';
+g_haxis_title varchar2(200) := '';
+g_scale_type varchar2(200);
 g_line_width number default 1;
-g_line_color varchar2(100) := 'black';
-g_background_color varchar2(100) := 'white';
+g_line_color varchar2(200);
+g_background_color varchar2(200);
 
 procedure assert_column_count_is_not_locked is
 begin
@@ -167,7 +167,7 @@ procedure init_series_defaults is
 begin 
    arcsql.debug2('init_series_defaults');
    g_series_id := null;
-   g_js := null;
+   g_charts_js := null;
    g_chart_count := 0;
    g_divs_array.delete;
    g_divs := null;
@@ -191,7 +191,7 @@ begin
    g_series_in_progress := true;
 end;
 
-procedure add_chart ( -- | Start creating a new chart.
+procedure add_line_chart ( -- | Start creating a new chart.
    p_title in varchar2,
    p_vaxis_title in varchar2 default '',
    p_haxis_title in varchar2 default '',
@@ -204,7 +204,7 @@ procedure add_chart ( -- | Start creating a new chart.
    p_tags in varchar2 default null,
    p_div_group in number default 0) is 
 begin
-   arcsql.debug2('add_chart: ' || p_title);
+   arcsql.debug2('add_line_chart: ' || p_title);
    assert_series_is_started;
    assert_columns_are_defined;
    if g_chart_in_progress then
@@ -218,6 +218,7 @@ begin
    g_function_name := arcsql.str_to_key_str(g_series_id) || '_' || g_chart_count;
    g_div_name := g_function_name || '_div';
    g_title := p_title;
+   -- Tags and group are added as a comment which can be searched when get_divs is called.
    g_divs_array(g_chart_count) := '<div id="'||g_div_name||'"><!-- tags=['||lower(p_tags)||'], group='||p_div_group||' --></div>
 ';
    g_callbacks := g_callbacks || arcsql.clob_replace(callback_template, to_clob('#FUNCTION_NAME#'), g_function_name);
@@ -262,20 +263,19 @@ begin
    assert_columns_are_defined;
    assert_chart_is_defined;
    assert_chart_has_data;
-   g_function := arcsql.clob_replace(function_template, to_clob('#FUNCTION_NAME#'), g_function_name);
-   g_function := arcsql.clob_replace(g_function, to_clob('#DIV_NAME#'), g_div_name);
-   g_function := arcsql.clob_replace(g_function, to_clob('#COLUMNS#'), g_columns);
-   g_function := arcsql.clob_replace(g_function, to_clob('#DATA#'), rtrim(g_data, ','));
-   g_function := arcsql.clob_replace(g_function, to_clob('#TITLE#'), g_title);
-   g_function := arcsql.clob_replace(g_function, to_clob('#WIDTH#'), to_clob(g_width));
-   g_function := arcsql.clob_replace(g_function, to_clob('#HEIGHT#'), to_clob(g_height));
-   g_function := arcsql.clob_replace(g_function, to_clob('#VAXIS_TITLE#'), to_clob(g_vaxis_title));
-   g_function := arcsql.clob_replace(g_function, to_clob('#HAXIS_TITLE#'), to_clob(g_haxis_title));
-   g_function := arcsql.clob_replace(g_function, to_clob('#SCALE_TYPE#'), to_clob(g_scale_type));
-   g_function := arcsql.clob_replace(g_function, to_clob('#LINE_WIDTH#'), to_clob(g_line_width));
-   g_function := arcsql.clob_replace(g_function, to_clob('#LINE_COLOR#'), to_clob(g_line_color));
-   g_function := arcsql.clob_replace(g_function, to_clob('#BACKGROUND_COLOR#'), to_clob(g_background_color));
-   g_functions := g_functions || g_function;
+   g_function := replace(function_template, '#FUNCTION_NAME#', g_function_name);
+   g_function := replace(g_function, '#DIV_NAME#', g_div_name);
+   g_function := replace(g_function, '#COLUMNS#', g_columns);
+   g_function := replace(g_function, '#TITLE#', g_title);
+   g_function := replace(g_function, '#WIDTH#', g_width);
+   g_function := replace(g_function, '#HEIGHT#', g_height);
+   g_function := replace(g_function, '#VAXIS_TITLE#', g_vaxis_title);
+   g_function := replace(g_function, '#HAXIS_TITLE#', g_haxis_title);
+   g_function := replace(g_function, '#SCALE_TYPE#', g_scale_type);
+   g_function := replace(g_function, '#LINE_WIDTH#', g_line_width);
+   g_function := replace(g_function, '#LINE_COLOR#', g_line_color);
+   g_function := replace(g_function, '#BACKGROUND_COLOR#', g_background_color);
+   g_functions := g_functions || arcsql.clob_replace(to_clob(g_function), to_clob('#DATA#'), rtrim(g_data, ','));
    g_chart_in_progress := false;
 end;
 
@@ -287,8 +287,8 @@ begin
    if g_chart_in_progress then
       end_chart;
    end if;
-   g_js := arcsql.clob_replace(series_template, to_clob('#CALLBACKS#'), g_callbacks);
-   g_js := arcsql.clob_replace(g_js, to_clob('#FUNCTIONS#'), g_functions);
+   g_charts_js := arcsql.clob_replace(series_template, to_clob('#CALLBACKS#'), g_callbacks);
+   g_charts_js := arcsql.clob_replace(g_charts_js, to_clob('#FUNCTIONS#'), g_functions);
    g_series_in_progress := false;
 end;
 
@@ -297,7 +297,7 @@ function get_js_chunk return varchar2 is
    chunk clob;
 begin
    arcsql.debug2('get_js_chunk');
-   dbms_lob.read(g_js, g_chunk_amount, g_chunk_pos, chunk);
+   dbms_lob.read(g_charts_js, g_chunk_amount, g_chunk_pos, chunk);
    g_chunk_pos := g_chunk_pos + g_chunk_amount;
    -- arcsql.debug2('chunk: '||chunk);
    return chunk;
@@ -314,7 +314,7 @@ begin
    if g_series_in_progress then
       end_series;
    end if;
-   return g_js;
+   return g_charts_js;
 end;
 
 function get_divs (

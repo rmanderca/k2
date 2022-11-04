@@ -3,7 +3,7 @@ create or replace package gc is
    procedure start_series (
          p_series_id in varchar2);
 
-   procedure add_chart (
+   procedure add_line_chart (
       p_title in varchar2,
       p_vaxis_title in varchar2 default '',
       p_haxis_title in varchar2 default '',
