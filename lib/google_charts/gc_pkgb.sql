@@ -292,7 +292,6 @@ begin
    g_series_in_progress := false;
 end;
 
-
 function get_js_chunk return varchar2 is 
    chunk clob;
 begin
@@ -317,23 +316,19 @@ begin
    return g_charts_js;
 end;
 
-function get_divs (
+procedure assemble_divs (
    p_series_id in varchar2,
    p_div_group in number default null,
    p_set_class in varchar2 default 'gc',
-   p_having_tags in varchar2 default null) return clob is 
-   g_div_index number;
+   p_having_tags in varchar2 default null) is 
    add_div boolean default false;
    start_of_tags number;
    end_of_tags number;
    tags_list varchar2(100) default null;
+   g_div_index number;
    n number;
-begin
-   arcsql.debug2('get_divs: '||p_series_id);
-   assert_series_id_has_not_changed(p_series_id);
-   if g_series_in_progress then
-      end_series;
-   end if;
+begin 
+   g_divs := '<div class="'||p_set_class||'">';
    g_div_index := g_divs_array.first;
    while g_div_index is not null loop 
       add_div := true;
@@ -367,9 +362,32 @@ begin
 
       g_div_index := g_divs_array.next(g_div_index);
    end loop;
-   return '
-<div class="'||p_set_class||'">
-'||g_divs||'</div>';
+   g_divs := g_divs || '</div>';
+end;
+
+function get_divs_chunk (
+   p_series_id in varchar2,
+   p_div_group in number default null,
+   p_set_class in varchar2 default 'gc',
+   p_having_tags in varchar2 default null) return varchar2 is 
+   chunk clob;
+begin
+   arcsql.debug2('get_divs_chunk');
+   if g_chunk_pos = 1 then 
+      assemble_divs (
+         p_series_id=>p_series_id,
+         p_div_group=>p_div_group,
+         p_set_class=>p_set_class,
+         p_having_tags=>p_having_tags);
+   end if;
+   dbms_lob.read(g_divs, g_chunk_amount, g_chunk_pos, chunk);
+   g_chunk_pos := g_chunk_pos + g_chunk_amount;
+   return chunk;
+exception
+   when no_data_found then 
+      g_chunk_pos := 1;
+      g_chunk_amount := 20000;
+      return null;
 end;
 
 end;

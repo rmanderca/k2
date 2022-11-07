@@ -64,8 +64,9 @@ set long 20000000
 set longchunksize 20000000
 set linesize 4000
 
+
 select gc.get_js from dual;
-select gc.get_divs(
+select gc.get_divs_chunk(
           p_series_id=>'gc_test_1', 
           p_div_group=>null,
           p_set_class=>'google_charts',

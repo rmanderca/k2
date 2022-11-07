@@ -31,11 +31,12 @@ create or replace package gc is
 
    function get_js return clob;
 
-   function get_divs (
+   function get_divs_chunk (
       p_series_id in varchar2,
       p_div_group in number default null,
       p_set_class in varchar2 default 'gc',
-      p_having_tags in varchar2 default null) return clob;
+      p_having_tags in varchar2 default null) return varchar2;
+
    
 end;
 /
