@@ -66,4 +66,8 @@ drop type arcsql_csv_tab;
 drop type arcsql_csv_row;
 drop sequence seq_arcsql_alert;
 drop sequence seq_request_count_id;
+drop view arcsql_test_result;
+drop procedure drop_constraint;
+drop procedure drop_scheduler_job;
+drop function is_column_nullable;
 

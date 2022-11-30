@@ -385,3 +385,16 @@ end;
 /
 
 
+create or replace function ords_is_enabled return boolean is
+   v_enabled number;
+begin
+   select count(*) into v_enabled 
+     from user_ords_schemas
+    where status='ENABLED';
+   if v_enabled > 0 then 
+      return true;
+   else
+      return false;
+   end if;
+end;
+/

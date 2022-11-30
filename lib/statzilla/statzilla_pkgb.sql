@@ -13,19 +13,22 @@ procedure add_bucket ( -- | Create a bucket to store stats in.
    p_calc_type in varchar2 default 'none',
    p_ignore_negative in varchar2 default 'N',
    p_save_stat_hours in number default 0,
-   p_skip_archive_hours in number default 0) is
+   p_skip_archive_hours in number default 0,
+   p_app_name in varchar2 default null) is
 begin
    insert into stat_bucket (
       bucket_name,
       calc_type,
       ignore_negative,
       save_stat_hours,
-      skip_archive_hours) values (
+      skip_archive_hours,
+      app_name) values (
       p_bucket_name,
       p_calc_type,
       p_ignore_negative,
       p_save_stat_hours,
-      p_skip_archive_hours);
+      p_skip_archive_hours,
+      p_app_name);
 exception 
    when others then 
       arcsql.log_err(p_text=>'add_bucket: '||dbms_utility.format_error_stack, p_key=>'statzilla');

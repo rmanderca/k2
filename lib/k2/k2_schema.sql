@@ -63,8 +63,6 @@ begin
 end;
 /
 
-
-
 -- uninstall: exec drop_view('user_flash_message');
 create or replace view user_flash_message as (
     select * from flash_message
@@ -72,3 +70,5 @@ create or replace view user_flash_message as (
         or session_id=v('APP_SESSION'))
        and (expires_at<=sysdate
         or expires_at is null));
+
+

@@ -2,6 +2,9 @@
 -- uninstall: drop package saas_auth_pkg;
 create or replace package saas_auth_pkg as
 
+   procedure assert_user_id_is_valid (
+      p_user_id in number);
+
    procedure increment_email_count (
       p_email_address in varchar2);
 
@@ -55,6 +58,9 @@ create or replace package saas_auth_pkg as
 
    procedure ui_delete_account (
       p_auth_token in varchar2);
+
+   function does_user_name_exist ( 
+      p_user_name in varchar2) return boolean;
 
    function is_email_verification_required (
       p_email in varchar2) return boolean;

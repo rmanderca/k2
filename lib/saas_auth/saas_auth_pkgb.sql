@@ -1,5 +1,15 @@
 create or replace package body saas_auth_pkg as
 
+procedure assert_user_id_is_valid (
+   p_user_id in number) is
+   n number;
+begin
+   select count(*) into n from saas_auth where user_id=p_user_id;
+   if n = 0 then 
+      raise_application_error(-20001, 'Invalid user_id: '||p_user_id);
+   end if;
+end;
+
 procedure increment_email_count (
    p_email_address in varchar2) is 
 begin 
@@ -393,22 +403,6 @@ begin
 exception 
    when others then
       k2.log_err('get_current_time_for_user: '||dbms_utility.format_error_stack);
-      raise;
-end;
-
-
-procedure delete_user (
-   p_email in varchar2 default null,
-   p_user_id in number default null) is 
-begin 
-   k2.debug('delete_user: id='||p_user_id||', name='||p_email);
-   delete from saas_auth 
-    where user_name=lower(p_email)
-       or user_id=p_user_id;
-   k2.log_security_event(p_text=>'delete_user: '||p_email, p_key=>'saas_auth');
-exception 
-   when others then
-      k2.log_err('delete_user: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -1068,8 +1062,7 @@ begin
    end if;
 end;
 
-
-procedure fire_create_account(p_user_id in varchar2) is 
+procedure fire_create_account (p_user_id in varchar2) is 
    n number;
 begin 
    k2.debug('saas_auth_pkg.fire_create_account: '||p_user_id);
@@ -1080,6 +1073,52 @@ begin
       k2.debug('fire_create_account: '||p_user_id);
       execute immediate 'begin on_create_account('||p_user_id||'); end;';
    end if;
+end;
+
+procedure fire_before_delete_user (
+   p_user_id in varchar2) is 
+   n number;
+begin 
+   k2.debug('saas_auth_pkg.fire_before_delete_user: '||p_user_id);
+   select count(*) into n from user_source 
+    where name = 'BEFORE_DELETE_USER'
+      and type='PROCEDURE';
+   if n > 0 then 
+      execute immediate 'begin before_delete_user('||p_user_id||'); end;';
+   end if;
+end;
+
+procedure fire_after_delete_user (
+   p_user_id in varchar2) is 
+   n number;
+begin 
+   k2.debug('saas_auth_pkg.fire_after_delete_user: '||p_user_id);
+   select count(*) into n from user_source 
+    where name = 'AFTER_DELETE_USER'
+      and type='PROCEDURE';
+   if n > 0 then 
+      execute immediate 'begin after_delete_user('||p_user_id||'); end;';
+   end if;
+end;
+
+procedure delete_user ( -- | Deletes the user fro the saas_auth table.
+   p_email in varchar2 default null,
+   p_user_id in number default null) is 
+   v_user_id number := p_user_id;
+begin 
+   k2.debug('delete_user: user_id='||v_user_id||', email='||p_email);
+   if v_user_id is null then 
+      v_user_id := get_user_id_from_email(p_email);
+   end if;
+   fire_before_delete_user(v_user_id);
+   delete from saas_auth 
+    where user_id=v_user_id;
+   fire_after_delete_user(v_user_id);
+   k2.log_security_event(p_text=>'delete_user: '||p_email, p_key=>'saas_auth');
+exception 
+   when others then
+      k2.log_err('delete_user: '||dbms_utility.format_error_stack);
+      raise;
 end;
 
 procedure add_user (

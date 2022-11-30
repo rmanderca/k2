@@ -42,7 +42,7 @@ procedure log_err (
    p_key in varchar2 default null) is
 begin 
    if k2_config.enable_arcsql_logging then
-      arcsql.log_err(p_text=>p_text, p_key=>p_key);
+      log_err(p_text=>p_text, p_key=>p_key);
    end if;
    if k2_config.enable_apex_debug then
       apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_error);
@@ -178,7 +178,7 @@ begin
       );
 exception 
    when others then
-      arcsql.log_err('add_cookie: '||dbms_utility.format_error_stack);
+      log_err('add_cookie: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -204,7 +204,7 @@ begin
    end loop;
 exception 
    when others then
-      arcsql.log_err('set_cookies: '||dbms_utility.format_error_stack);
+      log_err('set_cookies: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -220,7 +220,7 @@ exception
    when no_data_found then 
       return null;
    when others then
-      arcsql.log_err('get_cookie: '||dbms_utility.format_error_stack);
+      log_err('get_cookie: '||dbms_utility.format_error_stack);
       -- Do not raise error here. The 15 min admin job was getting 6502 err here and breaking.
       -- Not sure why admin job would be calling this. Might be from plsq in auto login auth scheme.
       -- raise;
@@ -258,7 +258,7 @@ begin
       p_expires_at);
 exception 
    when others then
-      arcsql.log_err('add_flash_message: '||dbms_utility.format_error_stack);
+      log_err('add_flash_message: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -289,7 +289,7 @@ begin
    return r;
 exception 
    when others then
-      arcsql.log_err('get_flash_message: '||dbms_utility.format_error_stack);
+      log_err('get_flash_message: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -327,7 +327,7 @@ begin
    return r;
 exception 
    when others then
-      arcsql.log_err('get_flash_message: '||dbms_utility.format_error_stack);
+      log_err('get_flash_message: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -348,9 +348,11 @@ begin
    return n;
 exception 
    when others then
-      arcsql.log_err('flash_message_count: '||dbms_utility.format_error_stack);
+      log_err('flash_message_count: '||dbms_utility.format_error_stack);
       raise;
 end;
+
+
 
 end;
 /

@@ -8,7 +8,8 @@ procedure add_bucket (
    p_calc_type in varchar2 default 'none',
    p_ignore_negative in varchar2 default 'N',
    p_save_stat_hours in number default 0,
-   p_skip_archive_hours in number default 0);
+   p_skip_archive_hours in number default 0,
+   p_app_name in varchar2 default null);
 
 function get_bucket (
    p_bucket_id in number) return stat_bucket%rowtype;

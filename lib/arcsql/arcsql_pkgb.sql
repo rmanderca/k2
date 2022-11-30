@@ -120,11 +120,39 @@ begin
    return r;
 end;
 
-function encrypt_sha256 (text varchar2) return varchar2 deterministic is 
+function encrypt_sha256 (text varchar2) -- | Uses dbms_crypto.hash which can't be decrypted but is easier to use.
+   return varchar2 deterministic is 
    r varchar2(1000);
 begin
    r := dbms_crypto.hash(utl_i18n.string_to_raw(text, 'AL32UTF8'), dbms_crypto.hash_sh256);
    return r;
+end;
+
+function encrypt ( -- | Encypts a string using a method that can be decrypted with the arcsql.decrypt function.
+   p_text_to_encrypt in varchar2,
+   p_encryption_key in varchar2
+   ) return raw deterministic is 
+begin
+   if length(p_encryption_key) < 30 then 
+      raise_application_error(-20001, 'Encryption key must be at least 30 characters long.');
+   end if;
+   return dbms_crypto.encrypt (
+      -- Text must be converted to AL32UTF8 and then raw per Oracle docs.
+      src=>utl_i18n.string_to_raw(p_text_to_encrypt, 'AL32UTF8'),
+      -- aes 256 cbc mode + padding (https://stackoverflow.com/questions/32472691/how-to-use-dbms-crypto-encrypt-function-in-oracle)
+      typ=>4356,
+      key=>utl_i18n.string_to_raw(p_encryption_key, 'AL32UTF8'));
+end;
+
+function decrypt ( -- Used to decrypt strings encyrpted using arcsql.encrypt.
+   p_text_to_decrypt in varchar2,
+   p_encryption_key in varchar2
+   ) return varchar2 deterministic is 
+begin
+   return utl_raw.cast_to_varchar2(dbms_crypto.decrypt (
+      src=>p_text_to_decrypt,
+      typ=>4356,
+      key=>utl_i18n.string_to_raw(p_encryption_key, 'AL32UTF8')));
 end;
 
 function str_is_email (text varchar2) return boolean is 
@@ -1781,20 +1809,62 @@ begin
    end if;
 end;
 
+procedure add_log_type (
+   p_log_type in varchar2,
+   p_sends_email in boolean default false,
+   p_sends_sms in boolean default false) is 
+   v_sends_email varchar2(1) default 'N';
+   v_sends_sms varchar2(1) default 'N';
+begin 
+   if p_sends_email then 
+      v_sends_email := 'Y';
+   end if;
+   if p_sends_sms then 
+      v_sends_sms := 'Y';
+   end if;
+   if not does_log_type_exist(p_log_type) then 
+      insert into arcsql_log_type (
+         log_type, 
+         sends_email,
+         sends_sms) values (
+         p_log_type, 
+         v_sends_email,
+         v_sends_sms);
+   end if;
+end;
+
+procedure create_default_log_types_for_account is 
+begin 
+   -- Routes to email and sms
+   add_log_type(p_log_type=>'sms', p_sends_email=>true, p_sends_sms=>true);
+   -- Routes to email only
+   add_log_type(p_log_type=>'email', p_sends_email=>true, p_sends_sms=>false);
+   add_log_type(p_log_type=>'warning', p_sends_email=>true, p_sends_sms=>false);
+   add_log_type(p_log_type=>'notice', p_sends_email=>true, p_sends_sms=>false);
+   add_log_type(p_log_type=>'notify', p_sends_email=>true, p_sends_sms=>false);
+   add_log_type(p_log_type=>'error', p_sends_email=>true, p_sends_sms=>false);
+   -- Does not route to email or sms
+   add_log_type(p_log_type=>'info', p_sends_email=>false, p_sends_sms=>false);
+   add_log_type(p_log_type=>'log',    p_sends_email=>false, p_sends_sms=>false);
+   add_log_type(p_log_type=>'debug', p_sends_email=>false, p_sends_sms=>false);
+   add_log_type(p_log_type=>'debug2', p_sends_email=>false, p_sends_sms=>false);
+   add_log_type(p_log_type=>'debug3', p_sends_email=>false, p_sends_sms=>false);
+   add_log_type(p_log_type=>'deprecated', p_sends_email=>false, p_sends_sms=>false);
+   add_log_type(p_log_type=>'fail', p_sends_email=>false, p_sends_sms=>false);
+   add_log_type(p_log_type=>'pass', p_sends_email=>false, p_sends_sms=>false);
+end;
+
 procedure log_interface (
    p_text in varchar2, 
    p_key in varchar2, 
    p_tags in varchar2,
    p_level in number,
-   p_type in varchar2,
-   p_metric_name_1 in varchar2 default null,
-   p_metric_1 in number default null,
-   p_metric_name_2 in varchar2 default null,
-   p_metric_2 in number default null
+   p_type in varchar2
    ) is 
    pragma autonomous_transaction;
 begin
    if not does_log_type_exist(p_type) then 
+      -- ToDo: This should probably generate an event that requires an ack.
       insert into arcsql_log_type (
          log_type) values (
          lower(p_type));
@@ -1807,10 +1877,6 @@ begin
       log_tags,
       audsid,
       username,
-      metric_name_1,
-      metric_1,
-      metric_name_2,
-      metric_2,
       process_id) values (
       p_text,
       lower(p_type),
@@ -1818,10 +1884,6 @@ begin
       p_tags,
       get_audsid,
       user,
-      p_metric_name_1,
-      p_metric_1,
-      p_metric_name_2,
-      p_metric_2,
       g_process_id);
       commit;
    end if;
@@ -1836,253 +1898,157 @@ procedure log (
    p_text in varchar2, 
    p_key in varchar2 default null, 
    p_tags in varchar2 default null,
-   log_type in varchar2 default 'log',
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   log_type in varchar2 default 'log') is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>0, 
-      p_type=>log_type,
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>log_type);
 end;
 
 procedure log_notify (
    p_text in varchar2, 
    p_key in varchar2 default null, 
-   p_tags in varchar2 default null,
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   p_tags in varchar2 default null) is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>0, 
-      p_type=>'notify',
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>'notify');
 end;
 
 procedure notify (
    p_text in varchar2, 
    p_key in varchar2 default null, 
-   p_tags in varchar2 default null,
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   p_tags in varchar2 default null) is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>0, 
-      p_type=>'notify',
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>'notify');
 end;
 
 procedure log_deprecated (
    p_text in varchar2, 
    p_key in varchar2 default null, 
-   p_tags in varchar2 default null,
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   p_tags in varchar2 default null) is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>0, 
-      p_type=>'deprecated',
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>'deprecated');
 end;
 
 procedure log_audit (
    p_text in varchar2, 
    p_key in varchar2 default null, 
-   p_tags in varchar2 default null,
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   p_tags in varchar2 default null) is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>0, 
-      p_type=>'audit',
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>'audit');
 end;
 
 procedure log_security_event (
    p_text in varchar2, 
    p_key in varchar2 default null, 
-   p_tags in varchar2 default null,
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   p_tags in varchar2 default null) is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>0, 
-      p_type=>'security',
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>'security');
 end;
 
 procedure log_err (
    p_text in varchar2, 
    p_key in varchar2 default null, 
-   p_tags in varchar2 default null,
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   p_tags in varchar2 default null) is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>-1, 
-      p_type=>'error',
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>'error');
 end;
 
 procedure debug (
    p_text in varchar2, 
    p_key in varchar2 default null, 
-   p_tags in varchar2 default null,
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   p_tags in varchar2 default null) is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>1, 
-      p_type=>'debug',
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>'debug');
 end;
 
 procedure debug2 (
    p_text in varchar2, 
    p_key in varchar2 default null, 
-   p_tags in varchar2 default null,
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   p_tags in varchar2 default null) is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>2, 
-      p_type=>'debug2',
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>'debug2');
 end;
 
 procedure debug3 (
    p_text in varchar2, 
    p_key in varchar2 default null, 
-   p_tags in varchar2 default null,
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   p_tags in varchar2 default null) is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>3, 
-      p_type=>'debug3',
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>'debug3');
 end;
 
 procedure log_pass (
    p_text in varchar2, 
    p_key in varchar2 default null, 
-   p_tags in varchar2 default null,
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   p_tags in varchar2 default null) is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>-1, 
-      p_type=>'pass',
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>'pass');
 end;
 
 procedure log_fail (
    p_text in varchar2, 
    p_key in varchar2 default null, 
-   p_tags in varchar2 default null,
-   metric_name_1 in varchar2 default null,
-   metric_1 in number default null,
-   metric_name_2 in varchar2 default null,
-   metric_2 in number default null) is 
+   p_tags in varchar2 default null) is 
 begin
    log_interface (
       p_text=>p_text, 
       p_key=>p_key, 
       p_tags=>p_tags, 
       p_level=>-1, 
-      p_type=>'fail',
-      p_metric_name_1=>metric_name_1,
-      p_metric_1=>metric_1,
-      p_metric_name_2=>metric_name_2,
-      p_metric_2=>metric_2);
+      p_type=>'fail');
 end;
 
 procedure log_sms (
@@ -2109,334 +2075,6 @@ begin
       p_tags=>p_tags, 
       p_level=>0, 
       p_type=>'email');
-end;
-
--- | -----------------------------------------------------------------------------------
--- | Contact groups 
--- | -----------------------------------------------------------------------------------
-
-/* 
-ToDo:
-   * Ability to link groups with certain log entries. Maybe using a regex.
-   * Create a default arcsql_admin contact group and add default email.
-   * log_type sends_email/sms should support cron type values.
-*/
-
-function get_contact_group ( -- | Returns an contact group record.
-   p_group_name in varchar2) return arcsql_contact_group%rowtype is 
-   r arcsql_contact_group%rowtype;
-begin 
-   select * into r 
-     from arcsql_contact_group 
-    where group_name=lower(p_group_name);
-   return r;
-end;
-
-
-function does_contact_group_exist ( -- | Return true if context group exists.
-   p_group_name in varchar2) return boolean is 
-   n number;
-begin 
-   select count(*) into n 
-     from arcsql_contact_group 
-    where group_name=lower(p_group_name);
-   return n=1;
-end;
-
-
-procedure create_contact_group ( -- | Create a new contact group.
-   p_group_name in varchar2,
-   p_is_group_enabled in boolean default true,
-   p_is_group_on_hold in boolean default false,
-   p_is_sms_disabled in boolean default false,
-   p_max_queue_secs in number default 0,
-   p_max_idle_secs in number default 0,
-   p_max_count in number default 0
-   ) is 
-   v_is_group_enabled varchar2(1) := 'N';
-   v_is_group_on_hold varchar2(1) := 'N';
-   v_is_sms_disabled varchar2(1)  := 'N';
-begin 
-   arcsql.debug('create_contact_group: ');
-   if does_contact_group_exist(p_group_name) then 
-      return;
-   end if;
-   if p_is_group_enabled then 
-      v_is_group_enabled := 'Y';
-   end if;
-   if p_is_group_on_hold then 
-      v_is_group_on_hold := 'Y';
-   end if;  
-   if p_is_sms_disabled then 
-      v_is_sms_disabled := 'Y';
-   end if;
-   insert into arcsql_contact_group (
-      group_name,
-      is_group_enabled,
-      is_group_on_hold,
-      is_sms_disabled,
-      max_queue_secs,
-      max_idle_secs,
-      max_count
-      ) values (
-      lower(p_group_name),
-      v_is_group_enabled,
-      v_is_group_on_hold,
-      v_is_sms_disabled,
-      p_max_queue_secs,
-      p_max_idle_secs,
-      p_max_count);
-end;
-
-
-procedure add_contact_to_contact_group ( -- | Add a contact to the contact group.
-   p_group_name in varchar2,
-   p_email_address in varchar2,
-   p_sms_address in varchar2) is 
-   n number;
-begin 
-   arcsql.debug('add_contact_to_contact_group: ');
-   select count(*) into n 
-     from arcsql_contact_group_contacts 
-    where group_name=lower(p_group_name) 
-      and (email_address=lower(p_email_address)
-       or sms_address=lower(p_sms_address));
-   if n = 0 then 
-      insert into arcsql_contact_group_contacts (
-         group_name,
-         email_address,
-         sms_address) values (
-         lower(p_group_name),
-         lower(p_email_address),
-         lower(p_sms_address));
-   end if;
-end;
-
-
-function is_sms_possible ( -- | Return true if sms enabled for group, group is enabled, and not on hold.
-   p_group_name in varchar2) return boolean is 
-   n number;
-begin 
-   select count(*) into n 
-     from arcsql_contact_group 
-    where group_name=p_group_name 
-      and is_truthy_y(is_group_enabled)='y' 
-      and is_truthy_y(is_sms_disabled)='n'
-      and is_truthy_y(is_group_on_hold)='n';
-   if n > 0 then 
-      debug2('is_sms_possible: true');
-      return true;
-   else 
-      debug2('is_sms_possible: false');
-      return false;
-   end if;
-end;
-
-
-function is_email_possible ( -- | Return true if the group is enabled and not on hold.
-   p_group_name in varchar2) return boolean is 
-   n number;
-begin 
-   select count(*) into n 
-     from arcsql_contact_group 
-    where group_name=p_group_name
-      and is_truthy_y(is_group_enabled)='y' 
-      and is_truthy_y(is_group_on_hold)='n';
-   if n > 0 then 
-      debug2('is_email_possible: true');
-      return true;
-   else 
-      debug2('is_email_possible: false');
-      return false;
-   end if;
-end;
-
-
-function has_sms_messages ( -- | Return true if contact group has SMS messages that need to be sent.
-   p_group_name in varchar2) return boolean is 
-   n number;
-   g arcsql_contact_group%rowtype;
-begin
-   g := get_contact_group(p_group_name);
-   select count(*) into n 
-    from arcsql_log a,
-         arcsql_log_type b
-   where log_time > g.last_sent 
-     and a.log_type=b.log_type  
-     and arcsql.is_truthy_y(sends_sms)='y';
-   if n > 0 then 
-      debug2('has_sms_messages: true');
-      return true;
-   else 
-      debug2('has_sms_messages: false');
-      return false;
-   end if;
-end;
-
-
-function has_email_messages ( -- | Return true if contact group has email messages queued.
-   p_group_name in varchar2) return boolean is 
-   n number;
-   g arcsql_contact_group%rowtype;
-begin
-   g := get_contact_group(p_group_name);
-   select count(*) into n 
-    from arcsql_log a,
-         arcsql_log_type b
-    where log_time > g.last_sent 
-      and a.log_type=b.log_type  
-      and arcsql.is_truthy_y(b.sends_email)='y';
-   if n > 0 then 
-      debug2('has_email_messages: true');
-      return true;
-   else 
-      debug2('has_email_messages: false');
-      return false;
-   end if;
-end;
-
-
-procedure send_sms_messages (
-   p_group_name in varchar2) is 
-   cursor c_sms (p_last_sent date) is 
-   select a.* 
-     from arcsql_log a,
-          arcsql_log_type b 
-    where log_time > p_last_sent
-      and a.log_type=b.log_type
-      and a.log_type not like 'debug%' 
-      and arcsql.is_truthy_y(b.sends_sms)='y'
-    order by log_time;
-   g arcsql_contact_group%rowtype;
-   m varchar2(1200);
-   sms_addresses varchar2(1200);
-begin
-   debug('send_sms_messages: ');
-   g := get_contact_group(p_group_name); 
-   select listagg(sms_address, ',') into sms_addresses 
-     from arcsql_contact_group_contacts 
-    where group_name=p_group_name;
-   for c in c_sms(g.last_sent) loop 
-      m := m || to_char(c.log_time, 'DD-MON-RR HH24:MI')||': '||c.log_text||'
-';
-   end loop;
-   if m is not null and sms_addresses is not null then 
-      send_email (
-         p_to=>sms_addresses,
-         p_from=>arcsql_cfg.default_email_from_address,
-         p_body=>m,
-         p_subject=>'New log table entries from ArcSQL.');
-   end if;
-end;
-
-
-procedure send_email_messages (
-   p_group_name in varchar2) is 
-   cursor c_email (p_last_sent date) is 
-   select a.* 
-     from arcsql_log a,
-          arcsql_log_type b 
-    where log_time > p_last_sent
-      and a.log_type=b.log_type
-      and a.log_type not like 'debug%' 
-      and arcsql.is_truthy_y(b.sends_email)='y'
-    order by log_time;
-   g arcsql_contact_group%rowtype;
-   m varchar2(1200);
-   email_addresses varchar2(1200);
-begin
-   debug('send_email_messages: ');
-   g := get_contact_group(p_group_name); 
-   select listagg(email_address, ',') into email_addresses 
-     from arcsql_contact_group_contacts 
-    where group_name=p_group_name;
-   for c in c_email(g.last_sent) loop 
-      m := m || to_char(c.log_time, 'DD-MON-RR HH24:MI')||': '||c.log_text||'
-';
-   end loop;
-   if m is not null and email_addresses is not null then 
-      send_email(
-         p_to=>email_addresses,
-         p_from=>arcsql_cfg.default_email_from_address,
-         p_body=>m,
-         p_subject=>'New log table entries from ArcSQL.');
-   end if;
-end;
-
-
-procedure check_contact_groups is 
-
-   cursor c_contact_groups is 
-   select * from arcsql_contact_group;
-   c arcsql_contact_group%rowtype;
-
-   function is_max_queue_secs (c arcsql_contact_group%rowtype) return boolean is 
-      v_queue_secs number;
-   begin 
-      select round((sysdate-min(log_time))/1440)
-        into v_queue_secs
-        from arcsql_log 
-       where log_time > c.last_sent;
-      if v_queue_secs >= c.max_queue_secs then 
-         debug('is_max_queue_secs: true');
-         return true;
-      else 
-         debug('is_max_queue_secs: false');
-         return false;
-      end if;
-   end;
-
-   function is_max_idle_secs (c arcsql_contact_group%rowtype) return boolean is 
-      v_idle_secs number;
-   begin 
-      select round((sysdate-max(log_time))/1440)
-        into v_idle_secs
-        from arcsql_log 
-       where log_time > c.last_sent;
-      if v_idle_secs >= c.max_idle_secs then 
-         debug('is_max_idle_secs: true');
-         return true;
-      else 
-         debug('is_max_idle_secs: false');
-         return false;
-      end if;
-   end;
-
-   function is_max_count (c arcsql_contact_group%rowtype) return boolean is 
-      v_count number;
-   begin 
-      select count(*)
-        into v_count
-        from arcsql_log 
-       where log_time > c.last_sent;
-      if v_count >= c.max_count then 
-         debug('is_max_count: true');
-         return true;
-      else 
-         debug('is_max_count: false');
-         return false;
-      end if;
-   end;
-   
-begin 
-   for g in c_contact_groups loop 
-      debug2('check_contact_groups: '||g.group_name);
-      c := get_contact_group(g.group_name);
-      if is_sms_possible(g.group_name) and has_sms_messages(g.group_name) then 
-         send_sms_messages(g.group_name);
-         send_email_messages(g.group_name);
-         update arcsql_contact_group 
-            set last_sent=sysdate 
-          where group_name=g.group_name;
-         commit;
-      elsif is_email_possible(g.group_name) and has_email_messages(g.group_name) and (is_max_queue_secs(c) or is_max_idle_secs(c) or is_max_count(c)) then
-         send_email_messages(g.group_name);
-         update arcsql_contact_group 
-            set last_sent=sysdate 
-          where group_name=g.group_name;
-         commit;
-      end if;
-   end loop;
 end;
 
 -- | -----------------------------------------------------------------------------------
@@ -3218,257 +2856,6 @@ begin
       p_key=>'message',
       p_tags=>p_tags, 
       p_level=>0);
-end;
-
--- | -----------------------------------------------------------------------------------
--- | Alerting
--- | -----------------------------------------------------------------------------------
-
-function is_alert_open (p_alert_key in varchar2) return boolean is 
-   n number;
-begin 
-   select count(*) into n from arcsql_alert 
-    where alert_key=p_alert_key 
-      and status in ('open', 'abandoned');
-   if n > 0 then 
-      debug('Alert is already open.');
-      return true;
-   else 
-      debug('Alert is not open.');
-      return false;
-   end if;
-end;
-
-function does_alert_priority_exist(p_priority in number) return boolean is 
-   n number;
-begin 
-   select count(*) into n from arcsql_alert_priority where priority_level=p_priority;
-   if n > 0 then 
-      return true;
-   else 
-      return false;
-   end if;
-end;
-
-procedure raise_alert_priority_not_found (p_priority in number) is 
-   n number;
-begin 
-   select count(*) into n from arcsql_alert_priority where priority_level=p_priority;
-   if n = 0 then 
-      raise_application_error(-20001, 'Alert priority not found.');
-   end if;
-end;
-
-procedure set_alert_priority (p_priority in number) is 
-   n number;
-begin 
-   raise_alert_priority_not_found(p_priority);
-   -- Get the max level alert type which is enabled.
-   g_alert_priority := null;
-   select max(priority_level) into n 
-     from arcsql_alert_priority 
-    where priority_level <= p_priority 
-      and is_truthy_y(enabled) = 'y';
-   if n is null then 
-      g_alert_priority.priority_level := 0;
-   else 
-      select * into g_alert_priority
-        from arcsql_alert_priority 
-       where priority_level=n;
-   end if;
-   debug3('Setting alert priority level to '||g_alert_priority.priority_level);
-end;
-
-procedure raise_alert_priority_not_set is 
-begin 
-   if g_alert_priority.priority_level is null then 
-      raise_application_error(-20001, 'Alert priority not set.');
-   end if;
-end;
-
-procedure save_alert_priority is 
-begin 
-   raise_alert_priority_not_set;
-   if does_alert_priority_exist(g_alert_priority.priority_level) then 
-      update arcsql_alert_priority set row=g_alert_priority where priority_level=g_alert_priority.priority_level;
-   else 
-      insert into arcsql_alert_priority values g_alert_priority;
-   end if;
-end;
-
-function get_default_alert_priority return number is 
-   cursor default_priorities is 
-   select * from arcsql_alert_priority 
-    where is_truthy_y(is_default)='y'
-    order 
-       by priority_level desc;
-begin 
-   for priority_level in default_priorities loop 
-      return priority_level.priority_level;
-   end loop;
-   return 3;
-end;
-
-procedure set_alert(p_alert_key in varchar2) is 
-begin 
-   select * into g_alert from arcsql_alert 
-    where alert_key=p_alert_key
-      and status in ('open', 'abandoned');
-   set_alert_priority(g_alert.priority_level);
-end;
-
-procedure raise_alert_not_set is 
-begin 
-   if g_alert.alert_key is null then 
-      raise_application_error(-20001, 'Alert is not set.');
-   end if;
-end;
-
-procedure log_alert (
-   p_log_text in varchar2,
-   p_log_type in varchar2) is 
-begin 
-   raise_alert_not_set;
-   log_interface (
-      p_text=>p_log_text, 
-      p_key=>'ALERT-P'||g_alert.priority_level, 
-      p_tags=>'alert',
-      p_level=>0, 
-      p_type=>p_log_type);
-end;
-
-function get_alert_key_from_alert_text (p_text in varchar2) return varchar2 is 
-begin 
-   return lower(replace(str_remove_text_between(p_text, '[', ']'), ' '));
-end;
-
-procedure open_alert (
-   p_text in varchar2 default null,
-   -- Supports levels 1-5 (critical, high, moderate, low, informational).
-   p_priority in number default null) is 
-   v_priority number := p_priority;
-   v_alert_key varchar2(120) := get_alert_key_from_alert_text(p_text);
-begin
-   debug('Opening an alert.');
-   if not is_alert_open(v_alert_key) then 
-      if v_priority is null then 
-         v_priority := get_default_alert_priority;
-      end if;
-      set_alert_priority(v_priority);
-      -- If all alert types are disabled skip any furthur action.
-      if g_alert_priority.priority_level > 0 then
-         insert into arcsql_alert (
-            alert_key,
-            alert_text,
-            status,
-            priority_level,
-            opened,
-            closed,
-            abandoned,
-            reminder_count,
-            reminder_interval
-            ) values (
-            v_alert_key,
-            p_text,
-            'open',
-            g_alert_priority.priority_level,
-            sysdate,
-            null,
-            null,
-            0,
-            g_alert_priority.reminder_interval
-            );
-         set_alert(v_alert_key);
-         log_alert (
-            p_log_text=>'OPEN: '||p_text||' (ALERT-P'||g_alert_priority.priority_level||')',
-            p_log_type=>g_alert_priority.alert_log_type);
-      end if;
-   end if;
-end;
-
-procedure close_alert (
-   p_text in varchar2, 
-   p_is_autoclose in boolean := false) is 
-   v_alert_key varchar2(120) := get_alert_key_from_alert_text(p_text);
-   v_close varchar2(120) := 'CLOSE';
-begin 
-   set_alert(v_alert_key);
-   update arcsql_alert 
-      set closed=sysdate, 
-          status='closed',
-          last_action=sysdate
-    where alert_key=v_alert_key
-      and status in ('open', 'abandoned');
-   if not g_alert_priority.close_log_type is null and g_alert_priority.priority_level > 0 then
-      if p_is_autoclose then 
-         v_close := 'AUTOCLOSE';
-      end if;
-      log_alert (
-         p_log_text=>v_close||': '||p_text||' (ALERT-P'||g_alert_priority.priority_level||')',
-         p_log_type=>g_alert_priority.alert_log_type);
-   end if;
-end;
-
-procedure abandon_alert (p_text in varchar2) is 
-   v_alert_key varchar2(120) := get_alert_key_from_alert_text(p_text);
-begin 
-   set_alert(v_alert_key);
-   update arcsql_alert 
-      set abandoned=sysdate, 
-          status='abandoned',
-          last_action=sysdate
-    where alert_key=v_alert_key
-      and status in ('open');
-   if not g_alert_priority.abandon_log_type is null and g_alert_priority.priority_level > 0 then
-      log_alert (
-         p_log_text=>'ABANDON: '||p_text||' (ALERT-P'||g_alert_priority.priority_level||')',
-         p_log_type=>g_alert_priority.alert_log_type);
-   end if;
-end;
-
-procedure remind_alert (p_text in varchar2) is 
-   v_alert_key varchar2(120) := get_alert_key_from_alert_text(p_text);
-begin 
-   set_alert(v_alert_key);
-   update arcsql_alert 
-      set reminder_interval=reminder_interval*g_alert_priority.reminder_backoff_interval,
-          reminder_count=reminder_count+1,
-          last_action=sysdate
-    where alert_key=v_alert_key
-      and status in ('open');
-   log_alert (
-      p_log_text=>'REMIND: '||p_text||' (ALERT-P'||g_alert_priority.priority_level||')',
-      p_log_type=>g_alert_priority.alert_log_type);
-end;
-
-procedure check_alerts is 
-   cursor alerts is 
-   select * from arcsql_alert 
-    where status in ('open', 'abandoned');
-begin 
-   start_event(p_event_key=>'arcsql', p_sub_key=>'alerting', p_name=>'check_alerts');
-   for open_alert in alerts loop 
-      set_alert_priority(open_alert.priority_level);
-      if g_alert_priority.close_interval > 0 and 
-         open_alert.opened+(g_alert_priority.close_interval/1440) < sysdate then 
-         close_alert(open_alert.alert_text);
-      elsif g_alert_priority.abandon_interval > 0 and 
-         open_alert.opened+(g_alert_priority.abandon_interval/1440) < sysdate and 
-         open_alert.status = 'open' then 
-         abandon_alert(open_alert.alert_text);
-      elsif g_alert_priority.reminder_interval > 0 and 
-         open_alert.last_action+(g_alert_priority.reminder_interval/1440) < sysdate and
-         open_alert.reminder_count < g_alert_priority.reminder_count and 
-         open_alert.status = 'open' then 
-         remind_alert(open_alert.alert_text);
-      end if;
-   end loop;
-   stop_event(p_event_key=>'arcsql', p_sub_key=>'alerting', p_name=>'check_alerts');
-   commit;
-exception 
-   when others then 
-      rollback;
-      raise;
 end;
 
 end;

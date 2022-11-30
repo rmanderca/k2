@@ -122,12 +122,10 @@ end;
 
 procedure log_cgi_env_to_debug is 
 begin 
-    arcsql.debug('REMOTE_ADDR: '||owa_util.get_cgi_env('REMOTE_ADDR'));
-    arcsql.debug('SCRIPT_NAME: '||owa_util.get_cgi_env('SCRIPT_NAME'));
-    arcsql.debug('QUERY_STRING: '||owa_util.get_cgi_env('QUERY_STRING'));
-    arcsql.debug('PATH_INFO: '||owa_util.get_cgi_env('PATH_INFO'));
-    arcsql.debug('REQUEST_METHOD: '||owa_util.get_cgi_env('REQUEST_METHOD'));
-    arcsql.debug('SERVER_SOFTWARE: '||owa_util.get_cgi_env('SERVER_SOFTWARE'));
+    -- https://stackoverflow.com/questions/70313694/how-to-get-host-name-and-request-headers-for-ords-restful-services
+    for i in 1..nvl(owa.num_cgi_vars, 0) loop
+        arcsql.debug('log_cgi_env_to_debug: '||owa.cgi_var_name(i) || ' = ' || owa.cgi_var_val(i));
+    end loop;
 end;
 
 end;

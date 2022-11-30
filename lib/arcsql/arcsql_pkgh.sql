@@ -65,7 +65,18 @@ create or replace package arcsql as
    function str_random (length in number default 33, string_type in varchar2 default 'an') return varchar2;
    -- Hash a string using MD5. 
    function str_hash_md5 (text varchar2) return varchar2;
+
    function encrypt_sha256 (text varchar2) return varchar2 deterministic;
+   
+   function encrypt ( 
+      p_text_to_encrypt in varchar2,
+      p_encryption_key in varchar2) return raw deterministic;
+
+   function decrypt ( 
+      p_text_to_decrypt in varchar2,
+      p_encryption_key in varchar2
+      ) return varchar2 deterministic;
+
    -- Return true if string appears to be an email address.
    function str_is_email (text varchar2) return boolean;
    -- Return count of str within str. Can handle >1 length p_char.
@@ -283,105 +294,63 @@ create or replace package arcsql as
 
    function does_log_type_exist (p_log_type in varchar2) return boolean;
 
+   procedure create_default_log_types_for_account;
+
    procedure log (
       p_text in varchar2, 
       p_key in varchar2 default null, 
       p_tags in varchar2 default null,
-      log_type in varchar2 default 'log',
-      metric_name_1 in varchar2 default null,
-      metric_1 in number default null,
-      metric_name_2 in varchar2 default null,
-      metric_2 in number default null);
+      log_type in varchar2 default 'log');
 
    procedure log_notify (
       p_text in varchar2, 
       p_key in varchar2 default null, 
-      p_tags in varchar2 default null,
-      metric_name_1 in varchar2 default null,
-      metric_1 in number default null,
-      metric_name_2 in varchar2 default null,
-      metric_2 in number default null);
+      p_tags in varchar2 default null);
 
     procedure notify (
       p_text in varchar2, 
       p_key in varchar2 default null, 
-      p_tags in varchar2 default null,
-      metric_name_1 in varchar2 default null,
-      metric_1 in number default null,
-      metric_name_2 in varchar2 default null,
-      metric_2 in number default null);
+      p_tags in varchar2 default null);
 
    procedure log_deprecated (
       p_text in varchar2, 
       p_key in varchar2 default null, 
-      p_tags in varchar2 default null,
-      metric_name_1 in varchar2 default null,
-      metric_1 in number default null,
-      metric_name_2 in varchar2 default null,
-      metric_2 in number default null);
+      p_tags in varchar2 default null);
 
    procedure log_audit (
       p_text in varchar2, 
       p_key in varchar2 default null, 
-      p_tags in varchar2 default null,
-      metric_name_1 in varchar2 default null,
-      metric_1 in number default null,
-      metric_name_2 in varchar2 default null,
-      metric_2 in number default null);
+      p_tags in varchar2 default null);
 
    procedure log_security_event (
       p_text in varchar2, 
       p_key in varchar2 default null, 
-      p_tags in varchar2 default null,
-      metric_name_1 in varchar2 default null,
-      metric_1 in number default null,
-      metric_name_2 in varchar2 default null,
-      metric_2 in number default null);
+      p_tags in varchar2 default null);
 
    procedure log_err (
       p_text in varchar2, 
       p_key in varchar2 default null, 
-      p_tags in varchar2 default null,
-      metric_name_1 in varchar2 default null,
-      metric_1 in number default null,
-      metric_name_2 in varchar2 default null,
-      metric_2 in number default null);
+      p_tags in varchar2 default null);
 
    procedure debug (
       p_text in varchar2, 
       p_key in varchar2 default null, 
-      p_tags in varchar2 default null,
-      metric_name_1 in varchar2 default null,
-      metric_1 in number default null,
-      metric_name_2 in varchar2 default null,
-      metric_2 in number default null);
+      p_tags in varchar2 default null);
 
    procedure debug2 (
       p_text in varchar2, 
       p_key in varchar2 default null, 
-      p_tags in varchar2 default null,
-      metric_name_1 in varchar2 default null,
-      metric_1 in number default null,
-      metric_name_2 in varchar2 default null,
-      metric_2 in number default null);
+      p_tags in varchar2 default null);
 
    procedure debug3 (
       p_text in varchar2, 
       p_key in varchar2 default null, 
-      p_tags in varchar2 default null,
-      metric_name_1 in varchar2 default null,
-      metric_1 in number default null,
-      metric_name_2 in varchar2 default null,
-      metric_2 in number default null);
+      p_tags in varchar2 default null);
 
    procedure log_fail (
       p_text in varchar2, 
       p_key in varchar2 default null, 
-      p_tags in varchar2 default null,
-      metric_name_1 in varchar2 default null,
-      metric_1 in number default null,
-      metric_name_2 in varchar2 default null,
-      metric_2 in number default null);
+      p_tags in varchar2 default null);
 
    procedure log_sms (
       p_text in varchar2, 
@@ -393,59 +362,6 @@ create or replace package arcsql as
       p_key in varchar2 default null, 
       p_tags in varchar2 default null);
    
-   /* 
-   -----------------------------------------------------------------------------------
-   Contact Groups
-   -----------------------------------------------------------------------------------
-   */
-   procedure create_contact_group (
-      p_group_name in varchar2,
-      p_is_group_enabled in boolean default true,
-      p_is_group_on_hold in boolean default false,
-      p_is_sms_disabled in boolean default false,
-      p_max_queue_secs in number default 0,
-      p_max_idle_secs in number default 0,
-      p_max_count in number default 0);
-
-   procedure add_contact_to_contact_group (
-      p_group_name in varchar2,
-      p_email_address in varchar2,
-      p_sms_address in varchar2);
-
-   procedure send_email_messages (
-      p_group_name in varchar2);
-   
-   procedure check_contact_groups;
-
-   /* 
-   -----------------------------------------------------------------------------------
-   Alerts
-   -----------------------------------------------------------------------------------
-   */
-
-   g_alert_priority arcsql_alert_priority%rowtype;
-   g_alert arcsql_alert%rowtype;
-
-   function is_alert_open (p_alert_key in varchar2) return boolean;
-
-   function does_alert_priority_exist (p_priority in number) return boolean;
-
-   procedure set_alert_priority (p_priority in number);
-
-   procedure save_alert_priority;
-
-   -- Returns 3 if nothing is set.
-   function get_default_alert_priority return number;
-
-   procedure open_alert (
-      p_text in varchar2 default null,
-      p_priority in number default null);
-
-   procedure close_alert (
-      p_text in varchar2, 
-      p_is_autoclose in boolean := false);
-
-   procedure check_alerts;
 
    /* 
    -----------------------------------------------------------------------------------

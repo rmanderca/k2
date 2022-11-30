@@ -40,20 +40,7 @@ begin
 end;
 /
 
--- uninstall: exec drop_scheduler_job('arcsql_check_alerts');
-begin
-  if not does_scheduler_job_exist('arcsql_check_alerts') then 
-     -- Checks to see if any existing alerts need to auto-close or re-notify.
-     dbms_scheduler.create_job (
-       job_name        => 'arcsql_check_alerts',
-       job_type        => 'PLSQL_BLOCK',
-       job_action      => 'begin arcsql.check_alerts; end;',
-       start_date      => systimestamp,
-       repeat_interval => 'freq=minutely;interval=1',
-       enabled         => true);
-   end if;
-end;
-/
+exec drop_scheduler_job('arcsql_check_alerts');
 
 -- uninstall: exec drop_scheduler_job('arcsql_check_contact_groups');
 begin

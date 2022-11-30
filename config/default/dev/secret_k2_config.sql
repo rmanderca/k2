@@ -42,6 +42,14 @@ create or replace package k2_config as
     -- Do you want K2 to collect metrics?
     enable_k2_metrics boolean := true;
 
+    -- This disables email if send_email procedure references it(see long story file 11/4/2022).
+    disable_email boolean := false;
+
+    -- Determines if ords is enabled for the schema.
+    enable_ords boolean := true;
+
+    secret_key varchar2(100) := 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+
 end;
 /
 

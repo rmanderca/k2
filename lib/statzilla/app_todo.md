@@ -1,4 +1,7 @@
 
+## Implement stat profiles which automatically apply a set of rules to a group of stats.
+   - Ideally statzilla could recognize a stat group and prompt to apply a profile via UI or email.
+
 ## Should track metrics for stat groups
 	- How many are elevated
 	- How many key metrics are elevated/depressed
