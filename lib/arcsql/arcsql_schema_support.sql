@@ -235,6 +235,16 @@ exception
 end;
 /
 
+create or replace procedure add_pk_constraint (
+   table_name in varchar2,
+   column_name in varchar2) is 
+begin 
+   if not does_constraint_exist('pk_'||table_name) then 
+      execute_sql('alter table '||table_name||' add constraint pk_'||table_name||' primary key ('||column_name||')');
+   end if;
+end;
+/
+
 create or replace procedure drop_constraint (p_constraint_name varchar2) is 
    x user_constraints%rowtype;
 begin 
@@ -398,3 +408,5 @@ begin
    end if;
 end;
 /
+
+

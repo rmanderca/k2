@@ -89,8 +89,8 @@ end;
 
 function get_priority_group_row ( -- | Return a row from the alert_priority_groups table.
    p_priority_group_id in number)
-   return alert_priority_group%rowtype is 
-   r alert_priority_group%rowtype;
+   return alert_priority_groups%rowtype is 
+   r alert_priority_groups%rowtype;
 begin
    select * into r from alert_priority_groups where priority_group_id=p_priority_group_id;
    return r;
