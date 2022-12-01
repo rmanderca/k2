@@ -14,7 +14,7 @@ declare
 	
 begin
 
-    saas_auth_pkg.delete_user(t.email);
+    saas_auth_pkg.delete_user(p_email=>t.email);
     
 	arcsql.init_test('Make sure test user does not exist');
 	if not saas_auth_pkg.does_user_name_exist(t.email) then

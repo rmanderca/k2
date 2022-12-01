@@ -20,9 +20,6 @@
 -- Things that need to run towards the end of the install.
 @saas_app_post_install.sql
 
--- Create ArcSQL contact groups, like admins, for alerting, monitoring and other purposes.
-@app_contact_groups.sql
-
 -- Install any scheduled jobs using the dbms job scheduler.
 @app_scheduler_jobs.sql
 
