@@ -4,7 +4,6 @@ create or replace trigger statzilla_stat_bucket_trg
    before insert or update on stat_bucket 
    for each row
 begin
-   :new.ignore_negative := upper(:new.ignore_negative);
    :new.calc_type := lower(:new.calc_type);
    :new.date_format := upper(:new.date_format);
    :new.avg_val_ref_group := upper(:new.avg_val_ref_group);
@@ -49,7 +48,7 @@ create or replace trigger statzilla_stat_work_ins
 begin
    -- Do not do below, should already be set by the invoker. 
    -- statzilla.set_bucket_by_id(:new.bucket_id);
-   if statzilla.g_bucket.ignore_negative = 'Y' and 
+   if statzilla.g_bucket.ignore_negative = 1 and 
       :new.received_val < 0 then
          :new.received_val := 0;
    end if;
@@ -121,7 +120,7 @@ begin
 
    -- IN ADDITION TO SCHEDULED TASK REFRESH REFERENCES ON HOUR SWITCH FOR FIRST 14 DAYS
    if :new.created > systimestamp-14 and trunc(:old.stat_time, 'HH24') < trunc(:new.stat_time, 'HH24') then
-      statzilla.refresh_references(p_bucket_id=>:new.bucket_id, p_stat_name=>:new.stat_name);
+      statzilla.refresh_references(p_bucket_id=>:new.bucket_id, p_stat_key=>:new.stat_key);
    end if;
 
    -- ARCHIVE THE CURRENT RECORD AND START A NEW ONE WHEN DATE FORMAT VALUE CHANGES
@@ -131,6 +130,7 @@ begin
       insert into stat_archive (
       stat_work_id,
       stat_name,
+      stat_key,
       stat_level,
       bucket_id,
       calc_count,
@@ -171,6 +171,7 @@ begin
       ) values (
       :old.stat_work_id,
       :old.stat_name,
+      :old.stat_key,
       :old.stat_level,
       :old.bucket_id,
       :old.calc_count,
@@ -221,7 +222,7 @@ begin
               from stat_avg_val_hist_ref a 
              where a.avg_val_ref_group='HH24' 
                and a.hist_key=to_char(:new.stat_time, 'HH24')||':00'
-               and a.stat_name=:new.stat_name
+               and a.stat_key=:new.stat_key
                and row_count > statzilla.g_bucket.avg_val_required_row_count;
             :new.avg_val_ref_group := 'HH24';
             try_again := false;
@@ -240,7 +241,7 @@ begin
               from stat_avg_val_hist_ref a 
              where a.avg_val_ref_group='DY'  
                and a.hist_key=to_char(:new.stat_time, 'DY') 
-               and a.stat_name=:new.stat_name
+               and a.stat_key=:new.stat_key
                and row_count > statzilla.g_bucket.avg_val_required_row_count;
             try_again := false;
             :new.avg_val_ref_group := 'DY';
@@ -259,7 +260,7 @@ begin
               from stat_avg_val_hist_ref a 
              where a.avg_val_ref_group='ALL'  
                and a.hist_key='ALL'
-               and a.stat_name=:new.stat_name;
+               and a.stat_key=:new.stat_key;
                :new.avg_val_ref_group := 'ALL';
          exception 
             when no_data_found then 
@@ -342,7 +343,7 @@ begin
       :new.zero_calc_count := :new.zero_calc_count+1;
    end if;
 
-   if statzilla.g_bucket.ignore_negative = 'Y' and :new.calc_val < 0 then
+   if statzilla.g_bucket.ignore_negative = 1 and :new.calc_val < 0 then
       :new.calc_val := 0;
    end if;
 
@@ -352,14 +353,14 @@ begin
    -- Only do pctiles if we have data to compare to.
    select count(*) into n from stat_percentiles_ref
     where bucket_id=:new.bucket_id 
-      and stat_name=:new.stat_name 
+      and stat_key=:new.stat_key 
       and rownum <= 1;
 
    if n > 0 then 
       select * into v_stat_percentiles_ref
         from stat_percentiles_ref
        where bucket_id=:new.bucket_id 
-         and stat_name=:new.stat_name;
+         and stat_key=:new.stat_key;
       -- Percentile Buckets
       if :new.calc_val <= v_stat_percentiles_ref.pctile0 then 
          :new.pctile0x := :new.pctile0x + 1;

@@ -140,7 +140,9 @@ end;
 
 -- uninstall: exec drop_view('v_saas_auth_available_accounts');
 create or replace view v_saas_auth_available_accounts as
-   select * from saas_auth where account_status in ('active', 'inactive')
+   select * 
+     from saas_auth 
+    where account_status in ('active', 'inactive')
       and account_status not in ('delete', 'locked');
 
 

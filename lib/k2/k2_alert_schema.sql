@@ -53,7 +53,6 @@ begin
       drop_table('alert_priority_groups');
       drop_table('alert_priorities');
       drop_table('alerts');
-      drop_table('alert_log');
    end if;
 end;
 /
