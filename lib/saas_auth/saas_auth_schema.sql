@@ -180,10 +180,7 @@ begin
       use_count number default 0 not null
       )', false);
    end if;
-   if not does_constraint_exist('pk_saas_auth_token') then 
-      execute_sql('
-         alter table saas_auth_token add constraint pk_saas_auth_token primary key (id)', false);
-   end if;
+   add_pk_constraint('saas_auth_token', 'id');
    if not does_constraint_exist('saas_auth_token_fk_user_id') then 
       execute_sql('
          alter table saas_auth_token add constraint saas_auth_token_fk_user_id foreign key (user_id) references saas_auth (user_id) on delete cascade', false);

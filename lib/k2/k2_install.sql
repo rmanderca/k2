@@ -5,6 +5,9 @@
 @k2_alert_schema.sql
 @k2_alert_pkgh.sql 
 @k2_alert_pkgb.sql
+@k2_access_key_schema.sql
+@k2_access_key_pkgh.sql
+@k2_access_key_pkgb.sql
 @k2_contact_schema.sql
 @k2_contact_pkgh.sql
 @k2_contact_pkgb.sql
