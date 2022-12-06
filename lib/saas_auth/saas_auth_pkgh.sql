@@ -2,6 +2,10 @@
 -- uninstall: drop package saas_auth_pkg;
 create or replace package saas_auth_pkg as
 
+   procedure set_role_for_user (
+      p_user_id in number,
+      p_role_name in varchar2);
+
    function get_saas_auth_row (
       p_user_id in number)
       return saas_auth%rowtype;
@@ -81,7 +85,7 @@ create or replace package saas_auth_pkg as
    procedure verify_email_using_token (
       p_email in varchar2,
       p_auth_token in varchar2);
-  
+
    -- Add this to your authentication scheme. Calls all packaged procedures with name 'post_auth'.
    procedure post_auth;
 
@@ -126,7 +130,7 @@ create or replace package saas_auth_pkg as
 
    -- This is set up in APEX as a custom authorization.
    function is_signed_in return boolean;
-   
+
    -- This is set up in APEX as a custom authorization.
    function is_not_signed_in return boolean;
 

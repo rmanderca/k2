@@ -1,5 +1,30 @@
 create or replace package body saas_auth_pkg as
 
+function get_saas_auth_role_row ( -- | Return a role row using the role name as a look up.
+   p_role_name in varchar2) 
+   return saas_auth_role%rowtype is 
+   r saas_auth_role%rowtype;
+begin
+   select * into r from saas_auth_role where lower(role_name) = lower(p_role_name);
+   return r;
+end;
+
+procedure set_role_for_user ( -- | Set the role id in the saas_auth table for a user using the role name.
+   p_user_id in number,
+   p_role_name in varchar2) is 
+   r saas_auth_role%rowtype;
+begin
+   r := get_saas_auth_role_row(p_role_name);
+   update saas_auth set role_id=r.role_id where user_id=p_user_id;
+   if sql%rowcount = 0 then 
+      raise_application_error(-20001, 'User not found');
+   end if;
+exception
+   when others then
+      arcsql.log_err('set_role_for_user: '||dbms_utility.format_error_stack);
+      raise;
+end;
+
 function get_saas_auth_row (
    p_user_id in number)
    return saas_auth%rowtype is 
@@ -1057,16 +1082,13 @@ end;
 
 procedure add_test_user ( -- Add a user which is only accessible in dev mode.
    p_email in varchar2) is 
-   v_email varchar2(120) := lower(p_email);
-   test_pass varchar2(120);
 begin
-   arcsql.debug('add_test_user: '||v_email);
-   test_pass := saas_auth_config.saas_auth_test_pass;
-   if not does_user_name_exist(p_user_name=>v_email) then
+   arcsql.debug('add_test_user: '||lower(p_email));
+   if not does_user_name_exist(p_user_name=>lower(p_email)) then
       add_user (
-         p_user_name=>v_email,
-         p_email=>v_email,
-         p_password=>test_pass,
+         p_user_name=>lower(p_email),
+         p_email=>lower(p_email),
+         p_password=>saas_auth_config.saas_auth_test_pass,
          p_is_test_user=>true);
    end if;
 end;
@@ -1213,9 +1235,7 @@ exception
 end;
 
 
-procedure create_account (
-   -- Creates a new user account.
-   --
+procedure create_account ( -- | Creates a new user account.
    p_user_name in varchar2,
    p_email in varchar2,
    p_password in varchar2,
@@ -1260,7 +1280,6 @@ exception
       raise;
 end;
 
-
 function custom_auth (
    -- Custom authorization function registered as APEX authorization scheme.
    --
@@ -1287,7 +1306,7 @@ begin
     where user_name=v_user_name;
    v_password := get_hashed_password(p_secret_string=>v_uuid||p_password);
 
-   arcsql.debug('v_password='||v_password||', v_stored_password='||v_stored_password);
+   -- arcsql.debug('v_password='||v_password||', v_stored_password='||v_stored_password);
    if v_password=v_stored_password then
       arcsql.debug('custom_auth: true');
       fire_on_login_event(v_user_id);

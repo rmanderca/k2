@@ -14,7 +14,7 @@ procedure create_contact (
    p_sms in varchar2,
    p_user_id in number);
 
-procedure add_contact_to_group (
+procedure add_member_to_group (
    p_contact_key in varchar2,
    p_contact_group_key in varchar2);
 

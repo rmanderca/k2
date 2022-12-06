@@ -1,12 +1,22 @@
 
 ## Ethan's Oracle APEX SAAS_AUTH Package
 
-This package is used to support the custom authentication form which can be found in my APEX demo application.
+This package is used to support the custom authentication form which is part of the K2 demo app.
 
 ### Credits
-The code here is inspired/borrowed from [this post](https://dgielis.blogspot.com/2017/08/create-custom-authentication-and.html) by Dimitri Gielis. 
+The code here has been inspired and borrowed from [this post](https://dgielis.blogspot.com/2017/08/create-custom-authentication-and.html) by Dimitri Gielis. 
 
-### Authors
 
-To find out more about me visit https://e-t-h-a-n.com
+### Change Log
+
+**12/6/2022**
+
+I added a new role called 'system' which can be used if a user_id is needed on the back end.
+
+You might need a user_id on the back end to create an object which requires user_id (statzilla bucket, contact group...).
+
+There was no way to assign a role, I added set_role_for_user procedure as a way to do this.
+
+I added a test file. It is just a start.
+
 
