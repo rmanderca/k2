@@ -29,20 +29,7 @@ whenever sqlerror continue;
 @saas_auth_post_install.sql
 @saas_auth_scheduler_jobs.sql
 
-declare 
-	v_email varchar2(100) := 'k2@builtonapex.com';
-begin
-   if not saas_auth_pkg.does_user_name_exist('k2') then 
-      saas_auth_pkg.add_user(
-         p_user_name=>v_email,
-         p_email=>v_email,
-         p_password=>sys_guid());
-      saas_auth_pkg.assign_user_role(
-         p_user_id=>saas_auth_pkg.to_user_id(v_email),
-         p_role_name=>'system');
-   end if;
-end;
-/
+exec saas_auth_pkg.add_system_user('k2', 'k2@builtonapex.com');
 
 select 'SAAS_AUTH install complete.' MESSAGE from dual;
 

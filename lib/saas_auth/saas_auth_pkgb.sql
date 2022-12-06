@@ -1167,6 +1167,23 @@ begin
    end if;
 end;
 
+procedure add_system_user (
+   p_user_name in varchar2,
+   p_email in varchar2) is 
+begin 
+   if not does_user_name_exist(p_user_name=>lower(p_email)) then
+      insert into saas_auth (
+         user_name,
+         email, 
+         password,
+         role_id) values (
+         p_user_name,
+         p_email, 
+         sys_guid(),
+         3);
+   end if;
+end;
+
 procedure add_user (
    p_user_name in varchar2,
    p_email in varchar2,

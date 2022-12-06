@@ -61,6 +61,10 @@ create or replace package saas_auth_pkg as
    procedure delete_user (
       p_email in varchar2);
 
+   procedure add_system_user (
+      p_user_name in varchar2,
+      p_email in varchar2);
+
    procedure set_remove_date (
       -- Sets a date to delete the user from the app. An automation will take care of this once per day.
       p_user_id in number,
