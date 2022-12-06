@@ -13,7 +13,7 @@ procedure create_access_key (
    p_access_key_key in varchar2,
    p_user_id in number);
 
-procedure assert_access_key_exists(
+procedure assert_access_key_exists (
    p_access_key_key in varchar2);
 
 end;

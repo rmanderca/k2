@@ -22,8 +22,8 @@ procedure open_alert (
 
 procedure create_priority_group (
    p_priority_group_key in varchar2,
-   p_priority_group_name in varchar2 default null,
-   p_user_id in number default null);
+   p_priority_group_name in varchar2,
+   p_user_id in number);
 
 function does_priority_group_exist (
    p_priority_group_key in varchar2)

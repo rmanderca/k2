@@ -235,8 +235,8 @@ end;
 
 procedure create_priority_group ( -- | Creates a priority group if it does not exist.
    p_priority_group_key in varchar2, -- | Caller must provide a unique key to identify the priority group. Must be unique across the entire table.
-   p_priority_group_name in varchar2 default null, -- | Name of the priority group.
-   p_user_id in number default null) is -- | Optional numeric value which stores a user_id if provided. This could be mapped to saas_auth table but does not have to be.
+   p_priority_group_name in varchar2, -- | Name of the priority group.
+   p_user_id in number) is -- | References saas_auth table.
    v_priority_group_id number;
    n number;
 begin 

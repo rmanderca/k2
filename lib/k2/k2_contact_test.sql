@@ -68,7 +68,7 @@ begin
    end if;
 
    arcsql.init_test('Add a contact to a group');
-   k2_contact.add_contact_to_group (
+   k2_contact.add_member_to_group (
       p_contact_key=>'k2_ethan',
       p_contact_group_key=>'k2_test');
    select count(*) into test.n from contact_group_members

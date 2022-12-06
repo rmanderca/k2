@@ -68,13 +68,16 @@ begin
       -- Names are optional and only needed for reporting or if you want to make use of in a UI.
       priority_group_name varchar2(240) default null,
       -- This is an optional reference which can be used by the developer.
-      user_id number default null)', false);
+      user_id number not null)', false);
    end if;
    if not does_constraint_exist('pk_alert_priority_groups') then
       execute_sql('alter table alert_priority_groups add constraint pk_alert_priority_groups primary key (priority_group_id)', false);
    end if;
    if not does_index_exist('alert_priority_groups_1') then
       execute_sql('create unique index alert_priority_groups_1 on alert_priority_groups (priority_group_key)', false);
+   end if;
+   if not does_constraint_exist('alert_priority_groups_fk_user_id') then 
+      execute_sql('alter table alert_priority_groups add constraint alert_priority_groups_fk_user_id foreign key (user_id) references saas_auth (user_id) on delete cascade', false);
    end if;
 end;
 /

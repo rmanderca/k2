@@ -489,7 +489,7 @@ exception
 end;
 
 
-function does_user_name_exist ( -- | Return true if the user name exists. Does not see deleted accounts!
+function does_user_name_exist ( -- | Return true if the user name exists. Does not see some accounts!
    --
    p_user_name in varchar2) return boolean is
    n number;
@@ -1170,15 +1170,17 @@ end;
 procedure add_system_user (
    p_user_name in varchar2,
    p_email in varchar2) is 
+   n number;
 begin 
-   if not does_user_name_exist(p_user_name=>lower(p_email)) then
+   select count(*) into n from saas_auth where user_name=lower(p_user_name);
+   if n = 0 then 
       insert into saas_auth (
          user_name,
          email, 
          password,
          role_id) values (
-         p_user_name,
-         p_email, 
+         lower(p_user_name),
+         lower(p_email), 
          sys_guid(),
          3);
    end if;
