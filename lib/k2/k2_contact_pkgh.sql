@@ -11,7 +11,8 @@ procedure create_contact (
    p_contact_key in varchar2,
    p_contact_name in varchar2,
    p_email in varchar2,
-   p_sms in varchar2);
+   p_sms in varchar2,
+   p_user_id in number);
 
 procedure add_contact_to_group (
    p_contact_key in varchar2,
@@ -30,6 +31,17 @@ procedure delete_group (
 procedure add_priority_group_to_contact_group (
    p_priority_group_key in varchar2,
    p_contact_group_key in varchar2);
+
+function to_contact_id (
+   p_contact_key in varchar2)
+   return number;
+
+function to_contact_group_id (
+   p_contact_group_key in varchar2)
+   return number;
+
+procedure send_email (
+   p_contact_id in number);
 
 end;
 /

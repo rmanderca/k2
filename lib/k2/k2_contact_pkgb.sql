@@ -53,7 +53,7 @@ function is_contact_in_group ( -- Return true if contact group contact exists.
    return boolean is
    n number;
 begin 
-   select count(*) into n from contact_group_contacts where contact_group_id = p_contact_group_id and contact_id = p_contact_id;
+   select count(*) into n from contact_group_members where contact_group_id = p_contact_group_id and contact_id = p_contact_id;
    return n = 1;
 end;
 
@@ -70,10 +70,11 @@ end;
 procedure create_group ( -- | Create a contact group if it does not exist.
    p_contact_group_key in varchar2,
    p_contact_group_name in varchar2 default null,
-   p_user_id in number default null) is
+   p_user_id in number) is
 begin
    if not does_contact_group_exist(p_contact_group_key) then
-      insert into contact_groups (contact_group_key, contact_group_name, user_id) values (p_contact_group_key, p_contact_group_name, p_user_id);
+      insert into contact_groups (contact_group_key, contact_group_name, user_id) values (
+         p_contact_group_key, p_contact_group_name, p_user_id);
    end if;
 end;
 
@@ -81,10 +82,13 @@ procedure create_contact ( -- | Create a new contact if it does not exist.
    p_contact_key in varchar2,
    p_contact_name in varchar2,
    p_email in varchar2,
-   p_sms in varchar2) is
+   p_sms in varchar2,
+   p_user_id in number) is
 begin
    if not does_contact_exist(p_contact_key) then
-      insert into contacts (contact_key, contact_name, email_address, sms_address) values (p_contact_key, p_contact_name, p_email, p_sms);
+      insert into contacts (
+         contact_key, contact_name, email_address, sms_address, user_id) values (
+         p_contact_key, p_contact_name, p_email, p_sms, p_user_id);
    end if;
 end;
 
@@ -93,7 +97,7 @@ procedure add_contact_id_to_group_id ( -- | Adds a contact to a contract group i
    p_contact_group_id in number) is
 begin
    if not is_contact_in_group(p_contact_id, p_contact_group_id) then
-      insert into contact_group_contacts (contact_id, contact_group_id) values (p_contact_id, p_contact_group_id);
+      insert into contact_group_members (contact_id, contact_group_id) values (p_contact_id, p_contact_group_id);
    end if;
 end;
 
@@ -109,7 +113,7 @@ procedure remove_contact_id_from_group_id (
    p_contact_id in number,
    p_contact_group_id in number) is
 begin 
-   delete from contact_group_contacts where contact_id = p_contact_id and contact_group_id = p_contact_group_id;
+   delete from contact_group_members where contact_id = p_contact_id and contact_group_id = p_contact_group_id;
 end;
 
 procedure remove_contact_from_group ( -- | Removes a contact from a contact group.
@@ -149,7 +153,8 @@ function is_priority_group_id_in_contact_group_id (
    return boolean is
    n number;
 begin 
-   select count(*) into n from contact_group_priority_groups where priority_group_id = p_priority_group_id and contact_group_id = p_contact_group_id;
+   select count(*) into n from contact_group_priority_groups 
+    where priority_group_id = p_priority_group_id and contact_group_id = p_contact_group_id;
    return n = 1;
 end;
 
@@ -158,7 +163,8 @@ procedure add_priority_group_id_to_contact_group_id (
    p_contact_group_id in number) is
 begin
    if not is_priority_group_id_in_contact_group_id(p_priority_group_id, p_contact_group_id) then
-      insert into contact_group_priority_groups (priority_group_id, contact_group_id) values (p_priority_group_id, p_contact_group_id);
+      insert into contact_group_priority_groups (priority_group_id, contact_group_id) values (
+         p_priority_group_id, p_contact_group_id);
    end if;
 end;
 
@@ -223,11 +229,11 @@ begin
    g := get_contract_group_row(p_contact_group_id);
 
    -- Send email
-   send_email (
-      p_to => r.email_address, 
-      p_from => arcsql_cfg.default_email_from_address,
-      p_body => message_body,
-      p_subject => 'Alert notifications for the '||nvl(g.contact_group_name, g.contact_group_key)||' contract_group');
+   -- send_email (
+   --    p_to => r.email_address, 
+   --    p_from => arcsql_cfg.default_email_from_address,
+   --    p_body => message_body,
+   --    p_subject => 'Alert notifications for the '||nvl(g.contact_group_name, g.contact_group_key)||' contract_group');
 
 end;
 
@@ -235,7 +241,7 @@ procedure process_available_contacts ( -- | Loop through each available contact 
    p_contact_group_id in number) is
    cursor available_contacts is 
    select * 
-     from contact_group_contacts
+     from contact_group_members
     where contact_group_id=p_contact_group_id 
       -- Make sure the contact is available
       and arcsql.is_truthy_y(is_enabled)='y'
@@ -259,6 +265,12 @@ begin
    for contact_group in available_groups loop 
       process_available_contacts(contact_group.contact_group_id);
    end loop;
+end;
+
+procedure send_email (
+   p_contact_id in number) is 
+begin 
+   null;
 end;
 
 end;

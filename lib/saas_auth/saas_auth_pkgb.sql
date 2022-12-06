@@ -1,5 +1,14 @@
 create or replace package body saas_auth_pkg as
 
+function get_saas_auth_row (
+   p_user_id in number)
+   return saas_auth%rowtype is 
+   r saas_auth%rowtype;
+begin
+   select * into r from saas_auth where user_id=p_user_id;
+   return r;
+end;
+
 procedure assert_user_id_is_valid (
    p_user_id in number) is
    n number;

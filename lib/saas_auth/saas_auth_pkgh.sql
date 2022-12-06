@@ -2,6 +2,10 @@
 -- uninstall: drop package saas_auth_pkg;
 create or replace package saas_auth_pkg as
 
+   function get_saas_auth_row (
+      p_user_id in number)
+      return saas_auth%rowtype;
+
    procedure assert_user_id_is_valid (
       p_user_id in number);
 
