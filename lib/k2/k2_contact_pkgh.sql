@@ -18,7 +18,11 @@ procedure add_member_to_group (
    p_contact_key in varchar2,
    p_contact_group_key in varchar2);
 
-procedure remove_contact_from_group (
+procedure assert_contact_is_member_of_group (
+   p_contact_key in varchar2,
+   p_contact_group_key in varchar2);
+
+procedure remove_member_from_group (
    p_contact_key in varchar2,
    p_contact_group_key in varchar2);
 

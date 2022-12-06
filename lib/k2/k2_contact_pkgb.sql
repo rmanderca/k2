@@ -109,6 +109,23 @@ begin
    add_contact_id_to_group_id(to_contact_id(p_contact_key), to_contact_group_id(p_contact_group_key));
 end;
 
+procedure assert_contact_is_member_of_group (
+   p_contact_key in varchar2,
+   p_contact_group_key in varchar2) is
+   n number;
+begin 
+   select count(*) into n from contact_group_members 
+    where contact_id = to_contact_id(p_contact_key) 
+      and contact_group_id = to_contact_group_id(p_contact_group_key);
+   if n = 0 then
+      raise_application_error(-20000, 'assert_contact_is_member_of_group: Contact is not a member of the group.');
+   end if;
+exception 
+   when others then 
+      arcsql.log_err('assert_contact_is_member_of_group: '||sqlerrm);
+      raise;
+end;
+
 procedure remove_contact_id_from_group_id (
    p_contact_id in number,
    p_contact_group_id in number) is
@@ -116,7 +133,7 @@ begin
    delete from contact_group_members where contact_id = p_contact_id and contact_group_id = p_contact_group_id;
 end;
 
-procedure remove_contact_from_group ( -- | Removes a contact from a contact group.
+procedure remove_member_from_group ( -- | Removes a contact from a contact group.
    p_contact_key in varchar2,
    p_contact_group_key in varchar2) is
 begin

@@ -30,5 +30,15 @@ begin
       p_user_id);
 end;
 
+procedure assert_access_key_exists (
+   p_access_key_key in varchar2) is 
+   r access_keys%rowtype;
+begin 
+   r := get_access_key_row(p_access_key_key=>p_access_key_key);
+exception 
+   when no_data_found then 
+      raise_application_error(-20001, 'assert_access_key_exists: Access key does not exist: '||p_access_key_key);
+end;
+
 end;
 /
