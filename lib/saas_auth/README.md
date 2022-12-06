@@ -15,7 +15,7 @@ I added a new role called 'system' which can be used if a user_id is needed on t
 
 You might need a user_id on the back end to create an object which requires user_id (statzilla bucket, contact group...).
 
-There was no way to assign a role, I added set_role_for_user procedure as a way to do this.
+There was no way to assign a role, I added assign_user_role procedure as a way to do this.
 
 I added a test file. It is just a start.
 
