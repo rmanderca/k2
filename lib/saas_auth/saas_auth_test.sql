@@ -20,6 +20,17 @@ end;
 -- end;
 -- /
 
+begin 
+   arcsql.init_test('k2@builtonapex.com system user should already exist');
+   select count(*) into test.n from saas_auth where email='k2@builtonapex.com' and role_id=3;
+   if test.n=1 then
+      arcsql.pass_test;
+   else
+      arcsql.fail_test;
+   end if;
+end;
+/
+
 exec saas_auth_pkg.delete_user(p_email=>test.email);
 
 begin 
@@ -29,7 +40,7 @@ begin
       p_email=>test.email,
       p_password=>saas_auth_config.saas_auth_test_pass);
    select user_id into test.user_id from saas_auth where email=test.email;
-   saas_auth_pkg.set_role_for_user(
+   saas_auth_pkg.assign_user_role(
       p_user_id=>test.user_id,
       p_role_name=>'system');
    select count(*) into test.n from saas_auth where user_id=test.user_id and role_id=3;

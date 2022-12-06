@@ -2,7 +2,7 @@
 -- uninstall: drop package saas_auth_pkg;
 create or replace package saas_auth_pkg as
 
-   procedure set_role_for_user (
+   procedure assign_user_role (
       p_user_id in number,
       p_role_name in varchar2);
 
@@ -143,6 +143,9 @@ create or replace package saas_auth_pkg as
       p_user_name in varchar2 default v('APP_USER')) return number;
 
    function get_user_id_from_email (
+      p_email in varchar2) return number;
+
+   function to_user_id (
       p_email in varchar2) return number;
 
    function get_user_name (p_user_id in number) return varchar2;

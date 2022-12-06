@@ -9,7 +9,7 @@ begin
    return r;
 end;
 
-procedure set_role_for_user ( -- | Set the role id in the saas_auth table for a user using the role name.
+procedure assign_user_role ( -- | Set the role id in the saas_auth table for a user using the role name.
    p_user_id in number,
    p_role_name in varchar2) is 
    r saas_auth_role%rowtype;
@@ -21,7 +21,7 @@ begin
    end if;
 exception
    when others then
-      arcsql.log_err('set_role_for_user: '||dbms_utility.format_error_stack);
+      arcsql.log_err('assign_user_role: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -913,7 +913,7 @@ begin
    if v_saas_auth.email_verification_token = p_auth_token  
       and (v_saas_auth.email_verification_token_expires_at is null 
        or v_saas_auth.email_verification_token_expires_at >= sysdate) then 
-      fire_on_login_event(get_user_id_from_email(p_email=>lower(p_email)));
+      fire_on_login_event(to_user_id(p_email=>lower(p_email)));
       verify_email(p_user_id=>v_saas_auth.user_id);
       apex_authentication.post_login (
          p_username=>lower(v_saas_auth.user_name), 
@@ -1036,9 +1036,7 @@ exception
 end;
 
 
-function get_user_id_from_email (
-   -- Return the user id using the user name. 
-   --
+function get_user_id_from_email ( -- | Return the user id using the user name. Uses v_saas_auth_available_accounts which does not return *ALL* accounts.
    p_email in varchar2) return number is 
    n number;
 begin 
@@ -1052,6 +1050,15 @@ exception
    when others then
       arcsql.log_err('get_user_id_from_email: '||dbms_utility.format_error_stack);
       raise;
+end;
+
+
+function to_user_id ( -- | Returns user id using email. Can see all accounts and might be a better option than get_user_id_from_email.
+   p_email in varchar2) return number is
+   r saas_auth%rowtype;
+begin
+   select * into r from saas_auth where email=lower(p_email);
+   return r.user_id;
 end;
 
 
@@ -1156,7 +1163,7 @@ begin
    select count(*) into n from saas_auth where email=lower(p_email);
    -- if not does_email_already_exist(p_email) then <- Don't use this, it use a view which will raise an error if email does not exist.
    if n > 0 then
-      delete_user(p_user_id=>get_user_id_from_email(p_email));
+      delete_user(p_user_id=>to_user_id(p_email));
    end if;
 end;
 
