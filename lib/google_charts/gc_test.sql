@@ -16,8 +16,10 @@ select stat_name,
 
 create or replace procedure gc_test_1 is
 begin
+   -- Always start a series of charts with this call.
    gc.start_series('gc_test_1');
 
+   -- For now we need to add two columns.
    gc.add_column( 
       p_data_type=>'timeofday',
       p_column_name=>'Time');
@@ -28,10 +30,10 @@ begin
 
    -- Default chart type is line.
    gc.add_line_chart (
-	  p_title=>'CPU Usage',
-     p_vaxis_title=>'Microseconds',
-     p_div_group=>1,
-     p_tags=>'foo, bar');
+      p_title=>'CPU Usage',
+      p_vaxis_title=>'Microseconds',
+      p_div_group=>1,
+      p_tags=>'foo, bar');
 
    -- [Hours, Minutes, Seconds]
    gc.add_data(p_data=>'[[8, 0, 0], 35.5]');
@@ -54,7 +56,6 @@ end;
 
 exec gc_test_1;
 
-
 set wrap off
 set trimout ON
 set trimspool on
@@ -63,7 +64,6 @@ set pagesize 0
 set long 20000000
 set longchunksize 20000000
 set linesize 4000
-
 
 select gc.get_js from dual;
 select gc.get_divs_chunk(

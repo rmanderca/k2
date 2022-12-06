@@ -16,6 +16,7 @@ g_chart_count number := 0;
 g_functions clob;
 g_charts clob;
 g_callbacks clob;
+-- True if we are in the midst of a series
 g_series_in_progress boolean := false;
 
 -- Most reset for each new chart.
@@ -163,7 +164,7 @@ begin
    g_chart_in_progress := false;
 end;
 
-procedure init_series_defaults is 
+procedure init_series_defaults is -- | Initialize global variables before we start building a series of charts.
 begin 
    arcsql.debug2('init_series_defaults');
    g_series_id := null;
@@ -182,8 +183,9 @@ end;
 
 -- Everything above this line is private.
 
-procedure start_series (
-   p_series_id in varchar2) is 
+procedure start_series ( -- | Begin building some charts.
+   p_series_id in varchar2 -- | This value will be used later to make sure we are still working with out data since we are using a lot of globals.
+   ) is 
 begin
    arcsql.debug2('start_series');
    init_series_defaults;
