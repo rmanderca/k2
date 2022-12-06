@@ -4,13 +4,16 @@ create or replace procedure statzilla_get_oracle_metrics is
 	v_bucket_key varchar2(100) := '7A9FAD5F86FEA65691C70E944B3D8FB5317E9C43B194F0EC4B4294CE3D321E5D';
 	v_bucket_name varchar2(250) := 'Oracle Metrics (Local)';
 begin
-
+	arcsql.debug('statzilla_get_oracle_metrics');
 	if not k2_config.enable_statzilla_get_oracle_metrics then
 	   return;
 	end if;
 
 	if not statzilla.does_bucket_exist(v_bucket_key) then 
-		statzilla.create_bucket(p_bucket_key=>v_bucket_key, p_bucket_name=>v_bucket_name);
+		statzilla.create_bucket(
+			p_bucket_key=>v_bucket_key, 
+			p_bucket_name=>v_bucket_name,
+			p_user_id=>saas_auth_pkg.to_user_id('k2@builtonapex.com'));
 	    b := statzilla.get_bucket_row(p_bucket_key=>v_bucket_key);
 	    b.calc_type := 'rate/m';
 	    b.ignore_negative := 1;

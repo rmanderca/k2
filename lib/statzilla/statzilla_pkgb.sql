@@ -3,11 +3,11 @@ create or replace package body statzilla as
 procedure create_bucket ( -- | Create a bucket to store stats in.
    p_bucket_key in varchar2,
    p_bucket_name in varchar2,
+   p_user_id in number,
    p_calc_type in varchar2 default 'none',
    p_ignore_negative in number default 0,
    p_save_stat_hours in number default 0,
-   p_skip_archive_hours in number default 0,
-   p_user_id in number default null) is
+   p_skip_archive_hours in number default 0) is
 begin
    insert into stat_bucket (
       bucket_key,
@@ -429,7 +429,8 @@ procedure purge_stats ( -- | Delete old data from stat_detail and stat_archive.
    p_stat_key in varchar2) is 
    max_save_stat_hours number;
 begin 
-   g_bucket := get_bucket_row(p_bucket_id);
+   arcsql.debug2('purge_stats: '||p_bucket_id||', '||p_stat_key);
+   g_bucket := get_bucket_row(p_bucket_id=>p_bucket_id);
    -- We may need to keep data to calculate percentiles.
    max_save_stat_hours := greatest(g_bucket.percentile_calc_days*24, g_bucket.save_stat_hours);
    delete from stat_detail
@@ -440,6 +441,10 @@ begin
     where bucket_id=p_bucket_id 
       and stat_key=p_stat_key 
       and stat_time < systimestamp-statzilla.g_bucket.save_archive_days;
+exception
+   when others then
+      arcsql.log_err(p_text=>'purge_stats: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      raise;
 end;
 
 procedure delete_bucket ( -- | Delete a bucket for the given bucket id.

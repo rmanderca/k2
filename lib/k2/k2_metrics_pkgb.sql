@@ -11,7 +11,10 @@ begin
     end if;
 
     if not statzilla.does_bucket_exist(v_bucket_key) then 
-        statzilla.create_bucket(p_bucket_key=>v_bucket_key);
+        statzilla.create_bucket(
+            p_bucket_name=>'K2 Metrics',
+            p_bucket_key=>v_bucket_key,
+            p_user_id=>saas_auth_pkg.to_user_id('k2@builtonapex.com');
         b := statzilla.get_bucket_by_name(v_bucket_key);
         b.calc_type := 'rate/m';
         statzilla.save_bucket(b);

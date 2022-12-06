@@ -14,6 +14,7 @@ begin
    else 
       dbms_scheduler.disable('statzilla_process_buckets_job');
    end if;
+   commit;
 end;
 /
 
@@ -33,6 +34,7 @@ begin
    else 
       dbms_scheduler.disable('statzilla_get_oracle_metrics_job');
    end if;
+   commit;
 end;
 /
 
@@ -52,6 +54,7 @@ begin
    else 
       dbms_scheduler.disable('statzilla_refresh_references_job');
    end if;
+   commit;
 end;
 /
 
