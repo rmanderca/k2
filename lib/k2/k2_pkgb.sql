@@ -1,6 +1,6 @@
 
 create or replace package body k2 as 
-    
+
 procedure debug (
    p_text in varchar2, 
    p_key in varchar2) is 
