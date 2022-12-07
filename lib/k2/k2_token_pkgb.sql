@@ -17,6 +17,15 @@ begin
    return r;
 end;
 
+function get_token_row (
+   p_token in varchar2)
+   return tokens%rowtype is 
+   r tokens%rowtype;
+begin
+   select * into r from tokens where token = p_token;
+   return r;
+end;
+
 procedure create_token (
    p_token_key in varchar2,
    p_user_id in number) is 

@@ -9,6 +9,10 @@ function get_token_row (
    p_token_key in varchar2)
    return tokens%rowtype;
 
+function get_token_row (
+   p_token in varchar2)
+   return tokens%rowtype;
+
 procedure create_token (
    p_token_key in varchar2,
    p_user_id in number);
