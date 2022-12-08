@@ -37,7 +37,7 @@ create or replace package saas_auth_config as
    -- Route all emails to this address instead of using the address for the account. Used for dev/test.
    global_email_override varchar2(120) := null;
 
-   send_email_on_create_account boolean := true;
+   send_email_after_create_account boolean := true;
 
    -- Days user can auto login for if they select the checkbox on login form.
    -- Set to zero or null to disable and hide the checkbox.

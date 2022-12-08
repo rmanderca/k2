@@ -1,7 +1,7 @@
--- uninstall: exec drop_procedure('on_create_account');
-create or replace procedure on_create_account (p_user_id in number) as 
+-- uninstall: exec drop_procedure('after_create_account');
+create or replace procedure after_create_account (p_user_id in number) as 
 begin
-   k2.debug('on_create_account: '||p_user_id); 
+   k2.debug('after_create_account: '||p_user_id); 
    null;
 end;
 /

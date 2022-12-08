@@ -1100,16 +1100,16 @@ begin
    end if;
 end;
 
-procedure fire_create_account (p_user_id in varchar2) is 
+procedure fire_after_create_account (p_user_id in varchar2) is 
    n number;
 begin 
-   arcsql.debug('saas_auth_pkg.fire_create_account: '||p_user_id);
+   arcsql.debug('saas_auth_pkg.fire_after_create_account: '||p_user_id);
    select count(*) into n from user_source 
-    where name = 'ON_CREATE_ACCOUNT'
+    where name = 'AFTER_CREATE_ACCOUNT'
       and type='PROCEDURE';
    if n > 0 then 
-      arcsql.debug('fire_create_account: '||p_user_id);
-      execute immediate 'begin on_create_account('||p_user_id||'); end;';
+      arcsql.debug('fire_after_create_account: '||p_user_id);
+      execute immediate 'begin after_create_account('||p_user_id||'); end;';
    end if;
 end;
 
@@ -1227,7 +1227,7 @@ begin
       p_user_name=>v_email,
       p_password=>p_password);
    v_user_id := get_user_id_from_user_name(p_user_name=>v_email);
-   fire_create_account(v_user_id);
+   fire_after_create_account(v_user_id);
 end;
 
 
@@ -1297,7 +1297,7 @@ begin
          p_username=>v_email, 
          p_password=>utl_raw.cast_to_raw(dbms_random.string('x',10)));
    end if;
-   if saas_auth_config.send_email_on_create_account then 
+   if saas_auth_config.send_email_after_create_account then 
       k2.log_email('saas_auth_pkg.create_account: '||v_email);
    end if;
 exception 

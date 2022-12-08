@@ -5,7 +5,7 @@ drop table saas_auth cascade constraints purge;
 exec drop_view('v_saas_auth_available_accounts');
 exec drop_table('saas_auth_token');
 drop package saas_auth_pkg;
-exec drop_procedure('on_create_account');
+exec drop_procedure('after_create_account');
 exec drop_procedure('before_delete_user');
 exec drop_procedure('after_delete_user');
 exec drop_procedure('on_login');
