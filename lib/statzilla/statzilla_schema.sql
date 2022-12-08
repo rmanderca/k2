@@ -141,6 +141,14 @@ begin
 end;
 /
 
+create or replace trigger stat_bucket_delete_trg 
+   before delete on stat_bucket
+   for each row
+begin
+   delete from stat_in where bucket_key=:old.bucket_key;
+end;
+/
+
 -- uninstall: exec drop_table('stat');
 begin 
    if not does_table_exist('stat') then

@@ -1,4 +1,4 @@
-create or replace package body statzilla as 
+1create or replace package body statzilla as 
 
 procedure create_bucket ( -- | Create a bucket to store stats in.
    p_bucket_key in varchar2,
@@ -408,7 +408,11 @@ end;
 
 procedure process_buckets is -- | Process all buckets.
    cursor buckets is 
-   select distinct bucket_key from stat_in;
+   select distinct bucket_key 
+    from stat_in a,
+         stat_bucket b
+         -- Added join here to prevent orphan bucket_key in stat_in from getting processed which ends up blowing up when get_bucket_row is called.
+   where a.bucket_key=b.bucket_key;
 begin
    if not k2_config.enable_statzilla then
       return;
