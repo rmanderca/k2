@@ -8,12 +8,7 @@ begin
          job_action      => 'begin k2_metrics.get_metrics; commit; end;',
          start_date      => systimestamp,
          repeat_interval => 'freq=minutely;interval=5',
-         enabled         => false);
-   end if;
-   if k2_config.enable_k2_metrics then 
-      dbms_scheduler.enable('k2_get_metrics_job');
-   else 
-      dbms_scheduler.disable('k2_get_metrics_job');
+         enabled         => true);
    end if;
    commit;
 end;

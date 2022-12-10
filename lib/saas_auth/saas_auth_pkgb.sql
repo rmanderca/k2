@@ -72,6 +72,9 @@ procedure automation_daily is -- | Tasks which should be scheduled to run daily.
    cursor remove_users is 
    select * from saas_auth where remove_date <= sysdate;
 begin
+   if is_truthy(app_job.disable_all) or not is_truthy(app_job.enable_saas_auth_automations)) then 
+      return;
+   end if;
    arcsql.debug('automation_daily: ');
    for c in remove_users loop 
       delete_user(p_user_id=>c.user_id);

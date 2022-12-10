@@ -1380,6 +1380,9 @@ procedure run_sql_log_update is
    last_elap_secs_per_exe  number;
    v_sql_log sql_log%rowtype;
 begin
+   if is_truthy(app_job.disable_all) or not is_truthy(app_job.enable_sql_log_updates)) then 
+      return;
+   end if;
    start_event(p_event_key=>'arcsql', p_sub_key=>'sql_log', p_name=>'run_sql_log_update');
    select count(*) into n from sql_snap where rownum < 2;
    if n = 0 then

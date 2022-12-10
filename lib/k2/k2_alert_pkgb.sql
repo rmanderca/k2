@@ -346,6 +346,9 @@ procedure check_alerts is -- | Checks all open alerts to see if a new entry need
    v_new_priority_row alert_priorities%rowtype;
    v_old_priority_row alert_priorities%rowtype;
 begin 
+   if is_truthy(app_job.disable_all) or not is_truthy(app_job.enable_alert_checks)) then 
+      return;
+   end if;
    for alert in alerts loop 
       v_old_priority_row := get_alert_priority_row(alert.priority_id);
       v_new_priority_row := get_max_allowed_priority_row(alert.requested_priority_id);

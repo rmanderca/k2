@@ -6,35 +6,35 @@ procedure get_metrics is
     v_bucket_key varchar2(100) := 'k2_metrics';
 begin
 
-    if not k2_config.enable_k2_metrics then
-       return;
-    end if;
+   if is_truthy(app_job.disable_all) or not is_truthy(app_job.enable_k2_metrics)) then 
+      return;
+   end if;
 
-    if not k2_stat.does_bucket_exist(v_bucket_key) then 
-        k2_stat.create_bucket(
-            p_bucket_name=>'K2 Metrics',
-            p_bucket_key=>v_bucket_key,
-            p_user_id=>saas_auth_pkg.to_user_id('k2@builtonapex.com'));
-        b := k2_stat.get_bucket_row(p_bucket_key=>v_bucket_key);
-        b.calc_type := 'rate/m';
-        k2_stat.save_bucket(b);
-    end if;
+   if not k2_stat.does_bucket_exist(v_bucket_key) then 
+      k2_stat.create_bucket(
+         p_bucket_name=>'K2 Metrics',
+         p_bucket_key=>v_bucket_key,
+         p_user_id=>saas_auth_pkg.to_user_id('k2@builtonapex.com'));
+      b := k2_stat.get_bucket_row(p_bucket_key=>v_bucket_key);
+      b.calc_type := 'rate/m';
+      k2_stat.save_bucket(b);
+   end if;
 
-    insert into stat_in (
-        stat_name,
-        bucket_key,
-        stat_time,
-        received_val) (
-    select
-        'example',
-        v_bucket_key,
-        current_timestamp,
-        0
-    from
-        dual
-    );
+   insert into stat_in (
+     stat_name,
+     bucket_key,
+     stat_time,
+     received_val) (
+   select
+     'example',
+     v_bucket_key,
+     current_timestamp,
+     0
+   from
+     dual
+   );
 
-    commit;
+   commit;
 
 end;
 
