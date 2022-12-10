@@ -20,19 +20,19 @@ begin
    arcsql.init_test('Create a bucket and update stat');
    
    -- Create a bucket
-   k2_stat.create_bucket_v1 (
+   k2_stat_api.create_bucket_v1 (
       p_bucket_key => 'test_bucket_'||test.user_id,
       p_bucket_name => 'Test Bucket',
       p_user_id => test.user_id);
 
-   bucket := k2_stat.get_bucket_row(p_bucket_key=>'test_bucket_'||test.user_id);
+   test.bucket := k2_stat.get_bucket_row(p_bucket_key=>'test_bucket_'||test.user_id);
 
-   k2.stat.update_stat_v1 (
-      p_bucket_token => bucket.bucket_token,
+   k2_stat_api.update_stat_v1 (
+      p_bucket_token => test.bucket.bucket_token,
       p_stat => 'test_stat',
       p_value => 1.25);
 
-   select count(*) into test.n from stat_in where bucket_key=bucket.bucket_key;
+   select count(*) into test.n from stat_in where bucket_key=test.bucket.bucket_key;
    if test.n = 1 then 
       arcsql.pass_test;
    else 

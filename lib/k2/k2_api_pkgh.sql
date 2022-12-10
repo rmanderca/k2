@@ -3,11 +3,16 @@
 
 create or replace package k2_api as 
 
-	procedure status_v1;
+   procedure status_v1;
 
-	procedure assert_bearer_token_exists;
+   procedure success_message;
 
-	function get_bearer_token return varchar2;
+   procedure error_message (
+      p_error_message in varchar2);
+
+   procedure assert_bearer_token_exists;
+
+   function get_bearer_token return varchar2;
 
 end;
 /

@@ -16,6 +16,22 @@ exception
       raise;
 end;
 
+procedure success_message is 
+begin
+   apex_json.open_object;
+   apex_json.write('message', 'success');
+   apex_json.close_object;
+end;
+
+procedure error_message (
+   p_error_message in varchar2) is 
+begin 
+   arcsql.log_err(p_error_message);
+   apex_json.open_object;
+   apex_json.write('error', p_error_message);
+   apex_json.close_object;
+end;
+
 procedure assert_bearer_token_exists is 
    authorization_header varchar2(250);
 begin

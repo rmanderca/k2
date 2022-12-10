@@ -45,11 +45,12 @@ begin
       p_bucket_token=>:bucket_token,
       p_stat=>:stat,
       p_value=>:value);
-      :status := 200;
+   k2_api.success_message;
+   :status := 200;
 exception 
-   when others then 
-      :string_out := sqlerrm;
-      :status := 500;
+   when others then
+      k2_api.error_message(dbms_utility.format_error_stack);
+      :status := 400;
 end;
       ');
 
