@@ -1064,6 +1064,13 @@ begin
    return r.user_id;
 end;
 
+function to_user_id ( -- | Returns user id using user name. Can see all accounts and might be a better option than get_user_id_from_email.
+   p_user_name in varchar2) return number is
+   r saas_auth%rowtype;
+begin
+   select * into r from saas_auth where user_name=lower(p_user_name);
+   return r.user_id;
+end;
 
 function get_user_name (p_user_id in number) return varchar2 is 
    -- Return the user name by using the user id. 

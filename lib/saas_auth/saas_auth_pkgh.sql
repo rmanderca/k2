@@ -153,6 +153,9 @@ create or replace package saas_auth_pkg as
    function to_user_id (
       p_email in varchar2) return number;
 
+   function to_user_id (
+      p_user_name in varchar2) return number;
+
    function get_user_name (p_user_id in number) return varchar2;
 
    function ui_branch_to_main_after_auth (
