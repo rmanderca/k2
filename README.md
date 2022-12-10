@@ -14,6 +14,8 @@ K2 is not only a framework, it is a file layout and development methodology that
 
 K2 comes with API "enabled". This means that you can easily build a REST API for your application. You can also easily build a mobile application using the K2 API.
 
+Minimize costs. K2 will make it easy to deploy multiple applications and keep costs at a minimum.
+
 ## How to install K2 and set up folders for your new app
 
 * [How to install K2 updated - 9/17/22](https://youtu.be/b5jL91Kej7E)
