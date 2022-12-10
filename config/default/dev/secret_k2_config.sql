@@ -50,6 +50,9 @@ create or replace package k2_config as
 
     secret_key varchar2(100) := 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 
+    -- Do not include a trailing slash. '/v1/' or other versions will be appended to the base path.
+    api_base_path varchar2(120) := '/v2';
+
 end;
 /
 

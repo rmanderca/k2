@@ -16,20 +16,22 @@ exception
       raise;
 end;
 
-procedure success_message is 
+procedure json_message (
+   p_message in varchar2,
+   p_key in varchar2 default 'message') is 
 begin
    apex_json.open_object;
-   apex_json.write('message', 'success');
+   apex_json.write(p_key, p_message);
    apex_json.close_object;
 end;
 
-procedure error_message (
-   p_error_message in varchar2) is 
-begin 
-   arcsql.log_err(p_error_message);
-   apex_json.open_object;
-   apex_json.write('error', p_error_message);
-   apex_json.close_object;
+procedure json_response (
+   -- Note this does not escape things like line returns.
+   p_json in varchar2) is 
+begin
+   owa_util.mime_header('application/json', false);
+   owa_util.http_header_close;
+   htp.p(p_json);
 end;
 
 procedure assert_bearer_token_exists is 

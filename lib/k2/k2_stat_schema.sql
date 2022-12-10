@@ -1,7 +1,3 @@
-
-exec drop_package('k2_stat_b');
-exec drop_constraint('STAT_DEFAILT_FK_BUCKET_ID');
-
 /*
 
 All data starts in the STAT_IN (inbound) table.

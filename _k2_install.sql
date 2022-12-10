@@ -16,10 +16,10 @@ end;
 end;
 /
 
-@./config/default/dev/secret_arcsql_cfg.sql
-@./config/default/dev/secret_k2_config.sql
-@./config/default/dev/secret_saas_auth_config.sql 
-@./config/default/dev/secret_app_config.sql
+@./config/&k2_app_dir/&k2_env_dir/secret_arcsql_cfg.sql
+@./config/&k2_app_dir/&k2_env_dir/secret_k2_config.sql
+@./config/&k2_app_dir/&k2_env_dir/secret_saas_auth_config.sql 
+@./config/&k2_app_dir/&k2_env_dir/secret_app_config.sql
 @./lib/arcsql/arcsql_install.sql
 @./lib/saas_auth/saas_auth_schema.sql 
 
@@ -43,7 +43,6 @@ exec drop_package('statzilla');
 exec drop_scheduler_job('statzilla_process_buckets_job');
 exec drop_scheduler_job('statzilla_get_oracle_metrics_job');
 exec drop_scheduler_job('statzilla_refresh_references_job');
-
 
 /*
 APEX_UTL2 contains generic utilities for APEX.

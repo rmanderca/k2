@@ -4,6 +4,14 @@ The fastest way to build and prototype applications on Oracle APEX. Subscribe to
 
 Share K2 with others using the link [builtonapex.com/k2](builtonapex.com/k2) which redirects here!
 
+## Project goal and focus
+
+K2 focuses on your ability to build a proof of concept (POC) or minimal viable product (MVP) in the shortest amount of time possible. It is a starting point for your application, it is not the end.
+
+Using K2 you will be able to build a basic monitized SAAS application in as little as a few hours that has the look and feel of any other application. 
+
+K2 is not only a framework, it is a file layout and development methodology that enhances the productivity of developers.
+
 ## How to install K2 and set up folders for your new app
 
 * [How to install K2 updated - 9/17/22](https://youtu.be/b5jL91Kej7E)
