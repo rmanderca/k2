@@ -28,7 +28,16 @@ begin
    ords.define_template (
       p_module_name=>'api_v1',
       p_pattern=>'status',
-      p_comments=>'API status check');
+      p_comments=>'Check status of the API');
+
+   -- Just showing another way to return status here.
+   -- ords.define_handler (
+   --    p_module_name=>'api_v1',
+   --    p_pattern=>'status',
+   --    p_method=>'GET',
+   --    p_mimes_allowed=>'',
+   --    p_source_type=>ords.source_type_query_one_row,
+   --    p_source=>q'<select 'ok' message from dual>');
 
    ords.define_handler (
       p_module_name=>'api_v1',
