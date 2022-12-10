@@ -27,8 +27,6 @@ whenever sqlerror continue;
 @saas_auth_post_install.sql
 @saas_auth_scheduler_jobs.sql
 
-exec saas_auth_pkg.add_system_user('k2', 'k2@builtonapex.com');
-
 begin
 	if k2_app.version <= 20221019 then
 		-- We changed this to before_create_account which is clearer (12/7/2022).

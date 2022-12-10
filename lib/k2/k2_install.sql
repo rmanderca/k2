@@ -1,4 +1,6 @@
 
+exec saas_auth_pkg.add_system_user('k2', 'k2@builtonapex.com');
+
 @k2_utl_pkgh.sql 
 @k2_utl_pkgb.sql
 
