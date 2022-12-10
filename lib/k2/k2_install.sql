@@ -36,5 +36,6 @@ exec saas_auth_pkg.add_system_user('k2', 'k2@builtonapex.com');
 @k2_metrics_pkgh.sql
 @k2_metrics_pkgb.sql
 @k2_metrics_schedules.sql
+@k2_stat_get_oracle_metrics.sql
 
 select 'K2 install complete.' message from dual;
