@@ -24,11 +24,6 @@ begin
          repeat_interval => 'freq=minutely;interval=5',
          enabled         => false);
    end if;
-   if k2_config.enable_k2_stat_get_oracle_metrics then 
-      dbms_scheduler.enable('k2_stat_get_oracle_metrics_job');
-   else 
-      dbms_scheduler.disable('k2_stat_get_oracle_metrics_job');
-   end if;
    commit;
 end;
 /
@@ -43,11 +38,6 @@ begin
          start_date      => systimestamp,
          repeat_interval => 'freq=hourly;interval=8',
          enabled         => false);
-   end if;
-   if k2_config.enable_k2_stat then 
-      dbms_scheduler.enable('k2_stat_refresh_references_job');
-   else 
-      dbms_scheduler.disable('k2_stat_refresh_references_job');
    end if;
    commit;
 end;

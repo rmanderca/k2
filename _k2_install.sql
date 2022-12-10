@@ -45,12 +45,6 @@ exec drop_scheduler_job('statzilla_process_buckets_job');
 exec drop_scheduler_job('statzilla_get_oracle_metrics_job');
 exec drop_scheduler_job('statzilla_refresh_references_job');
 
-/*
-APEX_UTL2 contains generic utilities for APEX.
-*/
-
-@./lib/apex_utl2/apex_utl2_install.sql
-exec drop_package('apex_utl2_config');
 
 /*
 K2 lib is similiar in function to apex_utl2 but code here is more specific to the framework.
@@ -68,6 +62,10 @@ Authorization code. Uses the login and verification pages.
 @./lib/k2/k2_metrics_pkgb.sql
 
 @./lib/k2/k2_schedules.sql
+
+exec drop_package('t');
+exec drop_package('test');
+exec drop_package('apex_utl2');
 
 create or replace package k2_app as 
     version number := 20221209;

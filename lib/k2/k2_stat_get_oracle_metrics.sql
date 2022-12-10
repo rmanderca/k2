@@ -4,19 +4,15 @@ create or replace procedure k2_stat_get_oracle_metrics is
 	v_bucket_key varchar2(100) := '7A9FAD5F86FEA65691C70E944B3D8FB5317E9C43B194F0EC4B4294CE3D321E5D';
 	v_bucket_name varchar2(250) := 'Oracle Metrics (Local)';
 begin
-    if is_truthy(app_job.disable_all) or not is_truthy(app_job.collect_oracle_metrics)) then 
+    if arcsql.is_truthy(app_job.disable_all) or not arcsql.is_truthy(app_job.collect_oracle_metrics) then 
       return;
     end if;
 	arcsql.debug('k2_stat_get_oracle_metrics');
-	if not k2_config.enable_k2_stat_get_oracle_metrics then
-	   return;
-	end if;
-
 	if not k2_stat.does_bucket_exist(v_bucket_key) then 
 		k2_stat.create_bucket(
 			p_bucket_key=>v_bucket_key, 
 			p_bucket_name=>v_bucket_name,
-			p_user_id=>saas_auth_pkg.to_user_id('k2@builtonapex.com'));
+			p_user_id=>saas_auth_pkg.to_user_id(p_user_name=>'k2'));
 	    b := k2_stat.get_bucket_row(p_bucket_key=>v_bucket_key);
 	    b.calc_type := 'rate/m';
 	    b.ignore_negative := 1;

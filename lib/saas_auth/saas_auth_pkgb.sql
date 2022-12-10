@@ -72,7 +72,7 @@ procedure automation_daily is -- | Tasks which should be scheduled to run daily.
    cursor remove_users is 
    select * from saas_auth where remove_date <= sysdate;
 begin
-   if is_truthy(app_job.disable_all) or not is_truthy(app_job.enable_saas_auth_automations)) then 
+   if arcsql.is_truthy(app_job.disable_all) or not arcsql.is_truthy(app_job.enable_saas_auth_automations) then 
       return;
    end if;
    arcsql.debug('automation_daily: ');
@@ -802,7 +802,7 @@ procedure send_email_verification_code_to (  -- Sends a verification code to a u
    p_user_name in varchar2) is 
    t              saas_auth.email_verification_token%type   := arcsql.str_random(6, 'an');
    v_app_name     varchar2(120)                             := k2_config.app_name;
-   v_app_id       number                                    := apex_utl2.get_app_id;
+   v_app_id       number                                    := k2_utl.get_app_id;
    v_from_address varchar2(120)                             := arcsql_cfg.default_email_from_address;
    good_for       number                                    := saas_auth_config.token_good_for_minutes;
    m              varchar2(24000);
@@ -835,7 +835,7 @@ begin
    m := m || '### Thanks for signing up with '||v_app_name||'! Click the link below to verify this email address.';
 
    page_url := k2.monkey_patch_remove_app_root_url(apex_page.get_url (
-                  p_application=>apex_utl2.get_app_id,
+                  p_application=>k2_utl.get_app_id,
                   p_page=>20002,
                   p_items=>'SAAS_AUTH_EMAIL,SAAS_AUTH_TOKEN',
                   p_values=>lower(v_saas_auth.email)||','||t));
@@ -1173,7 +1173,7 @@ begin
    select count(*) into n from saas_auth where email=lower(p_email);
    -- if not does_email_already_exist(p_email) then <- Don't use this, it use a view which will raise an error if email does not exist.
    if n > 0 then
-      delete_user(p_user_id=>to_user_id(p_email));
+      delete_user(p_user_id=>to_user_id(p_email=>p_email));
    end if;
 end;
 

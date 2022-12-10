@@ -227,7 +227,7 @@ procedure refresh_all_references is -- | Scheduled job runs this to refresh all 
     order
        by bucket_id, stat_key;
 begin 
-   if is_truthy(app_job.disable_all) or not is_truthy(app_job.process_k2_stats)) then 
+   if arcsql.is_truthy(app_job.disable_all) or not arcsql.is_truthy(app_job.process_k2_stats) then 
       return;
    end if;
    arcsql.start_event(p_event_key=>'k2_stat', p_sub_key=>'refresh_all_references', p_name=>'refresh_all_references');
@@ -438,7 +438,7 @@ procedure process_buckets is -- | Process all buckets.
          -- Added join here to prevent orphan bucket_key in stat_in from getting processed which ends up blowing up when get_bucket_row is called.
    where a.bucket_key=b.bucket_key;
 begin
-   if is_truthy(app_job.disable_all) or not is_truthy(app_job.process_k2_stats)) then 
+   if arcsql.is_truthy(app_job.disable_all) or not arcsql.is_truthy(app_job.process_k2_stats) then 
       return;
    end if;
    for b in buckets loop

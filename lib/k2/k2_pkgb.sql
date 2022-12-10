@@ -131,7 +131,6 @@ begin
    | so if external domain name is needed get_url won't provide that. This function should
    | take all possible inputs and return the full path using the externally addressed domain.
    |
-   | ToDo: Move to apex_utl2 or k2 packages. This should be shared code.
    */
 end;
 

@@ -1,5 +1,5 @@
 
-create or replace package body apex_utl2 as
+create or replace package body k2_utl as
 
 
 /* 

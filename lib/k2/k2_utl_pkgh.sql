@@ -1,5 +1,5 @@
--- uninstall: exec drop_package('apex_utl2');
-create or replace package apex_utl2 as
+-- uninstall: exec drop_package('k2_utl');
+create or replace package k2_utl as
 
     /* 
     -----------------------------------------------------------------------------------
