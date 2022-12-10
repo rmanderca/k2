@@ -1,6 +1,6 @@
 
 
-create or replace trigger statzilla_stat_bucket_trg 
+create or replace trigger stat_bucket_trg 
    before insert or update on stat_bucket 
    for each row
 begin
@@ -10,7 +10,15 @@ begin
 end;
 /
 
-create or replace trigger statzilla_stat_ins_trg
+create or replace trigger stat_bucket_delete_trg 
+   before delete on stat_bucket
+   for each row
+begin
+   delete from stat_in where bucket_key=:old.bucket_key;
+end;
+/
+
+create or replace trigger stat_ins_trg
    before insert on stat
    for each row
 begin
@@ -27,7 +35,7 @@ exception
 end;
 /
 
-create or replace trigger statzilla_stat_in_ins_trg
+create or replace trigger stat_in_ins_trg
    before insert on stat_in
    for each row
 declare
@@ -42,21 +50,21 @@ exception
 end;
 /
 
-create or replace trigger statzilla_stat_work_ins
+create or replace trigger stat_work_ins
    before insert on stat_work 
    for each row 
 begin
    -- Do not do below, should already be set by the invoker. 
-   -- statzilla.set_bucket_by_id(:new.bucket_id);
-   if statzilla.g_bucket.ignore_negative = 1 and 
+   -- k2_stat.set_bucket_by_id(:new.bucket_id);
+   if k2_stat.g_bucket.ignore_negative = 1 and 
       :new.received_val < 0 then
          :new.received_val := 0;
    end if;
    -- Calc is entirely driven off the value in stat_bucket, we simply copy here for our reference.
    if :new.calc_type is null then 
-      :new.calc_type := statzilla.g_bucket.calc_type;
+      :new.calc_type := k2_stat.g_bucket.calc_type;
    end if;
-   if statzilla.g_bucket.calc_type = 'none' then
+   if k2_stat.g_bucket.calc_type = 'none' then
       :new.calc_val := :new.received_val;
       -- Stat count begins at one if not a rate or delta.
       :new.calc_count := 1;
@@ -68,7 +76,7 @@ begin
 end;
 /
 
-create or replace trigger statzilla_stat_work_upd_trg
+create or replace trigger stat_work_upd_trg
    -- Only fires when updated is updated. This tells us it is coming from process_buckets.
    before update of updated on stat_work
    for each row
@@ -80,8 +88,8 @@ declare
    try_again boolean;
 begin
    -- g_bucket should be set already when this trigger fires.
-   if statzilla.g_bucket.bucket_id != :new.bucket_id then 
-      raise_application_error(-20001, 'g_bucket not set in statzilla_stat_work_upd_trg!');
+   if k2_stat.g_bucket.bucket_id != :new.bucket_id then 
+      raise_application_error(-20001, 'g_bucket not set in stat_work_upd_trg!');
    end if;
    -- Due to a possible hourly reset we need a writable var to reference so
    -- we set :new to :old. This can be super confusing below. Probably need to 
@@ -120,11 +128,11 @@ begin
 
    -- IN ADDITION TO SCHEDULED TASK REFRESH REFERENCES ON HOUR SWITCH FOR FIRST 14 DAYS
    if :new.created > systimestamp-14 and trunc(:old.stat_time, 'HH24') < trunc(:new.stat_time, 'HH24') then
-      statzilla.refresh_references(p_bucket_id=>:new.bucket_id, p_stat_key=>:new.stat_key);
+      k2_stat.refresh_references(p_bucket_id=>:new.bucket_id, p_stat_key=>:new.stat_key);
    end if;
 
    -- ARCHIVE THE CURRENT RECORD AND START A NEW ONE WHEN DATE FORMAT VALUE CHANGES
-   if trunc(:old.stat_time, statzilla.g_bucket.date_format) < trunc(:new.stat_time, statzilla.g_bucket.date_format) and 
+   if trunc(:old.stat_time, k2_stat.g_bucket.date_format) < trunc(:new.stat_time, k2_stat.g_bucket.date_format) and 
       :old.calc_count > 0 then 
 
       insert into stat_archive (
@@ -177,7 +185,7 @@ begin
       :old.calc_count,
       :old.calc_type,
       :old.avg_val,
-      trunc(:old.stat_time, statzilla.g_bucket.date_format),
+      trunc(:old.stat_time, k2_stat.g_bucket.date_format),
       :old.last_non_zero_val,
       :old.received_val,
       :old.pctile0x,
@@ -213,7 +221,7 @@ begin
 
       try_again := true;
       
-      if statzilla.g_bucket.avg_val_ref_group = 'HH24' then 
+      if k2_stat.g_bucket.avg_val_ref_group = 'HH24' then 
          begin 
             select avg_val,
                    calc_count
@@ -223,7 +231,7 @@ begin
              where a.avg_val_ref_group='HH24' 
                and a.hist_key=to_char(:new.stat_time, 'HH24')||':00'
                and a.stat_key=:new.stat_key
-               and row_count > statzilla.g_bucket.avg_val_required_row_count;
+               and row_count > k2_stat.g_bucket.avg_val_required_row_count;
             :new.avg_val_ref_group := 'HH24';
             try_again := false;
          exception 
@@ -232,7 +240,7 @@ begin
          end;
       end if;
 
-      if try_again and statzilla.g_bucket.avg_val_ref_group in ('DY', 'HH24') then 
+      if try_again and k2_stat.g_bucket.avg_val_ref_group in ('DY', 'HH24') then 
          begin 
             select avg_val,
                    calc_count
@@ -242,7 +250,7 @@ begin
              where a.avg_val_ref_group='DY'  
                and a.hist_key=to_char(:new.stat_time, 'DY') 
                and a.stat_key=:new.stat_key
-               and row_count > statzilla.g_bucket.avg_val_required_row_count;
+               and row_count > k2_stat.g_bucket.avg_val_required_row_count;
             try_again := false;
             :new.avg_val_ref_group := 'DY';
          exception 
@@ -301,8 +309,8 @@ begin
 
    end if;
 
-   if :old.calc_type != statzilla.g_bucket.calc_type then 
-      :new.calc_type := statzilla.g_bucket.calc_type;
+   if :old.calc_type != k2_stat.g_bucket.calc_type then 
+      :new.calc_type := k2_stat.g_bucket.calc_type;
    end if;
 
    :new.elapsed_seconds := round(arcsql.secs_between_timestamps(:new.stat_time, :old.stat_time));
@@ -318,7 +326,7 @@ begin
    end if;
 
    -- Figure out what calc_val needs to be.
-   case statzilla.g_bucket.calc_type 
+   case k2_stat.g_bucket.calc_type 
       when 'none' then :new.calc_val := :new.received_val;
       when 'rate/s' then :new.calc_val := :new.rate_per_second;
       when 'rate/m' then :new.calc_val := :new.rate_per_second*60;
@@ -343,7 +351,7 @@ begin
       :new.zero_calc_count := :new.zero_calc_count+1;
    end if;
 
-   if statzilla.g_bucket.ignore_negative = 1 and :new.calc_val < 0 then
+   if k2_stat.g_bucket.ignore_negative = 1 and :new.calc_val < 0 then
       :new.calc_val := 0;
    end if;
 

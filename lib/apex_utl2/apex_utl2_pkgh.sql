@@ -1,3 +1,4 @@
+-- uninstall: exec drop_package('apex_utl2');
 create or replace package apex_utl2 as
 
     /* 

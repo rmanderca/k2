@@ -3,7 +3,7 @@ exec drop_table('access_keys');
 exec drop_table('token');
 exec drop_table('tokens');
 
--- uninstall: exec drop_table('token');
+-- uninstall: exec drop_table('tokens');
 
 begin 
 	if not does_table_exist('tokens') then 

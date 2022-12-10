@@ -1,4 +1,4 @@
-
+-- uninstall: exec drop_package('k2_config');
 -- uninstall: exec drop_package('k2');
 create or replace package k2 as 
 

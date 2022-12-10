@@ -1,5 +1,6 @@
 
--- uninstall: drop package saas_auth_pkg;
+-- uninstall: exec drop_package('saas_auth_pkg');
+-- uninstall: exec drop_package('saas_auth_config');
 create or replace package saas_auth_pkg as
 
    procedure assign_user_role (

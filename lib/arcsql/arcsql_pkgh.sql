@@ -1,4 +1,5 @@
 
+-- uninstall: drop package arcsql_cfg;
 -- uninstall: drop package arcsql;
 create or replace package arcsql as
 

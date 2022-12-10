@@ -57,7 +57,7 @@ begin
    k2_contact.create_contact (
       p_contact_key=>'k2_ethan',
       p_contact_name=>'Ethan',
-      p_email=>t.email,
+      p_email=>test.email,
       p_sms=>null,
       p_user_id=>test.user_id);
    select count(*) into test.n from contacts where contact_key='k2_ethan';
@@ -98,8 +98,9 @@ commit;
 
 select * from arcsql_log where log_type in ('pass', 'fail', 'error') order by 1 desc;
 
-exec saas_auth_pkg.delete_user(test.user_id);
-
-commit;
-
+select count(*) tests,
+       log_type
+ from arcsql_log
+group
+   by log_type;
 

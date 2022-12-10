@@ -453,11 +453,11 @@ create or replace view sql_snap_view as (
 
 /* COUNTERS */
 
-exec drop_sequence('seq_counter_id');
-exec drop_table('arcsql_counter2');
+-- uninstall: drop sequence seq_counter_id;
+-- uninstall: drop table arcsql_counter2;
 
 -- | arcsql_counter2 - New version of the counter table. Simpler.
--- uninstall: exec drop_table('arcsql_counter2');
+-- uninstall: drop table arcsql_counter;
 begin 
    if does_column_exist('arcsql_counter', 'subgroup') then 
       drop_table('arcsql_counter');
@@ -696,20 +696,21 @@ begin
 end;
 /
 
-exec drop_function('to_rows');
-
-exec drop_type('arcsql_csv_tab');
-
-exec drop_type('arcsql_csv_row');
-
+-- uninstall: drop function to_rows;
+-- uninstall: drop type arcsql_csv_tab;
 -- uninstall: drop type arcsql_csv_row;
-create type arcsql_csv_row as object (
+
+-- Needed for the create or replace types to work!
+drop function to_rows;
+drop type arcsql_csv_tab;
+drop type arcsql_csv_row;
+
+create or replace type arcsql_csv_row as object (
    token varchar2(120),
    token_level number);
 /
 
--- uninstall: drop type arcsql_csv_tab;
-create type arcsql_csv_tab is table of arcsql_csv_row;
+create or replace type arcsql_csv_tab is table of arcsql_csv_row;
 /
 
 create or replace function to_rows (
@@ -747,7 +748,7 @@ begin
 end;
 /
 
--- uninstall: drop_view('arcsql_test_result');
+-- uninstall: drop view arcsql_test_result;
 create or replace view arcsql_test_result as 
    select process_id,
         log_type,

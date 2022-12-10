@@ -116,7 +116,7 @@ begin
 end;
 /
 
--- uninstall: drop_view('alert_contacts_view');
+-- uninstall: exec drop_view('alert_contacts_view');
 create or replace view alert_contacts_view as 
 select a.alert_id,
        a.alert_key,
@@ -163,7 +163,7 @@ select a.alert_id,
    -- We do factor in priority level bounds here
    and b.priority_level between f.max_priority_level and f.min_priority_level;
    
--- uninstall: drop_view('contact_report_view');
+-- uninstall: exec drop_view('contact_report_view');
 create or replace view contact_report_view as
 select null alert_id,
        null contact_id,

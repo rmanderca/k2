@@ -68,6 +68,7 @@ end;
 /
 
 
+-- uninstall: drop procedure drop_view;
 create or replace procedure drop_view (view_name in varchar2) is 
 begin 
   if does_object_exist(drop_view.view_name, 'VIEW') then 
@@ -76,7 +77,7 @@ begin
 end;
 /
 
-
+-- uninstall: drop procedure drop_function;
 create or replace procedure drop_function (function_name in varchar2) is 
 begin 
   if does_object_exist(drop_function.function_name, 'FUNCTION') then 
@@ -86,6 +87,7 @@ end;
 /
 
 
+-- uninstall: drop procedure drop_procedure;
 create or replace procedure drop_procedure (procedure_name in varchar2) is 
 begin 
   if does_object_exist(drop_procedure.procedure_name, 'PROCEDURE') then 
@@ -95,6 +97,7 @@ end;
 /
 
 
+-- uninstall: drop procedure drop_type;
 create or replace procedure drop_type (type_name in varchar2) is 
 begin 
   if does_object_exist(drop_type.type_name, 'TYPE') then 
@@ -235,6 +238,7 @@ exception
 end;
 /
 
+-- uninstall: drop procedure add_pk_constraint;
 create or replace procedure add_pk_constraint (
    table_name in varchar2,
    column_name in varchar2) is 
@@ -245,6 +249,7 @@ begin
 end;
 /
 
+-- uninstall: drop procedure drop_constraint;
 create or replace procedure drop_constraint (p_constraint_name varchar2) is 
    x user_constraints%rowtype;
 begin 
@@ -338,7 +343,7 @@ begin
 end;
 /
 
--- uninstall: drop procedure drop_scheduler_job
+-- uninstall: drop procedure drop_scheduler_job;
 create or replace procedure drop_scheduler_job (p_job_name in varchar2) is 
 begin
    if does_scheduler_job_exist(p_job_name) then 
@@ -373,6 +378,7 @@ end;
 /
 
 
+-- uninstall: drop procedure fix_identity_sequences;
 create or replace procedure fix_identity_sequences is 
    cursor c_identify_sequences is 
       select table_name, column_name, sequence_name 
@@ -395,6 +401,7 @@ end;
 /
 
 
+-- uninstall: drop function ords_is_enabled;
 create or replace function ords_is_enabled return boolean is
    v_enabled number;
 begin

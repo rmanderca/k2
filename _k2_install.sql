@@ -22,7 +22,28 @@ end;
 @./config/default/dev/secret_app_config.sql
 @./lib/arcsql/arcsql_install.sql
 @./lib/saas_auth/saas_auth_schema.sql 
-@./lib/k2/k2_schema.sql 
+
+/*
+Stazilla (moved to k2_stat).
+*/
+
+exec drop_table('stat_calc_type');
+exec drop_table('stat_profile');
+exec drop_table('stat_bucket');
+exec drop_table('stat');
+exec drop_table('stat_property');
+exec drop_table('stat_in');
+exec drop_table('stat_archive');
+exec drop_sequence('seq_stat_work_id');
+exec drop_table('stat_work');
+exec drop_table('stat_avg_val_hist_ref');
+exec drop_table('stat_percentiles_ref');
+exec drop_table('stat_detail');
+exec drop_package('statzilla');
+exec drop_scheduler_job('statzilla_process_buckets_job');
+exec drop_scheduler_job('statzilla_get_oracle_metrics_job');
+exec drop_scheduler_job('statzilla_refresh_references_job');
+
 
 /*
 APEX_UTL2 contains generic utilities for APEX.
@@ -43,21 +64,12 @@ Authorization code. Uses the login and verification pages.
 
 @./lib/saas_auth/saas_auth_install.sql 
 
-/*
-Stazilla
-*/
-
-@./lib/statzilla/statzilla_install.sql
-
-/*
-Delivered K2 metrics (uses Statzilla).
-*/
-
-@./lib/k2/k2_metrics_pkgh.sql 
+@./lib/k2/k2_metrics_pkgh.sql
 @./lib/k2/k2_metrics_pkgb.sql
-@./lib/k2/app_scheduler_jobs.sql
+
+@./lib/k2/k2_schedules.sql
 
 create or replace package k2_app as 
-    version number := 20221019;
+    version number := 20221209;
 end;
 /

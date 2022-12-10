@@ -1,4 +1,4 @@
-
+exec drop_table('api_token');
 
 -- ToDo: Part of install needs to clean up orphan recs in this table since we 
 -- can't have a fk on saas_auth since some cookies may be session level only.

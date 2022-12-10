@@ -1,4 +1,14 @@
-1create or replace package body statzilla as 
+create or replace package body k2_stat as 
+
+procedure assert_valid_token (
+   p_bucket_token in varchar2) is 
+   n number;
+begin 
+   select count(*) into n from stat_bucket where bucket_token=p_bucket_token;
+   if n = 0 then
+      raise_application_error(-20001, 'Invalid stat_bucket token');
+   end if;
+end;
 
 procedure create_bucket ( -- | Create a bucket to store stats in.
    p_bucket_key in varchar2,
@@ -12,6 +22,7 @@ begin
    insert into stat_bucket (
       bucket_key,
       bucket_name,
+      bucket_token,
       calc_type,
       ignore_negative,
       save_stat_hours,
@@ -19,6 +30,7 @@ begin
       user_id) values (
       p_bucket_key,
       p_bucket_name,
+      sys_guid(),
       p_calc_type,
       p_ignore_negative,
       p_save_stat_hours,
@@ -26,7 +38,7 @@ begin
       p_user_id);
 exception 
    when others then 
-      arcsql.log_err(p_text=>'create_bucket: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'create_bucket: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -52,7 +64,7 @@ begin
    update stat_bucket set row=p_bucket where bucket_id=p_bucket.bucket_id;
 exception 
    when others then 
-      arcsql.log_err(p_text=>'save_bucket: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'save_bucket: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -94,7 +106,7 @@ begin
        and stat_key=p_stat_key);
 exception
    when others then 
-      arcsql.log_err(p_text=>'refresh_avg_val_hist_ref: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'refresh_avg_val_hist_ref: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -133,7 +145,7 @@ begin
       and calc_count > 0;
 exception 
    when others then 
-      arcsql.log_err(p_text=>'save_bucket_stat_detail: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'save_bucket_stat_detail: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -176,14 +188,14 @@ begin
       percentile_cont(1) within group (order by calc_val)
    from stat_detail a
    where a.bucket_id=p_bucket_id  
-     and a.stat_time >= a.stat_time-statzilla.g_bucket.percentile_calc_days 
+     and a.stat_time >= a.stat_time-k2_stat.g_bucket.percentile_calc_days 
      and a.stat_key=p_stat_key
    group by
       a.bucket_id, 
       a.stat_key);
 exception
    when others then 
-      arcsql.log_err(p_text=>'refresh_stat_percentiles_ref: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'refresh_stat_percentiles_ref: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -195,7 +207,7 @@ begin
    refresh_stat_percentiles_ref (p_bucket_id, p_stat_key);
 exception
    when others then
-      arcsql.log_err(p_text=>'refresh_references: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'refresh_references: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -206,15 +218,15 @@ procedure refresh_all_references is -- | Scheduled job runs this to refresh all 
     order
        by bucket_id, stat_key;
 begin 
-   arcsql.start_event(p_event_key=>'statzilla', p_sub_key=>'refresh_all_references', p_name=>'refresh_all_references');
+   arcsql.start_event(p_event_key=>'k2_stat', p_sub_key=>'refresh_all_references', p_name=>'refresh_all_references');
    for x in all_metrics loop 
       purge_stats (x.bucket_id, x.stat_key);
       refresh_references (x.bucket_id, x.stat_key);
    end loop;
-   arcsql.stop_event(p_event_key=>'statzilla', p_sub_key=>'refresh_all_references', p_name=>'refresh_all_references');
+   arcsql.stop_event(p_event_key=>'k2_stat', p_sub_key=>'refresh_all_references', p_name=>'refresh_all_references');
 exception
    when others then
-      arcsql.log_err(p_text=>'refresh_all_references: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'refresh_all_references: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -259,7 +271,7 @@ begin
    end loop;
 exception
    when others then 
-      arcsql.log_err(p_text=>'get_properties_from_new_stats: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'get_properties_from_new_stats: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -299,7 +311,7 @@ begin
    -- get_properties_from_new_stats(v_created);
 exception 
    when others then 
-      arcsql.log_err(p_text=>'get_new_stats_from_the_stat_work_table: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'get_new_stats_from_the_stat_work_table: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -347,7 +359,7 @@ begin
       stat_key,
       stat_description,
       g_bucket.bucket_id,
-      statzilla.g_bucket.calc_type,
+      k2_stat.g_bucket.calc_type,
       received_val,
       stat_time,
       systimestamp
@@ -373,7 +385,7 @@ begin
 
 exception 
    when others then 
-      arcsql.log_err(p_text=>'process_bucket_time: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'process_bucket_time: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -387,7 +399,7 @@ procedure process_bucket ( -- | Process records in stat_in for the given bucket 
    n number;
 begin 
    arcsql.debug('process_bucket: '||p_bucket_key);
-   arcsql.start_event(p_event_key=>'statzilla', p_sub_key=>'process_bucket', p_name=>p_bucket_key);
+   arcsql.start_event(p_event_key=>'k2_stat', p_sub_key=>'process_bucket', p_name=>p_bucket_key);
    -- Needs to be set here so it is available for triggers which are about to fire.
    g_bucket := get_bucket_row(p_bucket_key=>p_bucket_key);
    for t in stat_times loop 
@@ -399,31 +411,28 @@ begin
    end loop;
    -- Check stat_work for new stats and insert into stat table if we find any.
    get_new_stats_from_the_stat_work_table(p_bucket_id=>g_bucket.bucket_id);
-   arcsql.stop_event(p_event_key=>'statzilla', p_sub_key=>'process_bucket', p_name=>p_bucket_key);
+   arcsql.stop_event(p_event_key=>'k2_stat', p_sub_key=>'process_bucket', p_name=>p_bucket_key);
 exception 
    when others then 
-      arcsql.log_err(p_text=>'process_bucket: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'process_bucket: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
 procedure process_buckets is -- | Process all buckets.
    cursor buckets is 
-   select distinct bucket_key 
+   select distinct a.bucket_key 
     from stat_in a,
          stat_bucket b
          -- Added join here to prevent orphan bucket_key in stat_in from getting processed which ends up blowing up when get_bucket_row is called.
    where a.bucket_key=b.bucket_key;
 begin
-   if not k2_config.enable_statzilla then
-      return;
-   end if;
    for b in buckets loop
       process_bucket(p_bucket_key=>b.bucket_key);
    end loop;
    commit;
 exception 
    when others then 
-      arcsql.log_err(p_text=>'process_buckets: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'process_buckets: '||dbms_utility.format_error_stack, p_key=>'k2');
       rollback;
       raise;
 end;
@@ -444,10 +453,10 @@ begin
    delete from stat_archive
     where bucket_id=p_bucket_id 
       and stat_key=p_stat_key 
-      and stat_time < systimestamp-statzilla.g_bucket.save_archive_days;
+      and stat_time < systimestamp-k2_stat.g_bucket.save_archive_days;
 exception
    when others then
-      arcsql.log_err(p_text=>'purge_stats: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'purge_stats: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -458,7 +467,7 @@ begin
    where bucket_id=p_bucket_id;
 exception
    when others then 
-      arcsql.log_err(p_text=>'delete_bucket: '||dbms_utility.format_error_stack, p_key=>'statzilla');
+      arcsql.log_err(p_text=>'delete_bucket: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 

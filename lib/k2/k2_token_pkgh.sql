@@ -17,6 +17,11 @@ procedure create_token (
    p_token_key in varchar2,
    p_user_id in number);
 
+function create_token (
+   p_token_key in varchar2,
+   p_user_id in number)
+   return varchar2;
+
 procedure assert_valid_token (
    p_token in varchar2);
 

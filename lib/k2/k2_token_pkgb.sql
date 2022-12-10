@@ -26,7 +26,7 @@ begin
    return r;
 end;
 
-procedure create_token (
+procedure create_token ( -- | Creates a token for a user.
    p_token_key in varchar2,
    p_user_id in number) is 
 begin
@@ -37,6 +37,17 @@ begin
       p_token_key,
       sys_guid(),
       p_user_id);
+end;
+
+function create_token ( -- | Creates a token for a user and returns it.
+   p_token_key in varchar2,
+   p_user_id in number)
+   return varchar2 is 
+   r tokens%rowtype;
+begin 
+   create_token(p_token_key=>p_token_key, p_user_id=>p_user_id);
+   r := get_token_row(p_token_key=>p_token_key);
+   return r.token;
 end;
 
 procedure assert_valid_token (

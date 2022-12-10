@@ -1,4 +1,4 @@
--- uninstall: drop package apex_utl2;
+
 create or replace package body apex_utl2 as
 
 

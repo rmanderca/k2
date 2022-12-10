@@ -9,5 +9,4 @@ arcsql | ArcSQL | A lot of helpful tools for Oracle, monitoring, logging, and mo
 gumroad | Gumroad | An interface for implementing Gumroad | N |
 k2 | K2 Framework | Code which supports the overall K2 framework. | Y |
 saas_auth  | SAAS Authorization | A user login solution for Oracle APEX | Y |
-statzilla | Statzilla | A metrics monitoring and aggregation system. | Y |
 twilio | Twilio | A Twilio integration. | N |

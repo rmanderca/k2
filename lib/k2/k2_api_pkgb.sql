@@ -1,7 +1,7 @@
 
 create or replace package body k2_api as 
 
-procedure status is 
+procedure status_v1 is 
    -- l_cursor sys_refcursor;
 begin 
    -- open l_cursor for 
@@ -11,12 +11,9 @@ begin
    apex_json.open_object;
    apex_json.write('status', 'ok');
    apex_json.close_object;
-   -- :status_code := 200;
 exception
    when others then
       raise;
-      -- :status_code := 400;
-      -- :errmsg := sqlerrm;  
 end;
 
 procedure assert_bearer_token_exists is 

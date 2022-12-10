@@ -57,7 +57,7 @@ begin
 end;
 /
 
--- uninstall: drop table alert_priority_groups cascade constraints purge;
+-- uninstall: exec drop_table('alert_priority_groups');
 begin
    if not does_table_exist('alert_priority_groups') then 
       execute_sql('
@@ -82,7 +82,7 @@ begin
 end;
 /
 
--- uninstall: drop table alert_priorities cascade constraints purge;
+-- uninstall: exec drop_table('alert_priorities');
 begin
    if not does_table_exist('alert_priorities') then 
       execute_sql('
@@ -124,7 +124,7 @@ begin
 end;
 /
 
--- uninstall: drop table alerts cascade constraints purge;
+-- uninstall: exec drop_table('alerts');
 begin
    if not does_table_exist('alerts') then 
       execute_sql('
@@ -166,6 +166,7 @@ begin
 end;
 /
 
+-- uninstall: exec drop_view('alert_report_view');
 create or replace view alert_report_view as (
 select a.alert_id, 
        a.alert_key,
