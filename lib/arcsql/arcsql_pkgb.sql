@@ -491,6 +491,23 @@ exception
       raise_application_error(-20001, 'str_eval_math: Error evaluating expression.');
 end;
 
+function str_eval_math_v2 ( -- | Another method for evaluating a string as a math expression.
+   p_expression in varchar2,
+   p_decimals in number := 2) return number is
+   n number;
+begin
+   -- This works but may require a license for OLAP or need OLAP installed. Avoid if possible.
+   -- dbms_aw.eval_text('5+5/10')
+   -- Not sure if below avoids a hard parse which version 1 most likely occurs.
+   select
+     xmlquery(
+     replace(p_expression, '/', ' div ')
+        returning content
+     ).getNumberVal() into n
+     from dual;
+   return round(n, p_decimals);
+end;
+
 -- | -----------------------------------------------------------------------------------
 -- | Numbers 
 -- | -----------------------------------------------------------------------------------

@@ -116,6 +116,10 @@ create or replace package arcsql as
       p_expression in varchar2,
       p_decimals in number := 2) return number;
 
+   function str_eval_math_v2 (
+      p_expression in varchar2,
+      p_decimals in number := 2) return number;
+
    procedure str_raise_complex_value (
       text varchar2, 
       allow_regex varchar2 default null);
