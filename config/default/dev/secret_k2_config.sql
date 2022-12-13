@@ -32,15 +32,9 @@ create or replace package k2_config as
     enable_apex_debug boolean := true;
     -- Do you want messages forwards to arcsql_debug?
     enable_arcsql_logging boolean := true;
-
-    -- Do you want to enable the statzilla job which processes buckets?
-    enable_statzilla boolean := true;
     
     -- Do you want to collect oracle metrics?
     enable_statzilla_get_oracle_metrics boolean := true;
-
-    -- Do you want K2 to collect metrics?
-    enable_k2_metrics boolean := true;
 
     -- This disables email if send_email procedure references it(see long story file 11/4/2022).
     disable_email boolean := false;
@@ -51,7 +45,7 @@ create or replace package k2_config as
     secret_key varchar2(100) := 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 
     -- Do not include a trailing slash. '/v1/' or other versions will be appended to the base path.
-    api_base_path varchar2(120) := '/v2';
+    api_base_path varchar2(120) := '/api';
 
 end;
 /

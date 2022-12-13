@@ -339,7 +339,7 @@ begin
    if :new.calc_val != 0 then
       :new.last_non_zero_val := :new.stat_time;
       if :new.convert_eval is not null then 
-         :new.calc_val := dbms_aw.eval_text(:new.calc_val||:new.convert_eval);
+         :new.calc_val := arcsql.str_eval_math_v2(p_expression=>:new.calc_val||:new.convert_eval);
       end if;
    end if;
 
