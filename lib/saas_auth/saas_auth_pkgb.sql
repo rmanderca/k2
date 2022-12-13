@@ -1308,7 +1308,7 @@ begin
          p_password=>utl_raw.cast_to_raw(dbms_random.string('x',10)));
    end if;
    if saas_auth_config.send_email_after_create_account then 
-      k2.log_email('saas_auth_pkg.create_account: '||v_email);
+      arcsql.log_email('saas_auth_pkg.create_account: '||v_email);
    end if;
 exception 
    when others then

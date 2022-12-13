@@ -46,7 +46,7 @@ function get_alert_priority_row ( -- | Returns a row from alert_priorities.
    return alert_priorities%rowtype is 
    r alert_priorities%rowtype;
 begin 
-   k2.debug('get_alert_priority_row: '||p_priority_id);
+   arcsql.debug('get_alert_priority_row: '||p_priority_id);
    select * into r 
      from alert_priorities 
     where priority_id=p_priority_id;
@@ -206,7 +206,7 @@ procedure create_alert_priority ( -- | Adds a single alert priority to a priorit
    p_priority_name in varchar2,
    p_priority_level in number) is 
 begin 
-   k2.debug2('create_alert_priority: '||p_priority_group_id||', '||p_priority_name||', '||p_priority_level);
+   arcsql.debug2('create_alert_priority: '||p_priority_group_id||', '||p_priority_name||', '||p_priority_level);
    insert into alert_priorities (
       priority_group_id,
       priority_level,
@@ -220,7 +220,7 @@ procedure add_default_rows_to_new_priority_group ( -- | Adds default priorities 
    p_priority_group_id in number) is 
    n number;
 begin 
-   k2.debug('add_default_rows_to_new_priority_group: '||p_priority_group_id);
+   arcsql.debug('add_default_rows_to_new_priority_group: '||p_priority_group_id);
    select count(*) into n from alert_priorities where priority_group_id=p_priority_group_id;
    if n = 0 then 
       create_alert_priority(p_priority_group_id=>p_priority_group_id, p_priority_name=>'critical', p_priority_level=>1);
@@ -240,7 +240,7 @@ procedure create_priority_group ( -- | Creates a priority group if it does not e
    v_priority_group_id number;
    n number;
 begin 
-   k2.debug('create_priority_group: '||p_priority_group_key||', '||p_priority_group_name||', '||p_user_id);
+   arcsql.debug('create_priority_group: '||p_priority_group_key||', '||p_priority_group_name||', '||p_user_id);
    select count(*) into n from alert_priority_groups where priority_group_key=p_priority_group_key;
    if n = 0 then
       insert into alert_priority_groups (priority_group_key, priority_group_name, user_id)
@@ -334,7 +334,7 @@ begin
    end if;
 exception
    when others then
-      k2.log_err('open_alert: '||dbms_utility.format_error_stack);
+      arcsql.log_err('open_alert: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -376,7 +376,7 @@ begin
    commit;
 exception
    when others then
-      k2.log_err('check_alerts: '||dbms_utility.format_error_stack);
+      arcsql.log_err('check_alerts: '||dbms_utility.format_error_stack);
       raise;
 end;
 

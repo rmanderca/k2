@@ -1,104 +1,6 @@
 
 create or replace package body k2 as 
 
-procedure debug (
-   p_text in varchar2, 
-   p_key in varchar2) is 
-begin 
-   if k2_config.enable_arcsql_logging then
-      arcsql.debug(p_text=>p_text, p_key=>p_key);
-   end if;
-   if k2_config.enable_apex_debug then
-      apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_info);
-   end if;
-end;
-
-procedure debug2 (
-   p_text in varchar2, 
-   p_key in varchar2) is
-begin 
-   if k2_config.enable_arcsql_logging then
-      arcsql.debug2(p_text=>p_text, p_key=>p_key);
-   end if;
-   if k2_config.enable_apex_debug then
-      apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_app_trace);
-   end if;
-end;
-
-procedure debug3 (
-   p_text in varchar2, 
-   p_key in varchar2 default null) is
-begin 
-   if k2_config.enable_arcsql_logging then
-      arcsql.debug3(p_text=>p_text, p_key=>p_key);
-   end if;
-   if k2_config.enable_apex_debug then
-      apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_app_trace);
-   end if;
-end;
-
-procedure log_err (
-   p_text in varchar2, 
-   p_key in varchar2 default null) is
-begin 
-   if k2_config.enable_arcsql_logging then
-      log_err(p_text=>p_text, p_key=>p_key);
-   end if;
-   if k2_config.enable_apex_debug then
-      apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_error);
-   end if;
-end;
-
-procedure log (
-   p_text in varchar2, 
-   p_key in varchar2 default null) is
-begin 
-   if k2_config.enable_arcsql_logging then
-      arcsql.log(p_text=>p_text, p_key=>p_key);
-   end if;
-   if k2_config.enable_apex_debug then
-      apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_info);
-   end if;
-end;
-
-procedure log_audit (
-   p_text in varchar2, 
-   p_key in varchar2 default null) is
-begin 
-   if k2_config.enable_arcsql_logging then
-      arcsql.log_audit(p_text=>p_text, p_key=>p_key);
-   end if;
-   if k2_config.enable_apex_debug then
-      apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_warn);
-   end if;
-end;
-
-procedure log_email (
-   p_text in varchar2, 
-   p_key in varchar2 default null) is
-begin 
-   if k2_config.enable_arcsql_logging then
-      arcsql.log_email(p_text=>p_text, p_key=>p_key);
-   end if;
-   -- Apex won't send an email this way. This only works for Arcsql if configured to send emails.
-   if k2_config.enable_apex_debug then
-      apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_warn);
-   end if;
-end;
-
-procedure log_security_event (
-   p_text in varchar2, 
-   p_key in varchar2 default null) is
-begin 
-   if k2_config.enable_arcsql_logging then
-      arcsql.log_security_event(p_text=>p_text, p_key=>p_key);
-   end if;
-   if k2_config.enable_apex_debug then
-      apex_debug.message(p_message=>k2_config.apex_debug_prefix||p_text, p_level=>apex_debug.c_log_level_warn);
-   end if;
-end;
-
-
 /*
 -----------------------------------------------------------------------------------
 MONKEY PATCHES
@@ -177,7 +79,7 @@ begin
       );
 exception 
    when others then
-      log_err('add_cookie: '||dbms_utility.format_error_stack);
+      arcsql.log_err('add_cookie: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -203,7 +105,7 @@ begin
    end loop;
 exception 
    when others then
-      log_err('set_cookies: '||dbms_utility.format_error_stack);
+      arcsql.log_err('set_cookies: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -219,7 +121,7 @@ exception
    when no_data_found then 
       return null;
    when others then
-      log_err('get_cookie: '||dbms_utility.format_error_stack);
+      arcsql.log_err('get_cookie: '||dbms_utility.format_error_stack);
       -- Do not raise error here. The 15 min admin job was getting 6502 err here and breaking.
       -- Not sure why admin job would be calling this. Might be from plsq in auto login auth scheme.
       -- raise;
@@ -257,7 +159,7 @@ begin
       p_expires_at);
 exception 
    when others then
-      log_err('add_flash_message: '||dbms_utility.format_error_stack);
+      arcsql.log_err('add_flash_message: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -288,7 +190,7 @@ begin
    return r;
 exception 
    when others then
-      log_err('get_flash_message: '||dbms_utility.format_error_stack);
+      arcsql.log_err('get_flash_message: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -326,7 +228,7 @@ begin
    return r;
 exception 
    when others then
-      log_err('get_flash_message: '||dbms_utility.format_error_stack);
+      arcsql.log_err('get_flash_message: '||dbms_utility.format_error_stack);
       raise;
 end;
 
@@ -347,7 +249,7 @@ begin
    return n;
 exception 
    when others then
-      log_err('flash_message_count: '||dbms_utility.format_error_stack);
+      arcsql.log_err('flash_message_count: '||dbms_utility.format_error_stack);
       raise;
 end;
 

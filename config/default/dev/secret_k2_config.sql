@@ -24,10 +24,6 @@ create or replace package k2_config as
     -- Set to a default timezone to use in cases when you don't know time zone.
     default_timezone varchar(120) := 'US/Eastern';
 
-    -- Adds prefix to message of k2.debug* calls when it forwards to apex_debug.
-    -- This makes it a little easier to see what calls are specifically yours when
-    -- viewing debug or querying apex_debug_messages. Set to blank or null to disable.
-    apex_debug_prefix varchar(25) := 'k2: ';
     -- Do you want messages forwarded to apex_debug?
     enable_apex_debug boolean := true;
     -- Do you want messages forwards to arcsql_debug?

@@ -1,7 +1,7 @@
 -- uninstall: exec drop_procedure('after_create_account');
 create or replace procedure after_create_account (p_user_id in number) as 
 begin
-   k2.debug('after_create_account: '||p_user_id); 
+   arcsql.debug('after_create_account: '||p_user_id); 
    null;
 end;
 /
@@ -12,7 +12,7 @@ exec drop_procedure('on_delete_account');
 -- uninstall: exec drop_procedure('before_delete_user');
 create or replace procedure before_delete_user (p_user_id in number) as 
 begin
-   k2.debug('before_delete_user: '||p_user_id); 
+   arcsql.debug('before_delete_user: '||p_user_id); 
    null;
 end;
 /
@@ -20,7 +20,7 @@ end;
 -- uninstall: exec drop_procedure('after_delete_user');
 create or replace procedure after_delete_user (p_user_id in number) as 
 begin
-   k2.debug('after_delete_user: '||p_user_id); 
+   arcsql.debug('after_delete_user: '||p_user_id); 
    null;
 end;
 /
@@ -28,7 +28,7 @@ end;
 -- uninstall: exec drop_procedure('on_login');
 create or replace procedure on_login (p_user_id in number) as 
 begin
-   k2.debug('on_login: '||p_user_id); 
+   arcsql.debug('on_login: '||p_user_id); 
    null;
 end;
 /
