@@ -1,5 +1,5 @@
 
--- | app_scheduler_jobs.sql - Use this file to create the scheduler jobs for your application.
+-- | app_schedules.sql - Use this file to create the scheduler jobs for your application.
 
 
 /*

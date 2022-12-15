@@ -282,12 +282,6 @@ begin
    if bool_test then 
       drop_object(drop_table.table_name, 'TABLE');
    end if;  
-   /*
-   | An example of bool_test might look like the following.
-   | ```
-   | k2_config.env in ('dev', 'tst')
-   | ```
-   */
 end;
 /
 

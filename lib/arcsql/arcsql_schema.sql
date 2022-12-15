@@ -141,17 +141,6 @@ end;
 
 /* SQL LOG */
 
-begin 
-   if arcsql_version < 1 then
-       --drop_table('sql_log');
-       --drop_table('sql_log_arc');
-       --drop_table('counter');
-       --drop_table('event');
-       drop_table('sql_snap');
-   end if;
-end;
-/
-
 -- uninstall: drop sequence seq_sql_log_id;
 begin 
    if not does_sequence_exist('seq_sql_log_id') then
@@ -504,14 +493,6 @@ begin
 end;
 /
 
-begin
-  if arcsql_version <= 1 then
-     -- Changing name of table to audsid_event.
-     drop_table('session_event');
-  end if;
-end;
-/
-
 -- uninstall: drop table audsid_event;
 begin
    if not does_table_exist('audsid_event') then
@@ -701,9 +682,9 @@ end;
 -- uninstall: drop type arcsql_csv_row;
 
 -- Needed for the create or replace types to work!
-drop function to_rows;
-drop type arcsql_csv_tab;
-drop type arcsql_csv_row;
+exec drop_function('to_rows');
+exec drop_type('arcsql_csv_tab');
+exec drop_type('arcsql_csv_row');
 
 create or replace type arcsql_csv_row as object (
    token varchar2(120),

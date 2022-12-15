@@ -2,9 +2,6 @@
 -- uninstall: drop package arcsql_cfg;
 create or replace package arcsql_cfg as 
    
-   default_email_from_address varchar2(120) := 'donotreply@notmydomain.com';
-   disable_email boolean := false;
-
    -- 1 is "debug", 2 is "debug2", and 3 is "debug3" the highest level of detail.
    -- All other types of calls such as info, log_audit always get logged.
    log_level number := 1;

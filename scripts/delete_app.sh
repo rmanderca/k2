@@ -3,7 +3,7 @@
 function usage {
 	cat <<EOF
 
-./delete_app_folders.sh APP_NAME
+./delete_app.sh APP_NAME
 
 APP_NAME - Your app name. Will get converted to lower case to match folder name.
 

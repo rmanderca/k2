@@ -248,7 +248,7 @@ begin
    -- Send email
    -- send_email (
    --    p_to => r.email_address, 
-   --    p_from => arcsql_cfg.default_email_from_address,
+   --    p_from => app_config.app_from_email,
    --    p_body => message_body,
    --    p_subject => 'Alert notifications for the '||nvl(g.contact_group_name, g.contact_group_key)||' contract_group');
 

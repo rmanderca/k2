@@ -548,7 +548,7 @@ function get_email_override_when_set (
    --
    p_email varchar2) return varchar2 is 
 begin 
-   return nvl(trim(saas_auth_config.global_email_override), p_email);
+   return nvl(trim(app_config.email_override), p_email);
 exception 
    when others then
       arcsql.log_err('get_email_override_when_set: '||dbms_utility.format_error_stack);
@@ -801,9 +801,9 @@ end;
 procedure send_email_verification_code_to (  -- Sends a verification code to a user if the account is valid.
    p_user_name in varchar2) is 
    t              saas_auth.email_verification_token%type   := arcsql.str_random(6, 'an');
-   v_app_name     varchar2(120)                             := k2_config.app_name;
+   v_app_name     varchar2(120)                             := app_config.app_name;
    v_app_id       number                                    := k2_utl.get_app_id;
-   v_from_address varchar2(120)                             := arcsql_cfg.default_email_from_address;
+   v_from_address varchar2(120)                             := app_config.app_from_email;
    good_for       number                                    := saas_auth_config.token_good_for_minutes;
    m              varchar2(24000);
    v_saas_auth    saas_auth%rowtype;
@@ -849,7 +849,7 @@ m := m || '
    m := m || '**Thanks,**';
    m := m || '
 ';
-   m := m || '**'||k2_config.app_name||'**';
+   m := m || '**'||app_config.app_name||'**';
 
    m := apex_markdown.to_html(
          p_markdown=>m, 
@@ -857,7 +857,7 @@ m := m || '
          p_softbreak=>'<br />', 
          p_extra_link_attributes=>apex_t_varchar2('target', '_blank'));
 
-   send_email (
+   app_send_email (
       p_from=>v_from_address,
       p_to=>get_email_override_when_set(v_saas_auth.email),
       p_subject=>'Welcome to '||v_app_name||'. Please take a second to verify your email.',
@@ -1420,7 +1420,7 @@ begin
           last_session_id=v('APP_SESSION')
     where email=lower(p_email);
 
-   v_app_name := k2_config.app_name;
+   v_app_name := app_config.app_name;
    m := '
 Hello,
 
@@ -1433,9 +1433,9 @@ Please use the security code to change your password.
 Thanks,
 
 - The '||v_app_name||' Team';
-   send_email (
+   app_send_email (
       p_to=>get_email_override_when_set(p_email),
-      p_from=>arcsql_cfg.default_email_from_address,
+      p_from=>app_config.app_from_email,
       p_subject=>'Resetting your '||v_app_name||' account password!',
       p_body=>m);
 exception 

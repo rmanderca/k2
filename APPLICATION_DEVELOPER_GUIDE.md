@@ -1,4 +1,7 @@
 
+# OUT OF DATE - Some of below may be out of date at this point (12/14/2022). Will try to update soon.
+----
+
 # APPLICATION DEVELOPER GUIDE
 
 9/17/2022 – This document is a work in progress.

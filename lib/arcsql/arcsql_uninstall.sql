@@ -59,7 +59,6 @@ drop type arcsql_csv_tab;
 drop sequence seq_request_count_id;
 drop table arcsql_request_count cascade constraints purge;
 drop view arcsql_test_result;
-drop procedure send_email;
 drop package arcsql;
 exec drop_scheduler_job('arcsql_run_sql_log_update');
 exec drop_scheduler_job('arcsql_purge_events');

@@ -1,9 +1,14 @@
 
-exec drop_table('contact_groups');
-exec drop_table('contacts');
-exec drop_table('contact_group_contacts');
-exec drop_table('contact_group_members');
-exec drop_table('contact_group_priority_groups');
+begin
+   if app_dev.drop_tables then
+      drop_table('contact_groups');
+      drop_table('contacts');
+      drop_table('contact_group_contacts');
+      drop_table('contact_group_members');
+      drop_table('contact_group_priority_groups');
+   end if;
+end;
+/
 
 /*
 
@@ -62,7 +67,7 @@ begin
       )', false);
    end if;
    add_pk_constraint('contacts', 'contact_id');
-   if not does_constraint_exist('contact_fk_user_id') then 
+   if not does_constraint_exist('contacts_fk_user_id') then 
       execute_sql('alter table contacts add constraint contacts_fk_user_id foreign key (user_id) references saas_auth (user_id) on delete cascade', false);
    end if;
 end;
@@ -86,11 +91,11 @@ begin
       )', false);
    end if;
    add_pk_constraint('contact_group_members', 'contact_group_member_id');
-   if not does_constraint_exist('fk_cgc_contact_group_id') then 
-      execute_sql('alter table contact_group_members add constraint fk_cgc_contact_group_id foreign key (contact_group_id) references contact_groups (contact_group_id) on delete cascade', false);
+   if not does_constraint_exist('fk_contact_group_members_contact_group_id') then 
+      execute_sql('alter table contact_group_members add constraint fk_contact_group_members_contact_group_id foreign key (contact_group_id) references contact_groups (contact_group_id) on delete cascade', false);
    end if;
-   if not does_constraint_exist('fk_cgc_contact_id') then 
-      execute_sql('alter table contact_group_members add constraint fk_cgc_contact_id foreign key (contact_id) references contacts (contact_id) on delete cascade', false);
+   if not does_constraint_exist('fk_contact_group_members_contact_id') then 
+      execute_sql('alter table contact_group_members add constraint fk_contact_group_members_contact_id foreign key (contact_id) references contacts (contact_id) on delete cascade', false);
    end if;
 end;
 /
@@ -104,14 +109,12 @@ begin
       contact_group_id number not null,
       priority_group_id number not null)', false);
    end if;
-   if not does_constraint_exist('pk_contact_group_priority_groups') then 
-      execute_sql('alter table contact_group_priority_groups add constraint pk_contact_group_subscriptions primary key (contact_group_priority_group_id)', false);
+   add_pk_constraint('contact_group_priority_groups', 'contact_group_priority_group_id');
+   if not does_constraint_exist('fk_contact_group_priority_groups_contact_group_id') then 
+      execute_sql('alter table contact_group_priority_groups add constraint fk_contact_group_priority_groups_contact_group_id foreign key (contact_group_id) references contact_groups (contact_group_id) on delete cascade', false);
    end if;
-   if not does_constraint_exist('fk_cgpg_contact_group_id') then 
-      execute_sql('alter table contact_group_priority_groups add constraint fk_cgpg_contact_group_id foreign key (contact_group_id) references contact_groups (contact_group_id) on delete cascade', false);
-   end if;
-   if not does_constraint_exist('fk_cgpg_priority_group_id') then 
-      execute_sql('alter table contact_group_priority_groups add constraint fk_cgpg_priority_group_id foreign key (priority_group_id) references alert_priority_groups (priority_group_id) on delete cascade', false);
+   if not does_constraint_exist('fk_contact_group_priority_groups_priority_group_id') then 
+      execute_sql('alter table contact_group_priority_groups add constraint fk_contact_group_priority_groups_priority_group_id foreign key (priority_group_id) references alert_priority_groups (priority_group_id) on delete cascade', false);
    end if;
 end;
 /

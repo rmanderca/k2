@@ -12,6 +12,7 @@ All of the flags here should support truthy values including cron expressions.
 create or replace package app_job as 
 
 	-- Provides a simple way to prevent all jobs from running. They still call procs but they return immediately.
+	-- You have to implement a check for your own jobs, by default this only applies to delivered jobs.
 	disable_all varchar2(120) := 'y';
 
 	-- ArcSQL

@@ -49,7 +49,7 @@ API might look like
 */
 
 begin
-   if 1=1 then
+   if app_dev.drop_tables then
       drop_table('alert_priority_groups');
       drop_table('alert_priorities');
       drop_table('alerts');
@@ -70,9 +70,7 @@ begin
       -- This is an optional reference which can be used by the developer.
       user_id number not null)', false);
    end if;
-   if not does_constraint_exist('pk_alert_priority_groups') then
-      execute_sql('alter table alert_priority_groups add constraint pk_alert_priority_groups primary key (priority_group_id)', false);
-   end if;
+   add_pk_constraint('alert_priority_groups', 'priority_group_id');
    if not does_index_exist('alert_priority_groups_1') then
       execute_sql('create unique index alert_priority_groups_1 on alert_priority_groups (priority_group_key)', false);
    end if;
@@ -117,8 +115,12 @@ begin
       close_try_email varchar2(20) default ''Y'' not null,
       close_try_sms varchar2(20) default ''N'' not null
       )', false);
-      execute_sql('alter table alert_priorities add constraint pk_alert_priorities primary key (priority_id)', false);
+   end if;
+   add_pk_constraint('alert_priorities', 'priority_id');
+   if not does_constraint_exist('alert_priorities_fk_priority_group_id') then 
       execute_sql('alter table alert_priorities add constraint alert_priorities_fk_priority_group_id foreign key (priority_group_id) references alert_priority_groups (priority_group_id) on delete cascade', false);
+   end if;
+   if not does_index_exist('alert_priorities_1') then
       execute_sql('create unique index alert_priorities_1 on alert_priorities (priority_group_id, priority_level)', false);
    end if;
 end;
@@ -154,9 +156,7 @@ begin
       sent_email_count number default 0 not null
       )', false);
    end if;
-   if not does_constraint_exist('pk_alerts') then 
-      execute_sql('alter table alerts add constraint pk_alerts primary key (alert_id)', false);
-   end if;
+   add_pk_constraint('alerts', 'alert_id');
    if not does_constraint_exist('alerts_fk_priority_id') then
       execute_sql('alter table alerts add constraint alerts_fk_priority_id foreign key (priority_id) references alert_priorities (priority_id) on delete cascade', false);
    end if;

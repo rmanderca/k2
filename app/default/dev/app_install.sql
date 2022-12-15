@@ -3,25 +3,27 @@
 
 -- WARNING: You may want to exclude files starting with secret* from git. See the .gitignore file.
 
-@../../../config/&k2_app_dir/&k2_env_dir/secret_arcsql_cfg.sql
-@../../../config/&k2_app_dir/&k2_env_dir/secret_k2_config.sql
-@../../../config/&k2_app_dir/&k2_env_dir/secret_saas_auth_config.sql 
-@../../../config/&k2_app_dir/&k2_env_dir/secret_app_config.sql
+@app_patch.sql
+@app_schema.sql
+@app_pkgh.sql
+@app_pkgb.sql
+@app_api_pkgh.sql
+@app_api_pkgb.sql
 
 -- Authentication (create account, verify email, login, forgot password) features.
-@saas_auth_events.sql
+@app_events.sql
 
 -- Automatically pre-create users you need for your app.
-@users.sql
+@app_users.sql
 
--- send_email procedure over-ride. Replace the delivery proc with your proc to interface with your email solution.
-@send_email.sql
+-- app_send_email procedure over-ride. Replace the delivery proc with your proc to interface with your email solution.
+@app_send_email.sql
 
 -- Things that need to run towards the end of the install.
-@saas_app_post_install.sql
+@app_post_install.sql
 
 -- Install any scheduled jobs using the dbms job scheduler.
-@app_scheduler_jobs.sql
+@app_schedules.sql
 
 commit;
 

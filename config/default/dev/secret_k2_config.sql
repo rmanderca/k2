@@ -2,13 +2,6 @@
 -- uninstall: exec drop_package('k2_config');
 create or replace package k2_config as 
 
-    -- Used to determine which env we are working in. Usually dev, tst, prd.
-    env varchar2(12) := 'dev';
-
-    -- Application name. May want to include the env for non prod environments.
-    app_name varchar2(120) := 'My Default App (dev)';
-    app_version number := 20221019;
-
     -- This should be null or match the actual v('APP_ID') value. It is set here
     -- in order to support testing from SQL*Developer since the context of APP_ID
     -- does not otherwise exist.
@@ -23,17 +16,6 @@ create or replace package k2_config as
 
     -- Set to a default timezone to use in cases when you don't know time zone.
     default_timezone varchar(120) := 'US/Eastern';
-
-    -- Do you want messages forwarded to apex_debug?
-    enable_apex_debug boolean := true;
-    -- Do you want messages forwards to arcsql_debug?
-    enable_arcsql_logging boolean := true;
-    
-    -- Do you want to collect oracle metrics?
-    enable_statzilla_get_oracle_metrics boolean := true;
-
-    -- This disables email if send_email procedure references it(see long story file 11/4/2022).
-    disable_email boolean := false;
 
     -- Determines if ords is enabled for the schema.
     enable_ords boolean := true;

@@ -16,56 +16,41 @@ end;
 end;
 /
 
+-- Stub needed so saas_auth can compile.
+create or replace procedure app_send_email ( 
+   p_to in varchar2,
+   p_from in varchar2,
+   p_body in varchar2,
+   p_subject in varchar2 default null) is
+begin 
+   -- This is just a stub so things compile in order. Your app should have it's own version of this procedure.
+   null;
+end;
+/
+
 @./config/&k2_app_dir/&k2_env_dir/secret_arcsql_cfg.sql
 @./config/&k2_app_dir/&k2_env_dir/secret_k2_config.sql
 @./config/&k2_app_dir/&k2_env_dir/secret_saas_auth_config.sql 
 @./config/&k2_app_dir/&k2_env_dir/secret_app_config.sql
 @./config/&k2_app_dir/&k2_env_dir/secret_app_job.sql
+@./config/&k2_app_dir/&k2_env_dir/secret_app_dev.sql
 @./lib/arcsql/arcsql_install.sql
 @./lib/saas_auth/saas_auth_schema.sql 
-
-/*
-Stazilla (moved to k2_stat).
-*/
-
-exec drop_table('stat_calc_type');
-exec drop_table('stat_profile');
-exec drop_table('stat_bucket');
-exec drop_table('stat');
-exec drop_table('stat_property');
-exec drop_table('stat_in');
-exec drop_table('stat_archive');
-exec drop_sequence('seq_stat_work_id');
-exec drop_table('stat_work');
-exec drop_table('stat_avg_val_hist_ref');
-exec drop_table('stat_percentiles_ref');
-exec drop_table('stat_detail');
-exec drop_package('statzilla');
-exec drop_scheduler_job('statzilla_process_buckets_job');
-exec drop_scheduler_job('statzilla_get_oracle_metrics_job');
-exec drop_scheduler_job('statzilla_refresh_references_job');
+@./lib/k2/k2_schema.sql 
 
 
-/*
-K2 lib is similiar in function to apex_utl2 but code here is more specific to the framework.
-*/
-
+@./lib/k2/k2_utl_pkgh.sql
+@./lib/k2/k2_utl_pkgb.sql
+@./lib/k2/k2_pkgh.sql
+@./lib/k2/k2_pkgb.sql
+@./lib/saas_auth/saas_auth_install.sql 
 @./lib/k2/k2_install.sql
 
-/*
-Authorization code. Uses the login and verification pages.
-*/
-
-@./lib/saas_auth/saas_auth_install.sql 
 
 @./lib/k2/k2_metrics_pkgh.sql
 @./lib/k2/k2_metrics_pkgb.sql
 
 @./lib/k2/k2_schedules.sql
-
-exec drop_package('t');
-exec drop_package('test');
-exec drop_package('apex_utl2');
 
 create or replace package k2_app as 
     version number := 20221209;

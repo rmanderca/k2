@@ -7,6 +7,7 @@ superloser*
 reflash*
 demo*
 chart*
+x*
 
 # I recommend you exlude files starting with secret. I am not including this 
 # because I need the config/default/secret* files to get included in the repo.
