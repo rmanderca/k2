@@ -31,7 +31,7 @@ begin
 end;
 /
 
-exec saas_auth_pkg.delete_user(p_email=>test.email);
+exec saas_auth_pkg.delete_user(p_user_name=>test.email);
 
 begin 
    arcsql.init_test('Create a system user account');

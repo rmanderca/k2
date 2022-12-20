@@ -60,7 +60,7 @@ create or replace package saas_auth_pkg as
       p_user_id in number);
 
    procedure delete_user (
-      p_email in varchar2);
+      p_user_name in varchar2);
 
    procedure add_system_user (
       p_user_name in varchar2,
@@ -119,7 +119,7 @@ create or replace package saas_auth_pkg as
       p_password in varchar2) return boolean;
 
    procedure send_reset_pass_token (
-      p_email in varchar2);
+      p_user_name in varchar2);
 
    procedure reset_password (
       p_token in varchar2,
@@ -146,12 +146,6 @@ create or replace package saas_auth_pkg as
 
    function get_user_id_from_user_name (
       p_user_name in varchar2 default v('APP_USER')) return number;
-
-   function get_user_id_from_email (
-      p_email in varchar2) return number;
-
-   function to_user_id (
-      p_email in varchar2) return number;
 
    function to_user_id (
       p_user_name in varchar2) return number;

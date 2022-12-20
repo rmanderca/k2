@@ -5,6 +5,10 @@
 README
 -------------------------------------------------------------------------------
 
+# Update on the UT 2.1 bug
+
+You can enable 'Deferred page rendering' which is a page level template option.
+
 # UT 2.1 BUG
 
 There is a bug in Universal Theme 2.1 which causes all of the hidden 
@@ -24,8 +28,7 @@ whenever sqlerror continue;
 @saas_auth_schema.sql 
 @saas_auth_pkgh.sql 
 @saas_auth_pkgb.sql 
-@saas_auth_post_install.sql
-@saas_auth_scheduler_jobs.sql
+@saas_auth_schedules.sql
 
 begin
 	if k2_app.version <= 20221019 then

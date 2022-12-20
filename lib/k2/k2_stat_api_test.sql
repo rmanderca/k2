@@ -12,7 +12,7 @@ end;
 
 exec saas_auth_pkg.delete_user(test.email);
 exec saas_auth_pkg.add_test_user(p_email=>test.email);
-exec test.user_id := saas_auth_pkg.get_user_id_from_email(test.email);
+exec test.user_id := saas_auth_pkg.get_user_from_user_name(p_user_name=>test.email);
 
 begin 
    select user_id into test.user_id from saas_auth where user_name=test.email;

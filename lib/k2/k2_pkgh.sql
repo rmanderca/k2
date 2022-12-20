@@ -44,11 +44,11 @@ procedure add_flash_message (
 
 function get_flash_message (
    p_message_type in varchar2 default 'notice',
-   p_delete in boolean default true) return varchar2;
+   p_delete in number default 1) return varchar2;
 
 function get_flash_messages (
    p_message_type in varchar2 default 'notice',
-   p_delete in boolean default true) return varchar2;
+   p_delete in number default 1) return varchar2;
 
 function flash_message_count (
    p_message_type in varchar2 default 'notice') return number;

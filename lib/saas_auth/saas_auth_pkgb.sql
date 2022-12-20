@@ -25,12 +25,21 @@ exception
       raise;
 end;
 
-function get_saas_auth_row (
+function get_saas_auth_row ( -- | Return a row from saas_auth using the user_id.
    p_user_id in number)
    return saas_auth%rowtype is 
    r saas_auth%rowtype;
 begin
    select * into r from saas_auth where user_id=p_user_id;
+   return r;
+end;
+
+function get_saas_auth_row ( -- | Return a row from saas_auth using user_name which is always unique.
+   p_user_name in varchar2)
+   return saas_auth%rowtype is 
+   r saas_auth%rowtype;
+begin
+   select * into r from saas_auth where user_name=lower(p_user_name);
    return r;
 end;
 
@@ -220,7 +229,7 @@ begin
       apex_authentication.post_login (
          p_username=>v_user_name, 
          p_password=>utl_raw.cast_to_raw(dbms_random.string('x',10)));
-         fire_on_login_event(saas_auth_pkg.get_user_id_from_user_name(v_user_name));
+         fire_on_login_event(p_user_id=>v_user_id);
    end if;
 exception 
    when others then
@@ -360,13 +369,18 @@ end;
 
 function is_able_to_auto_login return boolean is 
    n number;
-   t saas_auth.auto_login_token%type := get_auto_login_token;
+   t saas_auth.auto_login_token%type;
 begin 
    arcsql.debug('is_able_to_auto_login: user='||v('APP_USER')||', session='||v('APP_SESSION'));
    if v('APP_USER') != 'nobody' then 
       arcsql.debug('App user is not nobody: '||v('APP_USER'));
       return false;
    end if;
+   if owa_util.get_cgi_env('QUERY_STRING') like '%AUTH_TOKEN%' then 
+      arcsql.debug2('is_able_to_auto_login: false, query_string='||owa_util.get_cgi_env('QUERY_STRING'));
+      return false;
+   end if;
+   t := get_auto_login_token;
    if t is null then 
       arcsql.debug('auto_login_token cookie is null.');
       return false;
@@ -393,15 +407,16 @@ end;
 
 
 procedure auto_login is 
-   
    v_user_name saas_auth.user_name%type;
-   t saas_auth.auto_login_token%type := get_auto_login_token;
+   t saas_auth.auto_login_token%type;
 begin 
    arcsql.debug('auto_login: user='||v('APP_USER')||', session='||v('APP_SESSION'));
 
    if not is_able_to_auto_login then 
       return;
    end if;
+
+   t := get_auto_login_token;
    
    -- Figure out user and log them in.
    select user_name into v_user_name 
@@ -493,7 +508,6 @@ end;
 
 
 function does_user_name_exist ( -- | Return true if the user name exists. Does not see some accounts!
-   --
    p_user_name in varchar2) return boolean is
    n number;
    v_user_name saas_auth.user_name%type := lower(p_user_name);
@@ -515,7 +529,7 @@ procedure raise_user_name_not_found (
    --
    p_user_name in varchar2 default null) is 
 begin 
-   if not does_user_name_exist(p_user_name) then
+   if not does_user_name_exist(p_user_name=>p_user_name) then
       arcsql.log_security_event(p_text=>'raise_user_name_not_found: '||p_user_name, p_key=>'saas_auth');
       raise_application_error(-20001, 'raise_user_name_not_found: '||p_user_name);
    end if;
@@ -568,9 +582,7 @@ exception
 end;
 
 
-function does_email_exist (
-   -- Return true if the email exists.
-   --
+function does_email_exist ( -- | Return true if the email exists.
    p_email in varchar2) return boolean is
    n number;
    v_email saas_auth.email%type := lower(p_email);
@@ -579,7 +591,7 @@ begin
    select count(*) into n 
       from v_saas_auth_available_accounts
      where email=v_email;
-   return n = 1;
+   return n > 0;
 exception 
    when others then
       arcsql.log_err('does_email_exist: '||dbms_utility.format_error_stack);
@@ -865,7 +877,7 @@ m := m || '
 
    if saas_auth_config.flash_notifications then 
       k2.add_flash_message (
-         p_message=>'Look for verification email in your inbox (check spam folder if you don''t see it).',
+         p_message=>'Don''t forget to verify your email address. Check your email inbox and if you don''t see it check your spam folder!',
          p_user_name=>lower(p_user_name),
          p_expires_at=>sysdate+.0002);
    end if;
@@ -875,6 +887,22 @@ exception
       arcsql.log_err('send_email_verification_code_to: '||dbms_utility.format_error_backtrace);
       raise;
 end;  
+
+function verify_email_email_template return clob is -- | ToDo: Not implemented yet.
+begin
+   return 'Hi ##USER_NAME##,
+
+Thanks for signing up! To complete your registration, please click the link below to verify your email address:
+
+##VERIFICATION_LINK##
+
+If you have any trouble, don''t hesitate to reach out.
+
+Best regards,
+##APP_OWNER_NAME##
+##APP_NAME##
+';
+end;
 
 procedure verify_email ( -- | Verifies a user's email by updating the saas_auth table.
    p_user_id in number default null,
@@ -916,7 +944,7 @@ begin
    if v_saas_auth.email_verification_token = p_auth_token  
       and (v_saas_auth.email_verification_token_expires_at is null 
        or v_saas_auth.email_verification_token_expires_at >= sysdate) then 
-      fire_on_login_event(to_user_id(p_email=>lower(p_email)));
+      fire_on_login_event(p_user_id=>v_saas_auth.user_id);
       verify_email(p_user_id=>v_saas_auth.user_id);
       apex_authentication.post_login (
          p_username=>lower(v_saas_auth.user_name), 
@@ -966,19 +994,6 @@ begin
      from v_saas_auth_available_accounts
     where email=lower(p_email);
    return n > 0;
-end;
-
-
-procedure raise_email_already_exists (
-   p_email in varchar2) is 
-   -- Raises error if the email address exists.
-   n number;
-begin 
-   if does_email_already_exist(p_email) then
-      arcsql.log_security_event(p_text=>'raise_email_already_exists: '||p_email, p_key=>'saas_auth');
-      set_error_message('User is already registered.');
-      raise_application_error(-20001, 'User is already registered.');
-   end if;
 end;
 
 
@@ -1038,33 +1053,7 @@ exception
       raise;
 end;
 
-
-function get_user_id_from_email ( -- | Return the user id using the user name. Uses v_saas_auth_available_accounts which does not return *ALL* accounts.
-   p_email in varchar2) return number is 
-   n number;
-begin 
-   arcsql.debug('get_user_id_from_email: email='||lower(p_email));
-   raise_email_not_found(p_email);
-   select user_id into n 
-     from v_saas_auth_available_accounts 
-    where email = lower(p_email);
-   return n;
-exception 
-   when others then
-      arcsql.log_err('get_user_id_from_email: '||dbms_utility.format_error_stack);
-      raise;
-end;
-
-
-function to_user_id ( -- | Returns user id using email. Can see all accounts and might be a better option than get_user_id_from_email.
-   p_email in varchar2) return number is
-   r saas_auth%rowtype;
-begin
-   select * into r from saas_auth where email=lower(p_email);
-   return r.user_id;
-end;
-
-function to_user_id ( -- | Returns user id using user name. Can see all accounts and might be a better option than get_user_id_from_email.
+function to_user_id ( -- | Returns user id using user name. Can see all accounts and might be a better option than get_user_id_from_user_name.
    p_user_name in varchar2) return number is
    r saas_auth%rowtype;
 begin
@@ -1165,15 +1154,14 @@ exception
       raise;
 end;
 
-procedure delete_user ( -- | Delete user by email if the account exists. Otherwise exit quietly.
-   p_email in varchar2) is 
+procedure delete_user ( -- | Delete user by user name if the account exists. Otherwise exit quietly.
+   p_user_name in varchar2) is 
    n number;
 begin 
-   arcsql.debug('delete_user: '||p_email);
-   select count(*) into n from saas_auth where email=lower(p_email);
-   -- if not does_email_already_exist(p_email) then <- Don't use this, it use a view which will raise an error if email does not exist.
+   arcsql.debug('delete_user: '||p_user_name);
+   select count(*) into n from saas_auth where user_name=lower(p_user_name);
    if n > 0 then
-      delete_user(p_user_id=>to_user_id(p_email=>p_email));
+      delete_user(p_user_id=>to_user_id(p_user_name=>p_user_name));
    end if;
 end;
 
@@ -1385,22 +1373,21 @@ begin
 end;
 
 
-procedure send_reset_pass_token (
-   -- Sends the user a security token which can be used on the password reset form.
-   --
-   p_email in varchar2) is 
+procedure send_reset_pass_token (-- | Sends the user a security token which can be used on the password reset form.
+   p_user_name in varchar2) is 
    n number;
    v_token varchar2(120);
    v_app_name varchar2(120);
    m varchar2(1200);
+   r saas_auth%rowtype;
 begin 
-   arcsql.debug('send_reset_pass_token: '||p_email);
+   arcsql.debug('send_reset_pass_token: '||p_user_name);
    arcsql.count_request(p_request_key=>'saas_auth');
    raise_too_many_auth_requests;
 
    -- Fail quietly. Querying emails is potential malicious activity.
-   if not does_email_already_exist(lower(p_email)) then 
-      arcsql.log_err('send_reset_pass_token: Email address not found: '||lower(p_email));
+   if not does_user_name_exist(p_user_name=>p_user_name) then 
+      arcsql.log_err('send_reset_pass_token: User name not found: '||lower(p_user_name));
       return;
    end if;
 
@@ -1418,15 +1405,17 @@ begin
       set reset_pass_token=v_token,
           reset_pass_expire=sysdate+nvl(saas_auth_config.password_reset_token_good_for_minutes, 15)/1440,
           last_session_id=v('APP_SESSION')
-    where email=lower(p_email);
+    where user_name=lower(p_user_name);
+
+   r := get_saas_auth_row(p_user_name=>p_user_name);
 
    v_app_name := app_config.app_name;
    m := '
-Hello,
+Hello '||r.user_name||',
 
 You have requested to reset the password of your '||v_app_name||' account. 
 
-Please use the security code to change your password.
+Please use the following security code to change your password.
 
 '||v_token||'
 
@@ -1434,7 +1423,7 @@ Thanks,
 
 - The '||v_app_name||' Team';
    app_send_email (
-      p_to=>get_email_override_when_set(p_email),
+      p_to=>get_email_override_when_set(r.email),
       p_from=>app_config.app_from_email,
       p_subject=>'Resetting your '||v_app_name||' account password!',
       p_body=>m);

@@ -26,7 +26,8 @@ begin
       r := replace(p_url, k2_config.internal_app_domain, k2_config.external_app_domain);
    end if;
    arcsql.debug('r='||r);
-   return r;
+   -- Removes // which could be in URL chain, but then puts the :// back which is after http or https
+   return replace(replace(r, '//', '/'), ':/', '://') ;
    /*
    | get_url return value is unpredictable. It can return "f" style links, or pretty urls.
    | Can also return relative path or full path and uses internal k2.maxapex for domain
@@ -165,12 +166,12 @@ end;
 
 
 function get_flash_message (
-   --
-   --
    p_message_type in varchar2 default 'notice',
-   p_delete in boolean default true) return varchar2 is 
+   p_delete in number default 1) return varchar2 is 
+   pragma autonomous_transaction;
    cursor c_messages is 
-   select * from flash_message 
+   select * 
+     from flash_message 
     where message_type=p_message_type 
       and (user_name=lower(v('APP_USER'))
        or session_id=v('APP_SESSION'))
@@ -182,8 +183,9 @@ begin
    arcsql.debug('get_flash_message: '||p_message_type);
    for m in c_messages loop 
       r := r || m.message;
-      if p_delete then 
+      if p_delete=1 then 
          delete from flash_message where id=m.id;
+         commit;
       end if;
       exit;
    end loop;
@@ -199,7 +201,8 @@ function get_flash_messages (
    --
    --
    p_message_type in varchar2 default 'notice',
-   p_delete in boolean default true) return varchar2 is 
+   p_delete in number default 1) return varchar2 is 
+   pragma autonomous_transaction;
    cursor c_messages is 
    select * from flash_message 
     where message_type=p_message_type 
@@ -215,13 +218,13 @@ begin
    for m in c_messages loop 
       loop_count := loop_count + 1;
       if loop_count = 1 then
-         r := r || m.message;
+         r := '[1]' || m.message;
       else 
-         r := r || m.message ||' 
-      ';
+         r := r || '  ['||loop_count||']   ' || m.message;
       end if;
-      if p_delete then 
+      if p_delete=1 then 
          delete from flash_message where id=m.id;
+         commit;
       end if;
    end loop;
    -- arcsql.debug('r='||r);

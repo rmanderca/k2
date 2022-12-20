@@ -1,3 +1,5 @@
+-- Verify: Make sure you have modified and implemented this procedure if want to enable email.
+
 create or replace procedure app_send_email ( -- | Primary email interface for sending an email.
    -- Valid email address to which the email is sent (required). For multiple email addresses, use a comma-separated list
    p_to in varchar2,

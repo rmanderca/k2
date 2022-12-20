@@ -14,7 +14,7 @@ declare
 	
 begin
 
-    saas_auth_pkg.delete_user(p_email=>test.email);
+    saas_auth_pkg.delete_user(p_user_name=>test.email);
     
 	arcsql.init_test('Make sure test user does not exist');
 	if not saas_auth_pkg.does_user_name_exist(test.email) then
@@ -31,7 +31,7 @@ begin
     	arcsql.fail_test;
     end if;
 
-    test.user_id := saas_auth_pkg.get_user_id_from_email(test.email);
+    test.user_id := saas_auth_pkg.get_user_id_from_user_name(p_user_name=>test.email);
 
     arcsql.init_test('Generate an API token for the user');
     test.api_token := k2_token.create_token(p_token_key=>'api_token_'||test.user_id, p_user_id=>test.user_id);
