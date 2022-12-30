@@ -1,4 +1,8 @@
 
+
+-- Patch added Dec 2022
+update saas_auth set account_type='system' where user_name='k2';
+
 exec saas_auth_pkg.add_system_user(p_user_name=>'k2', p_email=>app_config.app_email);
 
 @k2_utl_pkgh.sql 

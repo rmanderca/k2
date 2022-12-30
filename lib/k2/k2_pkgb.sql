@@ -1,4 +1,6 @@
 
+set define off
+
 create or replace package body k2 as 
 
 /*
@@ -37,6 +39,23 @@ begin
    */
 end;
 
+function remove_checksum_from_url ( -- | Removes the checksum from a url.
+   p_url in varchar2)
+   return varchar2 is 
+   /*
+   APEX 22.2 docs state that apex_page.get_url does not include a checksum but that does not 
+   seem to be the case. This returns a url without the checksum. This assumes the checksum
+   is the last parameter. Everything after the &cs= will be removes from the input url.
+   */
+   x number;
+begin
+   x := instr(p_url, '&cs=');
+   if x > 0 then 
+      return substr(p_url, 1, x-1);
+   else
+      return p_url;
+   end if;
+end;
 
 /* 
 -----------------------------------------------------------------------------------
@@ -137,9 +156,7 @@ FLASH MESSAGES
 */
 
 
-procedure add_flash_message (
-   --
-   --
+procedure add_flash_message ( -- | Add a message to the flash_message table so it can be displayed to the user.
    p_message in varchar2,
    p_message_type in varchar2 default 'notice',
    p_user_name in varchar2 default null,
@@ -164,7 +181,6 @@ exception
       raise;
 end;
 
-
 function get_flash_message (
    p_message_type in varchar2 default 'notice',
    p_delete in number default 1) return varchar2 is 
@@ -180,7 +196,7 @@ function get_flash_message (
     order by id desc;
    r varchar2(1200);
 begin 
-   arcsql.debug('get_flash_message: '||p_message_type);
+   arcsql.debug2('get_flash_message: '||p_message_type);
    for m in c_messages loop 
       r := r || m.message;
       if p_delete=1 then 
@@ -197,9 +213,7 @@ exception
 end;
 
 
-function get_flash_messages (
-   --
-   --
+function get_flash_messages ( -- | Return a string of messages from the flash_messages table.
    p_message_type in varchar2 default 'notice',
    p_delete in number default 1) return varchar2 is 
    pragma autonomous_transaction;
@@ -208,19 +222,18 @@ function get_flash_messages (
     where message_type=p_message_type 
       and (user_name=lower(v('APP_USER'))
        or session_id=v('APP_SESSION'))
-      and (expires_at is null  
-       or expires_at > sysdate)
+      and (expires_at is null or expires_at > sysdate)
     order by id desc;
    r varchar2(1200);
    loop_count number := 0;
 begin 
-   arcsql.debug('get_flash_messages: '||p_message_type);
+   arcsql.debug2('get_flash_messages: '||p_message_type);
    for m in c_messages loop 
       loop_count := loop_count + 1;
       if loop_count = 1 then
-         r := '[1]' || m.message;
+         r := m.message;
       else 
-         r := r || '  ['||loop_count||']   ' || m.message;
+         r := r || '  ----  ' || m.message;
       end if;
       if p_delete=1 then 
          delete from flash_message where id=m.id;
@@ -248,7 +261,7 @@ begin
       and (expires_at is null or expires_at > sysdate)
       and (user_name=lower(v('APP_USER'))
        or session_id=v('APP_SESSION'));
-   arcsql.debug('flash_message_count: count='||n||', session='||v('APP_SESSION'));
+   arcsql.debug2('flash_message_count: count='||n||', session='||v('APP_SESSION'));
    return n;
 exception 
    when others then
@@ -260,3 +273,5 @@ end;
 
 end;
 /
+
+set define on

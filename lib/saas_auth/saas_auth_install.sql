@@ -26,6 +26,7 @@ whenever sqlerror continue;
 -- set echo on
 
 @saas_auth_schema.sql 
+@saas_auth_templates.sql
 @saas_auth_pkgh.sql 
 @saas_auth_pkgb.sql 
 @saas_auth_schedules.sql

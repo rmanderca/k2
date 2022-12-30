@@ -28,12 +28,13 @@ begin
 end;
 /
 
-@./config/&k2_app_dir/&k2_env_dir/secret_arcsql_cfg.sql
-@./config/&k2_app_dir/&k2_env_dir/secret_k2_config.sql
-@./config/&k2_app_dir/&k2_env_dir/secret_saas_auth_config.sql 
-@./config/&k2_app_dir/&k2_env_dir/secret_app_config.sql
-@./config/&k2_app_dir/&k2_env_dir/secret_app_job.sql
-@./config/&k2_app_dir/&k2_env_dir/secret_app_dev.sql
+@./config/&k2_app_dir/&k2_env_dir/install.sql
+-- @./config/&k2_app_dir/&k2_env_dir/secret_arcsql_cfg.sql
+-- @./config/&k2_app_dir/&k2_env_dir/secret_k2_config.sql
+-- @./config/&k2_app_dir/&k2_env_dir/secret_saas_auth_config.sql 
+-- @./config/&k2_app_dir/&k2_env_dir/secret_app_config.sql
+-- @./config/&k2_app_dir/&k2_env_dir/secret_app_job.sql
+-- @./config/&k2_app_dir/&k2_env_dir/secret_app_dev.sql
 @./lib/arcsql/arcsql_install.sql
 @./lib/saas_auth/saas_auth_schema.sql 
 @./lib/k2/k2_schema.sql 

@@ -2,7 +2,7 @@
 delete from arcsql_log;
 
 create or replace package test as
-   email varchar2(100) := 'postest.e.than@gmail.com';
+   email varchar2(100) := app_config.app_test_user;
    user_id number;
    api_token varchar2(240);
 end;
@@ -24,7 +24,10 @@ begin
     end if;
 
 	arcsql.init_test('Create test user');
-	saas_auth_pkg.add_test_user(p_email=>test.email);
+	saas_auth_pkg.add_user(
+        p_email=>test.email,
+        p_user_name=>test.email,
+        p_password=>app_config.app_test_pass);
 	if saas_auth_pkg.does_user_name_exist(test.email) then
         arcsql.pass_test;
     else

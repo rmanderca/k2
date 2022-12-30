@@ -3,15 +3,22 @@
 delete from arcsql_log;
 
 create or replace package test as
-   email varchar2(100) := 'post.e.than@gmail.com';
+   email varchar2(100) := app_config.app_test_user;
    user_id number;
    n number;
    bucket stat_bucket%rowtype;
 end;
 /
 
-exec saas_auth_pkg.delete_user(test.email);
-exec saas_auth_pkg.add_test_user(p_email=>test.email);
+begin
+   saas_auth_pkg.delete_user(test.email);
+   saas_auth_pkg.add_user(
+        p_email=>test.email,
+        p_user_name=>test.email,
+        p_password=>app_config.app_test_pass);
+end;
+/
+
 exec test.user_id := saas_auth_pkg.get_user_from_user_name(p_user_name=>test.email);
 
 begin 

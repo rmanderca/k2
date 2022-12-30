@@ -15,7 +15,7 @@ begin
       end if;
    end if;
 
-   ords.delete_module(
+   ords.delete_module (
       p_module_name=>'api_v1');
 
    ords.define_module (
@@ -23,7 +23,7 @@ begin
       p_base_path=>v1_base_path,
       p_items_per_page=>1000,
       p_status=>'PUBLISHED',
-      p_comments=>'API for K2');
+      p_comments=>'K2 API');
 
    ords.define_template (
       p_module_name=>'api_v1',

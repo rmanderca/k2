@@ -18937,7 +18937,7 @@ wwv_flow_api.create_page_da_action(
 ,p_action=>'NATIVE_EXECUTE_PLSQL_CODE'
 ,p_attribute_01=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'begin',
-'    saas_auth_pkg.send_email_verification_code_to(:SAAS_AUTH_EMAIL);',
+'    saas_auth_pkg.send_verify_email_request(:SAAS_AUTH_EMAIL);',
 'end;'))
 ,p_attribute_02=>'SAAS_AUTH_EMAIL'
 ,p_attribute_05=>'PLSQL'

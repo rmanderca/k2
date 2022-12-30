@@ -18,16 +18,15 @@ begin
    -- It would return full url with domain and change from f= type of url to pretty url. 
    -- Sending email from Maxapex seems to work without this being set.
    -- wwv_flow_api.set_security_group_id;
-   -- apex_mail.send(
-   --    p_to=>p_to,
-   --    p_from=>p_from,
-   --    p_subj=>p_subject,
-   --    p_body=>p_body,
-   --    p_body_html=>p_body
-   --    );
-   -- apex_mail.push_queue;
+   apex_mail.send(
+      p_to=>p_to,
+      p_from=>p_from,
+      p_subj=>p_subject,
+      p_body=>p_body,
+      p_body_html=>p_body
+      );
+   apex_mail.push_queue;
    -- This should not raise an error if email does not exist since devs could use app_send_email to send emails to users not in saas_auth table.
-   saas_auth_pkg.increment_email_count(p_email_address=>p_to);
    arcsql.increment_counter(app_config.app_name||', app_send_email, '||p_to);
    commit;
 end;

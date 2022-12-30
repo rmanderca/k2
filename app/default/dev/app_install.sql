@@ -9,6 +9,7 @@
 @app_pkgb.sql
 @app_api_pkgh.sql
 @app_api_pkgb.sql
+@app_api.sql
 
 -- Authentication (create account, verify email, login, forgot password) features.
 @app_events.sql

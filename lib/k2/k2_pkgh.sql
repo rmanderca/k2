@@ -9,8 +9,12 @@ MONKEY PATCHES
 */
 
 function monkey_patch_remove_app_root_url ( 
-  p_url in varchar2)
-  return varchar2;
+   p_url in varchar2)
+   return varchar2;
+
+function remove_checksum_from_url ( 
+   p_url in varchar2)
+   return varchar2;
 
 /* 
 -----------------------------------------------------------------------------------

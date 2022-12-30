@@ -2,13 +2,6 @@ declare
    v1_base_path varchar2(120) := k2_config.api_base_path || '/v1/';
 begin
 
-   ords.define_module (
-      p_module_name=>'api_v1',
-      p_base_path=>v1_base_path,
-      p_items_per_page=>1000,
-      p_status=>'PUBLISHED',
-      p_comments=>'K2 API');
-
    ords.define_template (
       p_module_name=>'api_v1',
       p_pattern=>'stats',

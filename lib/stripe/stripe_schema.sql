@@ -1,6 +1,11 @@
 
+begin
+   if app_dev.drop_tables then
+      drop_table('stripe_webhooks');
+   end if;
+end;
+/
 
-exec drop_table('stripe_webhooks');
 -- uninstall: exec drop_table('stripe_webhooks');
 begin
    if not does_table_exist('stripe_webhooks') then 
@@ -18,6 +23,7 @@ begin
       event_type varchar2(100),
       event_request_body clob)', false);
    end if;
+   add_pk_constraint('stripe_webhooks', 'request_id');
 end;
 /
 
