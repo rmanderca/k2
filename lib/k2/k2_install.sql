@@ -28,6 +28,10 @@ exec saas_auth_pkg.add_system_user(p_user_name=>'k2', p_email=>app_config.app_em
 @k2_api_pkgb.sql
 @k2_api.sql
 
+@k2_json_schema.sql
+@k2_json_pkgh.sql
+@k2_json_pkgb.sql
+
 @k2_stat_schema.sql
 @k2_stat_pkgh.sql
 @k2_stat_pkgb.sql

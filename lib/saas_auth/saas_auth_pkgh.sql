@@ -20,6 +20,12 @@ create or replace package saas_auth_pkg as
       p_user_id in number,
       p_password in varchar2);
 
+   procedure add_account (
+      p_email in varchar2,
+      p_full_name in varchar2,
+      p_password in varchar2,
+      p_account_status in varchar2 default 'inactive');
+
    procedure process_create_account (
       p_email in varchar2,
       p_full_name in varchar2,

@@ -2,7 +2,7 @@
 function usage {
 	cat <<EOF
 
-./new_app.sh APP_NAME
+./create_app.sh APP_NAME
 
 APP_NAME - Your app name. Will get converted to lower case for folders and file names.
 

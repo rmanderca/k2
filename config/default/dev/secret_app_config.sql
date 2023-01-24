@@ -25,7 +25,7 @@ create or replace package app_config as
 
    -- Add an account for testing to avoid the registration process. Needs to be an email address.
    app_test_user varchar2(120) := 'test@mycompany.com';
-   app_test_pass varchar2(120) := 'XrandomXpass!';
+   app_test_pass varchar2(120) := 'X2randomX2pass!';
 
 end;
 /

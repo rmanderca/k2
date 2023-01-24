@@ -9,6 +9,7 @@ create or replace package body saas_auth_pkg as
 procedure raise_error (
    p_message in varchar2) is 
 begin
+   arcsql.debug('raise_error: '||p_message);
    apex_error.add_error (
       p_message          => p_message,
       p_display_location => apex_error.c_inline_in_notification );
@@ -65,8 +66,7 @@ exception
       raise;
 end;
 
-procedure fire_on_login_event ( -- | Fired when a login occurs.
-   -- This is the hook apps using auth can use to trigger workflow when a user logs on.
+procedure register_login ( -- | Updates saas_auth row for user anytime a login occurs.
    p_user_id in varchar2) is 
    n number;
 begin 
@@ -78,12 +78,10 @@ begin
           last_session_id=v('APP_SESSION'),
           failed_login_count=0
     where user_id=p_user_id;
-   fire_user_event(p_event_name=>'on_login', p_user_id=>p_user_id);
    set_session_time_zone(p_user_id);
-   -- set_login_cookie;
 exception 
    when others then
-      arcsql.log_err('fire_on_login_event: '||dbms_utility.format_error_stack);
+      arcsql.log_err('register_login: '||dbms_utility.format_error_stack);
       raise; 
    /*
    | This procedure looks for the on_login procedure and calls it if it exists.
@@ -203,8 +201,9 @@ exception
 end;
 
 procedure auto_login is -- | Triggers an auto login if a valid token in in query string or cookie.
-   v_user_name saas_auth.user_name%type;
-   t saas_auth.auto_token%type;
+   v_user_id number;
+   v_token saas_auth.auto_token%type;
+   r saas_auth%rowtype;
 begin 
    arcsql.debug('auto_login: '||v('APP_USER')||', '||v('APP_SESSION'));
 
@@ -218,19 +217,22 @@ begin
       return;
    end if;
 
-   t := get_auto_token_from_cookie;
-   
-   -- Figure out user and log them in.
-   select user_name into v_user_name 
-     from saas_auth 
-    where auto_token=t
+   v_token := get_auto_token_from_cookie;
+
+   -- ToDo: Need to return a nice error if the token has expired or redirect to login page.
+   select user_id into v_user_id
+     from saas_auth
+    where auto_token=v_token
       and auto_token_expire > sysdate
       and account_status='active';
-   arcsql.log_security_event(p_text=>'auto_login: '||v_user_name, p_key=>'saas_auth');
+
+   r := get_saas_auth_row(p_user_id=>v_user_id);
+   
+   arcsql.log_security_event(p_text=>'auto_login: '||r.user_name, p_key=>'saas_auth');
    apex_authentication.post_login (
-      p_username=>lower(v_user_name), 
-      p_password=>utl_raw.cast_to_raw(dbms_random.string('x',10)));
-   -- fire_on_login_event(to_user_id(p_user_name=>v_user_name));
+      p_username=>r.user_name, 
+      p_password=>utl_raw.cast_to_raw(dbms_random.string('x',12)));
+   register_login(p_user_id=>v_user_id);
 exception 
    when others then
       arcsql.log_err('auto_login: '||dbms_utility.format_error_stack);
@@ -613,8 +615,8 @@ procedure process_login ( -- | Process the 'login' page.
 begin 
    arcsql.debug('process_login: '||p_user_name);
    v_user_id := to_user_id(p_user_name=>p_user_name);
-   assert_account_is_allowed_to_login(p_user_id=>v_user_id);
    fire_user_event(p_event_name=>'before_user_login', p_user_id=>v_user_id);
+   assert_account_is_allowed_to_login(p_user_id=>v_user_id);
    apex_authentication.login (
       p_username => lower(p_user_name),
       p_password => p_password);
@@ -689,6 +691,36 @@ begin
    end if;
 end;
 
+procedure add_account (
+   p_email in varchar2,
+   p_full_name in varchar2,
+   p_password in varchar2,
+   p_account_status in varchar2 default 'inactive') is 
+   v_user_id number;
+begin 
+   -- This code is similar to process_create_account but we would need to return the new user_id in we wanted to refactor.
+   insert into saas_auth (
+      user_name,
+      full_name,
+      email, 
+      uuid,
+      last_session_id,
+      password,
+      account_status) values (
+      -- For now user name is email
+      lower(p_email),
+      p_full_name,
+      lower(p_email), 
+      sys_guid(),
+      v('APP_SESSION'),
+      arcsql.str_random(12)||'x!',
+      p_account_status) returning user_id into v_user_id;
+   set_password (
+      p_user_id=>v_user_id,
+      p_password=>p_password);
+   fire_user_event(p_event_name=>'after_create_account', p_user_id=>v_user_id);
+end;
+
 procedure process_create_account ( -- | Add email to the saas_auth table with an unknown password and unverified email.
    p_email in varchar2,
    p_full_name in varchar2,
@@ -746,7 +778,7 @@ begin
          p_user_id=>v_user_id,
          p_password=>p_password);
       send_verify_email_request(p_user_id=>v_user_id);
-      fire_user_event(p_event_name=>'after_create_event', p_user_id=>v_user_id);
+      fire_user_event(p_event_name=>'after_create_account', p_user_id=>v_user_id);
    end if;
 end;
 
@@ -775,7 +807,7 @@ begin
    arcsql.debug('v_password='||v_password||', v_stored_password='||r.password);
    if v_password=r.password then
       arcsql.debug('custom_auth: true');
-      fire_on_login_event(v_user_id);
+      register_login(v_user_id);
       return true;
    end if;
 

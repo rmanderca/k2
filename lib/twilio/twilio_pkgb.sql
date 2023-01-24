@@ -1,11 +1,5 @@
 create or replace package body twilio as 
 
-procedure foo is 
-begin
-   null;
-end;
-
-
 procedure send_sms_message (
    p_phone_to in varchar2,
    p_messaging_service_sid in varchar2 default 'MG4edcec20a54c1e1b3d580eba5cc38d6f',

@@ -13,7 +13,7 @@ create or replace package saas_auth_config as
 
    saas_auth_salt varchar2(120) := 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 
-   -- Prevent users from creating account unless thier passwords start with this secret prefix.
+   -- Prevent users from creating account unless passwords start with this secret prefix.
    saas_auth_pass_prefix varchar2(120) := '';
 
    -- Limits the rate of auth requests within any 10 minute window.

@@ -20,3 +20,22 @@ There was no way to assign a role, I added assign_user_role procedure as a way t
 I added a test file. It is just a start.
 
 
+### User Events
+
+### after_create_account
+
+### activate_account
+
+#### before_user_logon
+
+#### on_login
+
+#### after_user_logon
+
+#### before_delete_user
+
+#### after_delete_user
+
+
+
+

@@ -32,7 +32,7 @@ begin
       p_source=>'
       begin
          arcsql.debug(''stripe: '');
-         insert into stripe_webhooks (
+         insert into stripe_data (
             event_request_body) values (
             :body_text);
          commit;

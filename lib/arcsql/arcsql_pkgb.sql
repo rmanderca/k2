@@ -1898,7 +1898,7 @@ begin
       audsid,
       username,
       process_id) values (
-      p_text,
+      substr(p_text, 1, 1000),
       lower(p_type),
       p_key,
       p_tags,

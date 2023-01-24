@@ -5,3 +5,4 @@
 @secret_app_config.sql
 @secret_app_job.sql
 @secret_app_dev.sql
+@secret_stripe_config.sql
