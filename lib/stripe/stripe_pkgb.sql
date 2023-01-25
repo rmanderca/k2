@@ -72,7 +72,7 @@ begin
 
 end;
 
-function make_get_request (
+function make_get_request ( -- | Makes a get request with the secret_api_key to Stripe and returns the JSON response as clob.
    p_url in varchar2)
    return clob is
    response clob;
@@ -89,7 +89,7 @@ begin
    return response;
 end;
 
-procedure create_stripe_products_view is 
+procedure create_stripe_products_view is -- | Generates a view from a value from json_store table which contains the products JSON.
 begin 
       execute_sql(q'<create or replace view stripe_products_v
 as
@@ -111,7 +111,7 @@ where json_id='stripe_products'
         >', false);
 end;
 
-procedure store_products is 
+procedure store_products is -- | Makes a reset request to Stripe for all products. Mainly used as an example/test.
    response clob;
 begin
    response := make_get_request(api_url||'/products');
