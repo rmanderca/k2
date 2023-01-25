@@ -27,7 +27,7 @@ Edit and run ```./ks_grants.sql``` as an **administrator**  to grant permissions
 ```
 # Run the script to create the folders and files for your new app.
 # For our example the new app name will be 'foo'.
-./new_app.sh "foo"
+./create_app.sh "foo"
 ```
 
 Review and edit the configuration files in ```./config/foo/dev``` .
