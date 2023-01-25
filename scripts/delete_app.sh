@@ -19,7 +19,7 @@ typeset -l APP_NAME
 
 
 APP_NAME="${1:-NOTHING}"
-for d in app config install test; do
+for d in app config install; do
     # Might be run from root dir or current dir, test for both.
 	if [[ -d ./${d}/${APP_NAME} ]]; then
 		rm -rf ./${d}/${APP_NAME}

@@ -18,7 +18,7 @@ typeset -l APP_NAME
 
 
 APP_NAME="${1}"
-for d in app config install test; do
+for d in app config install; do
 	if [[ ! -d ./${d}/${APP_NAME} ]]; then
 		cp -rp ./${d}/default ./${d}/${APP_NAME}
 	fi

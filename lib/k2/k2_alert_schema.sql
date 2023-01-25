@@ -48,8 +48,6 @@ API might look like
 
 */
 
-drop_table('alert_groups');
-
 begin
    if app_dev.drop_tables then
       drop_table('alert_groups');
