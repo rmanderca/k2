@@ -1,25 +1,25 @@
 create or replace package body k2_alert as 
 
-function to_group_id ( -- Uses a unique alert group key to return the unique alert group id.
-   p_group_key in varchar2)
+function to_priority_group_id ( -- Uses a unique alert group key to return the unique alert group id.
+   p_priority_group_key in varchar2)
    return number is
    n number;
 begin
-   select group_id into n from alert_groups where group_key = p_group_key;
+   select priority_group_id into n from alert_priority_groups where priority_group_key = p_priority_group_key;
    return n;
 end;
 
 function get_open_alert_id ( -- | Returns alert_id or null if the alert is not found or is not open (overloaded).
-   p_group_id in number,
+   p_priority_group_id in number,
    p_alert_text in varchar2) return number is 
    n number;
 begin
    select max(alert_id) into n
      from alerts a,
           alert_priorities b,
-          alert_groups c
+          alert_priority_groups c
     where a.priority_id=b.priority_id
-      and b.group_id=c.group_id 
+      and b.priority_group_id=c.priority_group_id 
       and a.alert_text=p_alert_text
       and a.alert_status in ('open', 'abandoned');
    return n;
@@ -33,9 +33,9 @@ begin
    select max(alert_id) into n
      from alerts a,
           alert_priorities b,
-          alert_groups c
+          alert_priority_groups c
     where a.priority_id=b.priority_id
-      and b.group_id=c.group_id 
+      and b.priority_group_id=c.priority_group_id 
       and a.alert_key=p_alert_key
       and a.alert_status in ('open', 'abandoned');
    return n;
@@ -54,11 +54,11 @@ begin
 end;
 
 function is_open ( -- | Return true if the alert is open (overloaded).
-   p_group_id in number,
+   p_priority_group_id in number,
    p_alert_text in varchar2) return boolean is 
    v_alert_id number;
 begin 
-   v_alert_id := get_open_alert_id(p_group_id, p_alert_text);
+   v_alert_id := get_open_alert_id(p_priority_group_id, p_alert_text);
    if v_alert_id is not null then
       return true;
    else
@@ -87,20 +87,20 @@ begin
    return r;
 end;
 
-function get_group_row ( -- | Return a row from the alert_groups table.
-   p_group_id in number)
-   return alert_groups%rowtype is 
-   r alert_groups%rowtype;
+function get_group_row ( -- | Return a row from the alert_priority_groups table.
+   p_priority_group_id in number)
+   return alert_priority_groups%rowtype is 
+   r alert_priority_groups%rowtype;
 begin
-   select * into r from alert_groups where group_id=p_group_id;
+   select * into r from alert_priority_groups where priority_group_id=p_priority_group_id;
    return r;
 end;
 
-function get_group_id ( -- Return id for the priority group key.
-   p_group_key in varchar2) return number is 
+function get_priority_group_id ( -- Return id for the priority group key.
+   p_priority_group_key in varchar2) return number is 
    n number;
 begin
-   select group_id into n from alert_groups where group_key=p_group_key;
+   select priority_group_id into n from alert_priority_groups where priority_group_key=p_priority_group_key;
    return n;
 end;
 
@@ -120,11 +120,11 @@ begin
 end;
 
 procedure close_alert (
-   p_group_id in number,
+   p_priority_group_id in number,
    p_alert_text in varchar2) is 
    v_alert_id number;
 begin 
-   v_alert_id := get_open_alert_id(p_group_id, p_alert_text);
+   v_alert_id := get_open_alert_id(p_priority_group_id, p_alert_text);
    if v_alert_id is not null then 
       close_alert_by_id(p_alert_id=>v_alert_id);   
    end if;
@@ -202,59 +202,59 @@ begin
 end;
 
 procedure create_alert_priority ( -- | Adds a single alert priority to a priority group.
-   p_group_id in number,
+   p_priority_group_id in number,
    p_priority_name in varchar2,
    p_priority_level in number) is 
 begin 
-   arcsql.debug2('create_alert_priority: '||p_group_id||', '||p_priority_name||', '||p_priority_level);
+   arcsql.debug2('create_alert_priority: '||p_priority_group_id||', '||p_priority_name||', '||p_priority_level);
    insert into alert_priorities (
-      group_id,
+      priority_group_id,
       priority_level,
       priority_name) values (
-      p_group_id,
+      p_priority_group_id,
       p_priority_level,
       p_priority_name);
 end;
 
 procedure add_default_rows_to_new_group ( -- | Adds default priorities to a new priority group.
-   p_group_id in number) is 
+   p_priority_group_id in number) is 
    n number;
 begin 
-   arcsql.debug('add_default_rows_to_new_group: '||p_group_id);
-   select count(*) into n from alert_priorities where group_id=p_group_id;
+   arcsql.debug('add_default_rows_to_new_group: '||p_priority_group_id);
+   select count(*) into n from alert_priorities where priority_group_id=p_priority_group_id;
    if n = 0 then 
-      create_alert_priority(p_group_id=>p_group_id, p_priority_name=>'critical', p_priority_level=>1);
-      create_alert_priority(p_group_id=>p_group_id, p_priority_name=>'high', p_priority_level=>2);
-      create_alert_priority(p_group_id=>p_group_id, p_priority_name=>'moderate', p_priority_level=>3);
-      create_alert_priority(p_group_id=>p_group_id, p_priority_name=>'low', p_priority_level=>4);
-      create_alert_priority(p_group_id=>p_group_id, p_priority_name=>'info', p_priority_level=>5);
+      create_alert_priority(p_priority_group_id=>p_priority_group_id, p_priority_name=>'critical', p_priority_level=>1);
+      create_alert_priority(p_priority_group_id=>p_priority_group_id, p_priority_name=>'high', p_priority_level=>2);
+      create_alert_priority(p_priority_group_id=>p_priority_group_id, p_priority_name=>'moderate', p_priority_level=>3);
+      create_alert_priority(p_priority_group_id=>p_priority_group_id, p_priority_name=>'low', p_priority_level=>4);
+      create_alert_priority(p_priority_group_id=>p_priority_group_id, p_priority_name=>'info', p_priority_level=>5);
       update alert_priorities set is_default='Y' 
-       where group_id=p_group_id and priority_level=3;
+       where priority_group_id=p_priority_group_id and priority_level=3;
    end if;
 end;
 
-procedure create_group ( -- | Creates a priority group with default rows if it does not exist. Does nothing if it does.
-   p_group_key in varchar2, -- | Unique key for the priority group.
-   p_group_name in varchar2, -- | Name of the priority group.
+procedure create_priority_group ( -- | Creates a priority group with default rows if it does not exist. Does nothing if it does.
+   p_priority_group_key in varchar2, -- | Unique key for the priority group.
+   p_priority_group_name in varchar2, -- | Name of the priority group.
    p_user_id in number) is -- | References saas_auth table.
-   v_group_id number;
+   v_priority_group_id number;
    n number;
 begin 
-   arcsql.debug('create_group: '||p_group_key||', '||p_group_name||', '||p_user_id);
-   select count(*) into n from alert_groups where group_key=p_group_key;
+   arcsql.debug('create_priority_group: '||p_priority_group_key||', '||p_priority_group_name||', '||p_user_id);
+   select count(*) into n from alert_priority_groups where priority_group_key=p_priority_group_key;
    if n = 0 then
-      insert into alert_groups (group_key, group_name, user_id)
-      values (p_group_key, p_group_name, p_user_id) returning group_id into v_group_id;
-      add_default_rows_to_new_group(v_group_id);
+      insert into alert_priority_groups (priority_group_key, priority_group_name, user_id)
+      values (p_priority_group_key, p_priority_group_name, p_user_id) returning priority_group_id into v_priority_group_id;
+      add_default_rows_to_new_group(v_priority_group_id);
    end if;
 end;
 
-function does_group_exist (
-   p_group_key in varchar2)
+function does_priority_group_exist (
+   p_priority_group_key in varchar2)
    return boolean is 
    n number;
 begin 
-   select count(*) into n from alert_groups where group_key=p_group_key;
+   select count(*) into n from alert_priority_groups where priority_group_key=p_priority_group_key;
    if n = 1 then 
       return true;
    else
@@ -262,11 +262,11 @@ begin
    end if;
 end;
 
-procedure delete_group (
-   p_group_key in varchar2)
+procedure delete_priority_group (
+   p_priority_group_key in varchar2)
    is 
 begin 
-   delete from alert_groups where group_key=p_group_key;
+   delete from alert_priority_groups where priority_group_key=p_priority_group_key;
 end;   
 
 function get_max_allowed_priority_row ( -- | Returns the highest available priority available at or below the level requested.
@@ -284,7 +284,7 @@ begin
    select max(priority_level) into max_allowed_priority
      from alert_priorities
     where priority_level <= r.priority_level
-      and group_id=r.group_id
+      and priority_group_id=r.priority_group_id
       and arcsql.is_truthy_y(enabled) = 'y';
 
    if max_allowed_priority is null then
@@ -294,14 +294,14 @@ begin
    select * into r
      from alert_priorities
     where priority_level=max_allowed_priority
-      and group_id=r.group_id;
+      and priority_group_id=r.priority_group_id;
 
    return r;
 
 end;
 
 procedure open_alert ( -- | Open a new alert if it is not already open.
-   p_group_id in number, -- | Alerts must be linked to an alert priority group.
+   p_priority_group_id in number, -- | Alerts must be linked to an alert priority group.
    p_alert_text in varchar2, -- | ALert text is used to build a unique key if a key is not provided.
    p_priority_level in number default 3, -- | A valid level within the provided priority group.
    p_alert_key in varchar2 default null -- | A unique key to identify the alert. If not provided, a unique key is generated from p_alert_text.
@@ -314,10 +314,10 @@ begin
    if not is_open(p_alert_key=>v_alert_key) then 
       select * into v_requested_priority_row
         from alert_priorities
-       where group_id=p_group_id 
+       where priority_group_id=p_priority_group_id 
          and priority_level=p_priority_level;
       v_actual_priority_row := get_max_allowed_priority_row(v_requested_priority_row.priority_id);
-      if v_actual_priority_row is not null then 
+      if not v_actual_priority_row.priority_id is null then
          insert into alerts (
             priority_id,
             alert_text,
