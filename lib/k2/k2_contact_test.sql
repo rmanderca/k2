@@ -1,19 +1,19 @@
 
 
 -- begin 
---    k2_alert.create_priority_group (
---       p_priority_group_key=>'test_priority_group',
---       p_priority_group_name=>'Test',
+--    k2_alert.create_group (
+--       p_group_key=>'test_group',
+--       p_group_name=>'Test',
 --       p_user_id=>null);
 --    k2_alert.open_alert(
---       p_priority_group_id=>k2_alert.get_priority_group_id('test_priority_group'),
+--       p_group_id=>k2_alert.get_group_id('test_group'),
 --       p_alert_text=>'Test',
 --       p_priority_level=>1,
 --       p_alert_key=>'test_alert');
 --     k2_contact.create_group('test_contact_group');
 --     k2_contact.create_contact('test_contact', 'Ethan', 'post.ethan@gmail.com', null);
 --     k2_contact.add_contact_to_group('test_contact', 'test_contact_group');
---     k2_contact.add_priority_group_to_contact_group('test_priority_group', 'test_contact_group');
+--     k2_contact.add_group_to_contact_group('test_group', 'test_contact_group');
 -- end;
 -- /
 
@@ -88,14 +88,14 @@ begin
    end if;
 
    arcsql.init_test('Create an alert priority group');
-   k2_alert.create_priority_group (
-      p_priority_group_key=>'k2_test',
-      p_priority_group_name=>'K2 test priority group',
+   k2_alert.create_group (
+      p_group_key=>'k2_test',
+      p_group_name=>'K2 test priority group',
       p_user_id=>test.user_id);
 
    arcsql.init_test('Link an alert priority group to a contact group');
-   k2_contact.add_priority_group_to_contact_group (
-      p_priority_group_key=>'k2_test',
+   k2_contact.add_group_to_contact_group (
+      p_group_key=>'k2_test',
       p_contact_group_key=>'k2_test');
 
 end;

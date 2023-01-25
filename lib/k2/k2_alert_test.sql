@@ -11,12 +11,12 @@ end;
 
 begin 
    select user_id into test.user_id from saas_auth where user_name='k2';
-   k2_alert.create_priority_group (
-      p_priority_group_key=>'k2_test',
-      p_priority_group_name=>'Test',
+   k2_alert.create_group (
+      p_group_key=>'k2_test',
+      p_group_name=>'Test',
       p_user_id=>test.user_id);
    k2_alert.open_alert(
-      p_priority_group_id=>k2_alert.get_priority_group_id('k2_test'),
+      p_group_id=>k2_alert.get_group_id('k2_test'),
       p_alert_text=>'Test',
       p_priority_level=>3,
       p_alert_key=>'k2_test_alert');
@@ -28,20 +28,20 @@ declare
    v varchar2(120);
 begin 
    
-   k2_alert.delete_priority_group('k2_test');
+   k2_alert.delete_group('k2_test');
    arcsql.init_test('Priority group used for testing should be deleted');
-   if not k2_alert.does_priority_group_exist(p_priority_group_key=>'k2_test') then 
+   if not k2_alert.does_group_exist(p_group_key=>'k2_test') then 
       arcsql.pass_test;
    else 
       arcsql.fail_test;
    end if;
 
    arcsql.init_test('Create a new alert priority group');
-   k2_alert.create_priority_group (
-      p_priority_group_key=>'k2_test',
-      p_priority_group_name=>'Test',
+   k2_alert.create_group (
+      p_group_key=>'k2_test',
+      p_group_name=>'Test',
       p_user_id=>test.user_id);
-   if k2_alert.does_priority_group_exist(p_priority_group_key=>'k2_test') then 
+   if k2_alert.does_group_exist(p_group_key=>'k2_test') then 
       arcsql.pass_test;
    else 
       arcsql.fail_test;
@@ -49,7 +49,7 @@ begin
 
    arcsql.init_test('Open an alert');
    k2_alert.open_alert(
-      p_priority_group_id=>k2_alert.get_priority_group_id('k2_test'),
+      p_group_id=>k2_alert.get_group_id('k2_test'),
       p_alert_text=>'Test',
       p_priority_level=>3,
       p_alert_key=>'k2_test_alert');
@@ -65,7 +65,7 @@ begin
 
    arcsql.init_test('Open the same alert, nothing should happen');
    k2_alert.open_alert(
-      p_priority_group_id=>k2_alert.get_priority_group_id('k2_test'),
+      p_group_id=>k2_alert.get_group_id('k2_test'),
       p_alert_text=>'Test',
       p_priority_level=>3,
       p_alert_key=>'k2_test_alert');

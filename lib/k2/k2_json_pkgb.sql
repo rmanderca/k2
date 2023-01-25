@@ -1,7 +1,7 @@
 
 create or replace package body k2_json as 
 
-procedure json_to_data_table_handle_array (
+procedure json_to_data_table_handle_array ( -- Parses each element in a JSON array and inserts into a table.
    p_json_data clob,
    p_json_key in varchar2,
    p_json_path in varchar2,
@@ -12,7 +12,7 @@ procedure json_to_data_table_handle_array (
    v_json_path varchar2(120);
    v_data_size number;
 begin 
-   arcsql.debug('json_to_data_table_handle_array: '||p_json_data);
+   arcsql.debug2('json_to_data_table_handle_array: '||p_json_data);
    j := json_array_t(p_json_data);
    for i in 0 .. j.get_size - 1 loop 
       v_data_value := null;
@@ -62,7 +62,7 @@ begin
    end loop;
 end;
 
-procedure json_to_data_table (
+procedure json_to_data_table ( -- Parses each element in a JSON object and inserts into a table.
    p_json_data in clob,
    p_json_key in varchar2,
    p_json_path in varchar2 default 'root',
@@ -140,7 +140,7 @@ exception
       raise;
 end;
 
-function get_json_data_string (
+function get_json_data_string ( -- Return a value from json_data table as a string.
    p_json_key in varchar2,
    p_json_path in varchar2) return varchar2 is 
    r varchar2(4000);
@@ -149,7 +149,7 @@ begin
    return r;
 end;
 
-function get_json_data_number (
+function get_json_data_number ( -- Return a value from json_data table as a number.
    p_json_key in varchar2,
    p_json_path in varchar2) return varchar2 is 
    r number;
@@ -158,7 +158,11 @@ begin
    return r;
 end;
 
-procedure store_data (
+procedure store_data ( -- Stores p_json_data in a table called json_store using p_json_key.
+   /*
+   This is an easy way to store JSON in a look up table using a key.
+   If p_json_key already exists the record will get deleted and new value will get inserted.
+   */
    p_json_key in varchar2,
    p_json_data in clob) is
 begin
