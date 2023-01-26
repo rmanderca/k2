@@ -1,3 +1,6 @@
+
+-- ToDo: Add memory caching to debug and dump on error. Flag enabled. Flag enable for time period?
+
 create or replace package body arcsql as
 
 /* 
@@ -1794,28 +1797,9 @@ begin
    commit;
 end;
 
-
 -- | -----------------------------------------------------------------------------------
 -- | Logging/Debug 
 -- | -----------------------------------------------------------------------------------
-
--- The log type is used to determine if the log entry to sent to email or sms.
-
-procedure set_log_type (
-   -- 
-   -- 
-   p_log_type in varchar2) is 
-begin 
-   select * into g_log_type from arcsql_log_type
-    where log_type=p_log_type;
-end;
-
-procedure raise_log_type_not_set is 
-begin 
-   if g_log_type.log_type is null then  
-      raise_application_error(-20001, 'Log type is not set.');
-   end if;
-end;
 
 function does_log_type_exist (p_log_type in varchar2) return boolean is 
    n number;
@@ -1863,6 +1847,7 @@ begin
    add_log_type(p_log_type=>'notice', p_sends_email=>true, p_sends_sms=>false);
    add_log_type(p_log_type=>'notify', p_sends_email=>true, p_sends_sms=>false);
    add_log_type(p_log_type=>'error', p_sends_email=>true, p_sends_sms=>false);
+   add_log_type(p_log_type=>'audit', p_sends_email=>true, p_sends_sms=>false);
    -- Does not route to email or sms
    add_log_type(p_log_type=>'info', p_sends_email=>false, p_sends_sms=>false);
    add_log_type(p_log_type=>'log',    p_sends_email=>false, p_sends_sms=>false);
@@ -1872,6 +1857,7 @@ begin
    add_log_type(p_log_type=>'deprecated', p_sends_email=>false, p_sends_sms=>false);
    add_log_type(p_log_type=>'fail', p_sends_email=>false, p_sends_sms=>false);
    add_log_type(p_log_type=>'pass', p_sends_email=>false, p_sends_sms=>false);
+   add_log_type(p_log_type=>'debug_secret', p_sends_email=>false, p_sends_sms=>false);
 end;
 
 procedure log_interface (
@@ -1900,8 +1886,8 @@ begin
       process_id) values (
       substr(p_text, 1, 1000),
       lower(p_type),
-      p_key,
-      p_tags,
+      substr(p_key, 1, 120),
+      substr(p_tags, 1, 120),
       get_audsid,
       user,
       g_process_id);
@@ -2095,6 +2081,21 @@ begin
       p_tags=>p_tags, 
       p_level=>0, 
       p_type=>'email');
+end;
+
+procedure debug_secret ( -- | Used sparingly to log sensitive data when required. arcsql_cfg.allow_debug_secret must be true.
+   p_text in varchar2, 
+   p_key in varchar2 default null, 
+   p_tags in varchar2 default null) is 
+begin
+   if arcsql_cfg.allow_debug_secret then
+      log_interface (
+         p_text=>p_text, 
+         p_key=>p_key, 
+         p_tags=>p_tags, 
+         p_level=>1, 
+         p_type=>'secret');
+   end if;
 end;
 
 -- | -----------------------------------------------------------------------------------

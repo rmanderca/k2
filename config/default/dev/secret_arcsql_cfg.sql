@@ -15,5 +15,8 @@ create or replace package arcsql_cfg as
    -- Only SQL statements exceeding X seconds of elapsed time per hour will be analyzed.
    sql_log_analyze_min_secs number := 1;
 
+   -- Must be true to allow arcsql.debug_secret calls to work.
+   allow_debug_secret boolean := false;
+
 end;
 /
