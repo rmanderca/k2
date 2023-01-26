@@ -32,6 +32,7 @@ begin
       p_source=>'
       begin
          arcsql.debug(''stripe: '');
+         -- k2_utl.log_cgi_env_to_debug;
          insert into stripe_data (
             event_request_body) values (
             :body_text);

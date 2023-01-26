@@ -120,7 +120,7 @@ begin
     return owa_util.get_cgi_env('QUERY_STRING');
 end;
 
-procedure log_cgi_env_to_debug is 
+procedure log_cgi_env_to_debug is -- | Dumps all of the CGI environment variables in the request to the arcsql_log table.
 begin 
     -- https://stackoverflow.com/questions/70313694/how-to-get-host-name-and-request-headers-for-ords-restful-services
     for i in 1..nvl(owa.num_cgi_vars, 0) loop

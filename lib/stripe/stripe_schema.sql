@@ -26,9 +26,14 @@ begin
       product_id varchar2(120),
       created timestamp default systimestamp not null,
       updated timestamp default systimestamp not null,
-      event_request_body clob)', false);
+      event_request_body clob,
+      -- ToDo: Convert above to json which requires fixing k2_json procs to handle json instead of clob.
+      parse_status varchar2(12) default ''new'')', false);
    end if;
    add_pk_constraint('stripe_data', 'request_id');
+   if not does_index_exist('stripe_data_1') then 
+      execute_sql('create index stripe_data_1 on stripe_data (parse_status)', false);
+   end if;
 end;
 /
 

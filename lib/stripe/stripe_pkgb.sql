@@ -1,7 +1,5 @@
 create or replace package body stripe as 
     
-api_url varchar2(120) := 'https://api.stripe.com/v1';
-
 function get_stripe_data_row (p_request_id in number) return stripe_data%rowtype is
    r stripe_data%rowtype;
 begin 
@@ -9,7 +7,7 @@ begin
    return r;
 end;
 
-procedure parse_stripe_data (
+procedure parse_data_request (
    p_request_id in number) is 
    v_key varchar2(100) := 'stripe_data_' || p_request_id;
    r stripe_data%rowtype;
@@ -18,6 +16,9 @@ procedure parse_stripe_data (
 begin 
    -- Get the row from stripe_data.
    r := get_stripe_data_row(p_request_id);
+
+   r.parse_status := 'parsing';
+   update stripe_data set row=r where request_id=r.request_id;
 
    -- Parse the json data for the request into the json_data table.
    k2_json.json_to_data_table (
@@ -38,38 +39,59 @@ begin
       r.payment_link    := k2_json.get_json_data_string(v_key, 'root.data.object.payment_link');
 
       -- Use the invoice to figure out which product the user signed up for.
-      response := make_get_request(api_url||'/invoices/'||r.invoice_id);
+      response := make_get_request(stripe_config.api_url||'/invoices/'||r.invoice_id);
       delete from stripe_data where event_type='invoice' and event_id=r.invoice_id;
       insert into stripe_data (
          event_type,
          event_id,
-         event_request_body) values (
+         event_request_body,
+         parse_status) values (
          'invoice',
          r.invoice_id,
-         response) returning request_id into v_request_id;
+         response,
+         'parsing') returning request_id into v_request_id;
       k2_json.json_to_data_table (
          p_json_data=>response,
          p_json_key=>r.invoice_id);
       r.product_id := k2_json.get_json_data_string(r.invoice_id, 'root.lines.data_0.plan.product');
+      update stripe_data set parse_status='parsed' where request_id=v_request_id;
 
       -- Get the product data
-      response := make_get_request(api_url||'/products/'||r.product_id);
+      response := make_get_request(stripe_config.api_url||'/products/'||r.product_id);
       delete from stripe_data where event_type='product' and event_id=r.product_id;
       insert into stripe_data (
          event_type,
          event_id,
-         event_request_body) values (
+         event_request_body,
+         parse_status) values (
          'product',
          r.product_id,
-         response) returning request_id into v_request_id;
+         response,
+         'parsing') returning request_id into v_request_id;
       k2_json.json_to_data_table (
          p_json_data=>response,
          p_json_key=>r.product_id);
+      update stripe_data set parse_status='parsed' where request_id=v_request_id;
 
+      r.parse_status := 'parsed';
       update stripe_data set row=r where request_id=r.request_id;
 
    end if;
+exception
+   when others then
+      arcsql.log_err('parse_data_request: '||dbms_utility.format_error_stack);
+      r.parse_status := 'error';
+      update stripe_data set row=r where request_id=r.request_id;
+      commit;
+      raise;
+end;
 
+procedure parse_data_requests is 
+begin 
+   arcsql.debug('parse_stripe_data_requests: ');
+   for r in (select * from stripe_data where parse_status='new' order by request_id) loop 
+      parse_data_request(p_request_id=>r.request_id);
+   end loop;
 end;
 
 function make_get_request ( -- | Makes a get request with the secret_api_key to Stripe and returns the JSON response as clob.
@@ -114,7 +136,7 @@ end;
 procedure store_products is -- | Makes a reset request to Stripe for all products. Mainly used as an example/test.
    response clob;
 begin
-   response := make_get_request(api_url||'/products');
+   response := make_get_request(stripe_config.api_url||'/products');
    k2_json.store_data('stripe_products', response);
    create_stripe_products_view;
 end;

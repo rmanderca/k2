@@ -373,7 +373,7 @@ begin
    assert_password_passes_complexity_check(p_password);
    v_uuid := get_uuid(p_user_id=>p_user_id);
    hashed_password := get_hashed_password(p_secret_string=>v_uuid||p_password);
-   arcsql.debug('v_uuid='||v_uuid||', password='||p_password||', hashed_password='||hashed_password);
+   -- arcsql.debug('v_uuid='||v_uuid||', password='||p_password||', hashed_password='||hashed_password);
    update saas_auth
       set password=hashed_password
     where user_id=p_user_id;
