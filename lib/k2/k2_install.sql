@@ -1,5 +1,4 @@
 
-
 -- Patch added Dec 2022
 update saas_auth set account_type='system' where user_name='k2';
 
