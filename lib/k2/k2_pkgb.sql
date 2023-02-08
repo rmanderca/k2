@@ -104,8 +104,7 @@ exception
 end;
 
 
-procedure set_cookies is 
-   -- Called from the global page. Sets any cookies that are queued.
+procedure set_cookies is -- | Called from the global page. Sets any cookies that are queued.
    --
    cursor c_cookies is 
    select * from cookie 
@@ -146,7 +145,6 @@ exception
       -- Not sure why admin job would be calling this. Might be from plsq in auto login auth scheme.
       -- raise;
 end;
-
 
 
 /* 

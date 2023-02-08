@@ -56,6 +56,30 @@ begin
    return total_secs;
 end;
 
+function get_date_from_epoch(p_epoch in number) 
+   return date is
+begin
+   return date'1970-01-01' + ( p_epoch / 86400 );
+end;
+
+function get_timestamp_from_epoch(p_epoch in number) 
+   return timestamp is
+begin
+   return timestamp'1970-01-01 00:00:00' + numtodsinterval (p_epoch, 'second');
+end;
+
+function get_epoch_from_date(p_date in date)
+   return number is 
+begin 
+   return round ((p_date-date'1970-01-01') * 86400);
+end;
+
+function get_epoch_from_timestamp(p_timestamp in timestamp)
+   return number is 
+begin 
+   return round(secs_between_timestamps(p_timestamp, timestamp'1970-01-01 00:00:00'));
+end;
+
 procedure raise_invalid_cron_expression (p_expression in varchar2) is 
 begin 
    null;

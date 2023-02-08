@@ -41,6 +41,7 @@ begin
       exception
          when others then
             arcsql.log_err(sqlerrm);
+            k2_utl.log_cgi_env_to_debug;
             :status_code := 400;
             :errmsg := sqlerrm;  
       end;');
