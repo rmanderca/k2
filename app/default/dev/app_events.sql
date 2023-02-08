@@ -2,7 +2,6 @@
 create or replace procedure after_create_account (p_user_id in number) as 
 begin
    arcsql.debug('after_create_account: '||p_user_id); 
-   null;
 end;
 /
 
@@ -13,7 +12,6 @@ exec drop_procedure('on_delete_account');
 create or replace procedure before_delete_user (p_user_id in number) as 
 begin
    arcsql.debug('before_delete_user: '||p_user_id); 
-   null;
 end;
 /
 
@@ -21,7 +19,6 @@ end;
 create or replace procedure after_delete_user (p_user_id in number) as 
 begin
    arcsql.debug('after_delete_user: '||p_user_id); 
-   null;
 end;
 /
 
@@ -29,6 +26,5 @@ end;
 create or replace procedure on_login (p_user_id in number) as 
 begin
    arcsql.debug('on_login: '||p_user_id); 
-   null;
 end;
 /

@@ -5,32 +5,37 @@ procedure json_to_data_table_handle_array ( -- Parses each element in a JSON arr
    p_json_data clob,
    p_json_key in varchar2,
    p_json_path in varchar2,
-   p_depth in number) is 
-   j  json_array_t;
+   p_depth in number,
+   p_data_key in varchar2) is 
+   j json_array_t;
    v_data_value clob;
    v_data_type varchar2(30);
    v_json_path varchar2(120);
    v_data_size number;
 begin 
-   arcsql.debug2('json_to_data_table_handle_array: '||p_json_data);
+   arcsql.debug2('json_to_data_table_handle_array: '||p_json_key);
    j := json_array_t(p_json_data);
    for i in 0 .. j.get_size - 1 loop 
       v_data_value := null;
       v_data_type := null;
-      v_json_path := p_json_path||'_'||i;
+      v_json_path := p_json_path||'.'||to_char(i+1);
       if j.get(i).is_object then 
+         v_data_type := 'object';
          json_to_data_table (
             p_json_data=>j.get(i).to_clob,
             p_json_key=>p_json_key,
             p_json_path=>v_json_path,
             -- ToDo: Not entirely sure if I need to increase depth here.
-            p_depth=>p_depth+1);
+            p_depth=>p_depth+1,
+            p_data_index=>i+1);
       elsif j.get(i).is_array then 
+         v_data_type := 'array';
          json_to_data_table_handle_array (
             p_json_data=>j.get(i).to_clob,
             p_json_key=>p_json_key,
             p_json_path=>v_json_path,
-            p_depth=>p_depth);
+            p_depth=>p_depth,
+            p_data_key=>p_data_key);
       elsif j.get(i).is_string then
          v_data_type := 'string';
          v_data_value := j.get_string(i);
@@ -53,12 +58,16 @@ begin
          json_path, 
          data_type,
          data_size,
-         data_value) values (
+         data_value,
+         data_index,
+         data_key) values (
          p_json_key,
          v_json_path,
          v_data_type,
          v_data_size,
-         v_data_value);
+         v_data_value,
+         i+1,
+         p_data_key);
    end loop;
 end;
 
@@ -66,40 +75,51 @@ procedure json_to_data_table ( -- Parses each element in a JSON object and inser
    p_json_data in clob,
    p_json_key in varchar2,
    p_json_path in varchar2 default 'root',
-   p_depth in number default 0) is
+   p_depth in number default 0,
+   p_data_index in number default 0,
+   p_root_key in varchar2 default null) is
    j json_object_t;
    k json_key_list;
    v_data_value clob;
    v_data_type varchar2(30);
-   v_data_name varchar2(120);
+   v_data_key varchar2(120);
    v_json_path varchar2(120);
    v_data_size number;
 begin
-   arcsql.debug('json_to_data_table: '||p_json_data);
-   j := json_object_t (p_json_data);
+   arcsql.debug2('json_to_data_table: '||p_json_key);
+   if p_root_key is null then 
+      j := json_object_t (p_json_data);
+   else 
+      j := json_object_t ('{"'||p_root_key||'": '||p_json_data||'}');
+   end if;
+   if p_depth = 0 then 
+      delete from json_data where json_key=p_json_key;
+   end if;
+   
    k := j.get_keys;
    -- Note indexing diff if you are looping over keys or array, one is 1 and the latter is 0.
    for key in 1..k.count loop
       v_data_value := null;
       v_data_type := null;
-      v_data_name := k(key);
-      v_json_path := p_json_path||'.'||v_data_name;
+      v_data_key := k(key);
+      v_json_path := p_json_path||'.'||v_data_key;
       v_data_size := j.get(k(key)).get_size;
-      arcsql.debug('name='||v_data_name||', size='||v_data_size);
+      arcsql.debug2('name='||v_data_key||', size='||v_data_size);
       if j.get(k(key)).is_array then
-         arcsql.debug('is array');
+         arcsql.debug2('is array');
          v_data_type := 'array';
          if v_data_size > 0 then
             json_to_data_table_handle_array (
                p_json_data=>j.get(k(key)).to_clob,
                p_json_key=>p_json_key,
                p_json_path=>v_json_path,
-               p_depth=>p_depth);
+               p_depth=>p_depth,
+               p_data_key=>v_data_key);
          end if;
       end if;
       if j.get(k(key)).is_object then
          v_data_type := 'object';
-         arcsql.debug('is object');
+         arcsql.debug2('is object');
          json_to_data_table(
             p_json_data=>j.get_object(k(key)).to_clob, 
             p_json_key=>p_json_key,
@@ -127,12 +147,16 @@ begin
          json_path, 
          data_type,
          data_size,
-         data_value) values (
+         data_value,
+         data_index,
+         data_key) values (
          p_json_key,
          v_json_path,
          v_data_type,
          v_data_size,
-         v_data_value);
+         v_data_value,
+         p_data_index,
+         v_data_key);
    end loop;
 exception
    when others then
@@ -158,6 +182,22 @@ begin
    return r;
 end;
 
+function get_json_from_store ( -- Return json of json datatype from the json_store table.
+   p_json_key in varchar2) return json is 
+   r json;
+begin
+   select json_data into r from json_store where json_key=p_json_key;
+   return r;
+end;
+
+function get_clob_from_store (
+   p_json_key in varchar2) return clob is 
+   j json;
+   r clob;
+begin 
+   return k2_json.to_clob(p_json=>get_json_from_store(p_json_key=>p_json_key));
+end;
+
 procedure store_data ( -- Stores p_json_data in a table called json_store using p_json_key.
    /*
    This is an easy way to store JSON in a look up table using a key.
@@ -173,6 +213,29 @@ begin
       json_data) values (
       p_json_key,
       p_json_data);
+end;
+
+function to_clob ( -- Convert json datatype to clob.
+   p_json in json) return clob is 
+   r clob;
+begin
+   select json_mergepatch('{"foo": "1"}', p_json returning clob) into r from dual;
+   return r;
+end;
+
+function get_json_from_url ( -- | Makes a get request and returns the response as CLOB.
+   p_url in varchar2)
+   return clob is
+   response clob;
+begin 
+   apex_web_service.g_request_headers.delete();
+   apex_web_service.g_request_headers(1).name := 'content-type';
+   apex_web_service.g_request_headers(1).value := 'application/json'; 
+   response := apex_web_service.make_rest_request (
+      p_url         => p_url, 
+      p_http_method => 'GET');
+   apex_json.parse(response);
+   return response;
 end;
 
 end;

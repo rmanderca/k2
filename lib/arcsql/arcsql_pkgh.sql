@@ -33,6 +33,16 @@ create or replace package arcsql as
    -- return the # of seconds since a timestamp.
    function secs_since_timestamp(time_stamp timestamp) return number;
 
+   function get_date_from_epoch(p_epoch in number) return date;
+
+   function get_timestamp_from_epoch(p_epoch in number) return timestamp;
+
+   function get_epoch_from_date(p_date in date)
+      return number;
+
+   function get_epoch_from_timestamp(p_timestamp in timestamp)
+      return number;
+
    /* 
    -----------------------------------------------------------------------------------
    Timer
