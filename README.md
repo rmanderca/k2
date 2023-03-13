@@ -18,7 +18,7 @@ Minimize costs. K2 will make it easy to deploy multiple applications and keep co
 
 ## How to install K2 and set up folders for your new app
 
-* [How to install K2 updated - 9/17/22](https://youtu.be/b5jL91Kej7E)
+* [How to install K2 updated - 3/13/23](https://youtu.be/7O_n2gaHs6M)
 
 Edit and run ```./ks_user.sql``` as an **administrator** to create the database application user
 
