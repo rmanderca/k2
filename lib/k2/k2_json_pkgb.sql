@@ -9,8 +9,8 @@ procedure json_to_data_table_handle_array ( -- Parses each element in a JSON arr
    p_data_key in varchar2) is 
    j json_array_t;
    v_data_value clob;
-   v_data_type varchar2(30);
-   v_json_path varchar2(120);
+   v_data_type varchar2(32);
+   v_json_path varchar2(128);
    v_data_size number;
 begin 
    arcsql.debug2('json_to_data_table_handle_array: '||p_json_key);
@@ -81,9 +81,9 @@ procedure json_to_data_table ( -- Parses each element in a JSON object and inser
    j json_object_t;
    k json_key_list;
    v_data_value clob;
-   v_data_type varchar2(30);
-   v_data_key varchar2(120);
-   v_json_path varchar2(120);
+   v_data_type varchar2(32);
+   v_data_key varchar2(128);
+   v_json_path varchar2(128);
    v_data_size number;
 begin
    arcsql.debug2('json_to_data_table: '||p_json_key);
@@ -162,6 +162,16 @@ exception
    when others then
       arcsql.log_err('json_to_data_table: '||p_depth||', '||p_json_path||', '||sqlerrm);
       raise;
+end;
+
+function does_json_data_path_exist (
+   p_json_key in varchar2,
+   p_json_path in varchar2) 
+   return boolean is 
+   n number;
+begin
+   select count(*) into n from json_data where json_key = p_json_key and json_path = p_json_path;
+   return n=1;
 end;
 
 function get_json_data_string ( -- Return a value from json_data table as a string.

@@ -21233,7 +21233,7 @@ wwv_flow_imp_page.create_page_process(
 ,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'begin',
 '    saas_auth_pkg.process_create_account (',
-'        p_email=>:CREATE_ACCOUNT_EMAIL,',
+'        p_email_address=>:CREATE_ACCOUNT_EMAIL,',
 '        p_full_name=>:CREATE_ACCOUNT_FULL_NAME,',
 '        p_password=>:CREATE_ACCOUNT_PASSWORD);',
 '    k2.add_flash_message(''An email has been sent to ''||:CREATE_ACCOUNT_EMAIL||'' with a link you can click to verify the address. If you don''''t see it, be sure to check your spam folder.'');',

@@ -72,6 +72,7 @@ create or replace package arcsql as
    function str_is_number_y_or_n (text varchar2) return varchar2;
    -- Returns string. Anything not A-Z, a-z, or 0-9 is replaced with a '_'.
    function str_to_key_str (str in varchar2) return varchar2;
+   procedure assert_str_is_key_str (str in varchar2);
    -- Returns a random string of given type.
    function str_random (length in number default 33, string_type in varchar2 default 'an') return varchar2;
    -- Hash a string using MD5. 
@@ -90,6 +91,11 @@ create or replace package arcsql as
 
    -- Return true if string appears to be an email address.
    function str_is_email (text varchar2) return boolean;
+
+   function str_to_base64(t in varchar2) return varchar2;
+
+   function str_from_base64(t in varchar2) return varchar2;
+   
    -- Return count of str within str. Can handle >1 length p_char.
    function str_count (
       p_str varchar2, 

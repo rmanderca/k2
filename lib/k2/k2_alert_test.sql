@@ -3,7 +3,7 @@
 delete from arcsql_log;
 
 create or replace package test as
-   email varchar2(100) := 'post.e.than@gmail.com';
+   email varchar2(128) := 'post.e.than@gmail.com';
    user_id number;
    n number;
 end;
@@ -11,7 +11,7 @@ end;
 
 begin 
    select user_id into test.user_id from saas_auth where user_name='k2';
-   k2_alert.create_group (
+   k2_alert.create_alert_priority_group (
       p_group_key=>'k2_test',
       p_group_name=>'Test',
       p_user_id=>test.user_id);
@@ -25,7 +25,7 @@ end;
 
 declare
    n number;
-   v varchar2(120);
+   v varchar2(128);
 begin 
    
    k2_alert.delete_group('k2_test');
@@ -37,7 +37,7 @@ begin
    end if;
 
    arcsql.init_test('Create a new alert priority group');
-   k2_alert.create_group (
+   k2_alert.create_alert_priority_group (
       p_group_key=>'k2_test',
       p_group_name=>'Test',
       p_user_id=>test.user_id);

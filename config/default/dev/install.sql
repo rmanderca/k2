@@ -4,5 +4,5 @@
 @secret_saas_auth_config.sql 
 @secret_app_config.sql
 @secret_app_job.sql
-@secret_app_dev.sql
 @secret_stripe_config.sql
+@secret_chatgpt_config.sql

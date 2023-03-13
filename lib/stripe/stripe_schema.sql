@@ -1,6 +1,6 @@
 
 begin
-   if app_dev.drop_tables then
+   if 1=1 then
       drop_table('stripe_data');
    end if;
 end;
@@ -30,7 +30,7 @@ begin
       -- ToDo: Convert above to json which requires fixing k2_json procs to handle json instead of clob.
       parse_status varchar2(12) default ''new'')', false);
    end if;
-   add_pk_constraint('stripe_data', 'request_id');
+   add_primary_key('stripe_data', 'request_id');
    if not does_index_exist('stripe_data_1') then 
       execute_sql('create index stripe_data_1 on stripe_data (parse_status)', false);
    end if;

@@ -20852,7 +20852,7 @@ wwv_flow_imp_page.create_page_process(
 'arcsql.log(''BTN_REGISTER_CLICK'');',
 'saas_auth_pkg.create_account(',
 '    p_user_name => lower(:P20001_REGISTER_EMAIL),',
-'    p_email => lower(:P20001_REGISTER_EMAIL),',
+'    p_email_address => lower(:P20001_REGISTER_EMAIL),',
 '    p_password => :P20001_REGISTER_PASSWORD,',
 '    p_confirm => :P20001_REGISTER_CONFIRM,',
 '    p_timezone_name => :P20001_TIMEZONE_NAME);',

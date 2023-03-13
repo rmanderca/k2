@@ -11,7 +11,7 @@ drop function is_column_nullable;
 drop procedure drop_column;
 drop function does_index_exist;
 drop function does_constraint_exist;
-drop procedure add_pk_constraint;
+drop procedure add_primary_key;
 drop procedure drop_constraint;
 drop procedure drop_index;
 drop procedure drop_table;

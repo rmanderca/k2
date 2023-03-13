@@ -1,32 +1,28 @@
 
-declare 
-
-   v1_base_path varchar2(120) := k2_config.api_base_path || '/v1/';
-
 begin
 
    if k2_config.enable_ords then 
-      if not ords_is_enabled then
-         ords.enable_schema;
-      end if;
+      ords.enable_schema;
    else
-      if ords_is_enabled then
-         ords.enable_schema(false);
-      end if;
+      ords.enable_schema(false);
    end if;
 
+   -- ToDo: Remove this 
    ords.delete_module (
       p_module_name=>'api_v1');
 
+   ords.delete_module (
+      p_module_name=>'k2_api_v1');
+
    ords.define_module (
-      p_module_name=>'api_v1',
-      p_base_path=>v1_base_path,
+      p_module_name=>'k2_api_v1',
+      p_base_path=>'k2/v1/',
       p_items_per_page=>1000,
       p_status=>'PUBLISHED',
       p_comments=>'K2 API');
 
    ords.define_template (
-      p_module_name=>'api_v1',
+      p_module_name=>'k2_api_v1',
       p_pattern=>'status',
       p_comments=>'Check status of the API');
 
@@ -40,7 +36,7 @@ begin
    --    p_source=>q'<select 'ok' message from dual>');
 
    ords.define_handler (
-      p_module_name=>'api_v1',
+      p_module_name=>'k2_api_v1',
       p_pattern=>'status',
       p_method=>'GET',
       p_mimes_allowed => '',

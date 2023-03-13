@@ -16,7 +16,7 @@ When you create a new priority group...
 
 ```
 begin
-	k2_alert.create_group (
+	k2_alert.create_alert_priority_group (
 		p_group_key=>'default',
 		p_group_name=>'foo',
 		p_user_id=>1);

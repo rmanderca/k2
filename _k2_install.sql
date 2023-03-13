@@ -51,7 +51,9 @@ end;
 @./lib/k2/k2_metrics_pkgh.sql
 @./lib/k2/k2_metrics_pkgb.sql
 
-@./lib/k2/k2_schedules.sql
+-- Patchy stuff
+-- Did not need this.
+exec drop_package('app_dev');
 
 create or replace package k2_app as 
     version number := 20221209;

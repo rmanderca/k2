@@ -37,8 +37,11 @@ begin
    return sys_context(p_namespace, p_attribute);
 end;
 
-
 procedure enable_automations ( -- | Enable all automations for the given application id.
+   /*
+   I have had issues with automations being enabled after copying an app. This can be added
+   as something that can be run after copying an app to enable all automations.
+   */
    p_app_id in number) is 
    cursor c_automations is
    select application_id, static_id
@@ -55,24 +58,20 @@ begin
    end loop;
 end;
 
-
 function get_app_id return number is -- | Return app id if available within APEX session context else return configured value.
 begin 
     return nvl(apex_application.g_flow_id, k2_config.app_id);
 end;
-
 
 function get_app_alias return varchar2 is -- | Return the app alias using g_flow_alias.
 begin 
     return trim(apex_application.g_flow_alias);
 end;
 
-
 function get_current_theme_id_for_app return number is -- | Return current theme by using g_flow_theme_id.
 begin 
     return to_number(trim(apex_application.g_flow_theme_id));
 end;
-
 
 function get_style_id_for_theme_name ( -- | Return numeric style id for the specified theme name.
     p_theme_name in varchar2) 
@@ -85,7 +84,6 @@ begin
        and name=p_theme_name;
     return n;
 end;
-
 
 procedure change_theme_for_user ( -- | Change the theme for the current v('APP_USER').
     p_theme_name in varchar2) is 
@@ -107,12 +105,10 @@ exception
         raise;
 end;
 
-
 function get_ip return varchar2 is  -- | Return the IP of the calling session.
 begin 
     return owa_util.get_cgi_env('REMOTE_ADDR');
 end;
-
 
 function get_query_string return varchar2 is  -- | Return the query string of the calling session.
 begin 
@@ -127,7 +123,6 @@ begin
         arcsql.debug('log_cgi_env_to_debug: '||owa.cgi_var_name(i) || ' = ' || owa.cgi_var_val(i));
     end loop;
 end;
-
 
 end;
 /

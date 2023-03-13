@@ -2,6 +2,7 @@
 create or replace procedure after_create_account (p_user_id in number) as 
 begin
    arcsql.debug('after_create_account: '||p_user_id); 
+   -- insert into app_user (app_user_id) values (p_user_id);
 end;
 /
 

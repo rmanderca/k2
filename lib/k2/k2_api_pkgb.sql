@@ -35,7 +35,7 @@ begin
 end;
 
 procedure assert_bearer_token_exists is 
-   authorization_header varchar2(250);
+   authorization_header varchar2(256);
 begin
    authorization_header := owa_util.get_cgi_env('authorization');
    if instr(lower(authorization_header), 'bearer') = 0 then 
@@ -45,7 +45,7 @@ end;
 
 function get_bearer_token -- | Returns just the token from the CGI env 'authorization' header.
    return varchar2 is 
-   authorization_header varchar2(250);
+   authorization_header varchar2(256);
 begin 
    assert_bearer_token_exists;
    authorization_header := owa_util.get_cgi_env('authorization');

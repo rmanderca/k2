@@ -1,17 +1,21 @@
 create or replace package body gc is 
 
-type table_type is table of varchar2(100) index by binary_integer;
-g_divs_array table_type;
-g_divs clob;
+type div_row is record (
+   div_text varchar2(4096),
+   div_tags varchar2(256),
+   div_group varchar2(256));
+type div_table is table of div_row;
+-- Must be initialized like this or we get ORA-06531: Reference to uninitialized collection
+g_divs_clob clob;
+g_div_rows div_table := div_table();
 
-g_series_id varchar2(100);
+g_series_id varchar2(256);
 
 g_chunk_pos number := 1;
 g_chunk_amount number := 20000;
 
 -- Reset for each new series.
 g_charts_js clob;
-g_chart_count number := 0;
 
 g_functions clob;
 g_charts clob;
@@ -21,24 +25,24 @@ g_series_in_progress boolean := false;
 
 -- Most reset for each new chart.
 g_function varchar2(4000);
-g_function_name varchar2(200);
-g_columns varchar2(2000);
+g_function_name varchar2(256);
+g_columns varchar2(4000);
 g_column_count number := 0;
 g_lock_column_count boolean := false;
 g_data clob;
 g_row_count number := 0;
 g_options clob;
 g_div_name clob;
-g_title varchar2(200);
+g_title varchar2(256);
 g_width number := 600;
 g_height number := 400;
 g_chart_in_progress boolean := false;
-g_vaxis_title varchar2(200) := '';
-g_haxis_title varchar2(200) := '';
-g_scale_type varchar2(200);
+g_vaxis_title varchar2(256) := '';
+g_haxis_title varchar2(256) := '';
+g_scale_type varchar2(256);
 g_line_width number default 1;
-g_line_color varchar2(200);
-g_background_color varchar2(200);
+g_line_color varchar2(256);
+g_background_color varchar2(256);
 
 procedure assert_column_count_is_not_locked is
 begin
@@ -71,7 +75,7 @@ end;
 procedure assert_chart_has_data is 
 begin
    if g_row_count = 0 then 
-      raise_application_error(-20001, 'Chart does not have any date points!');
+      raise_application_error(-20001, 'Chart does not have any data points!');
    end if;
 end;
 
@@ -170,8 +174,9 @@ begin
    g_series_id := null;
    g_charts_js := null;
    g_chart_count := 0;
-   g_divs_array.delete;
-   g_divs := null;
+
+   g_div_rows.delete;
+
    g_functions := null;
    g_charts := null;
    g_callbacks := null;
@@ -193,6 +198,29 @@ begin
    g_series_in_progress := true;
 end;
 
+procedure end_chart is 
+begin 
+   arcsql.debug2('end_chart');
+   assert_series_is_started;
+   assert_columns_are_defined;
+   assert_chart_is_defined;
+   assert_chart_has_data;
+   g_function := replace(function_template, '#FUNCTION_NAME#', g_function_name);
+   g_function := replace(g_function, '#DIV_NAME#', g_div_name);
+   g_function := replace(g_function, '#COLUMNS#', g_columns);
+   g_function := replace(g_function, '#TITLE#', g_title);
+   g_function := replace(g_function, '#WIDTH#', g_width);
+   g_function := replace(g_function, '#HEIGHT#', g_height);
+   g_function := replace(g_function, '#VAXIS_TITLE#', g_vaxis_title);
+   g_function := replace(g_function, '#HAXIS_TITLE#', g_haxis_title);
+   g_function := replace(g_function, '#SCALE_TYPE#', g_scale_type);
+   g_function := replace(g_function, '#LINE_WIDTH#', g_line_width);
+   g_function := replace(g_function, '#LINE_COLOR#', g_line_color);
+   g_function := replace(g_function, '#BACKGROUND_COLOR#', g_background_color);
+   g_functions := g_functions || arcsql.clob_replace(to_clob(g_function), to_clob('#DATA#'), rtrim(g_data, ','));
+   g_chart_in_progress := false;
+end;
+
 procedure add_line_chart ( -- | Start creating a new chart.
    p_title in varchar2,
    p_vaxis_title in varchar2 default '',
@@ -204,9 +232,10 @@ procedure add_line_chart ( -- | Start creating a new chart.
    p_height in number default 400,
    p_background_color in varchar2 default 'white',
    p_tags in varchar2 default null,
-   p_div_group in number default 0) is 
+   p_div_group in varchar2 default 'default',
+   p_url in varchar2 default null) is 
 begin
-   arcsql.debug2('add_line_chart: ' || p_title);
+   arcsql.debug2('add_line_chart: p_title='||p_title||', p_div_group='||p_div_group);
    assert_series_is_started;
    assert_columns_are_defined;
    if g_chart_in_progress then
@@ -220,9 +249,16 @@ begin
    g_function_name := arcsql.str_to_key_str(g_series_id) || '_' || g_chart_count;
    g_div_name := g_function_name || '_div';
    g_title := p_title;
-   -- Tags and group are added as a comment which can be searched when get_divs is called.
-   g_divs_array(g_chart_count) := '<div id="'||g_div_name||'"><!-- tags=['||lower(p_tags)||'], group='||p_div_group||' --></div>
-';
+
+   g_div_rows.extend();
+   if p_url is not null then 
+      g_div_rows(g_div_rows.last).div_text := '<a href="'||p_url||'"><div id="'||g_div_name||'"></div></a>';
+   else
+      g_div_rows(g_div_rows.last).div_text := '<div id="'||g_div_name||'"></div>';
+   end if;
+   g_div_rows(g_div_rows.last).div_tags := lower(p_tags);
+   g_div_rows(g_div_rows.last).div_group := lower(p_div_group);
+
    g_callbacks := g_callbacks || arcsql.clob_replace(callback_template, to_clob('#FUNCTION_NAME#'), g_function_name);
    g_vaxis_title := p_vaxis_title;
    g_haxis_title := p_haxis_title;
@@ -258,29 +294,6 @@ begin
 p_data || ',';
 end;
 
-procedure end_chart is 
-begin 
-   arcsql.debug2('end_chart');
-   assert_series_is_started;
-   assert_columns_are_defined;
-   assert_chart_is_defined;
-   assert_chart_has_data;
-   g_function := replace(function_template, '#FUNCTION_NAME#', g_function_name);
-   g_function := replace(g_function, '#DIV_NAME#', g_div_name);
-   g_function := replace(g_function, '#COLUMNS#', g_columns);
-   g_function := replace(g_function, '#TITLE#', g_title);
-   g_function := replace(g_function, '#WIDTH#', g_width);
-   g_function := replace(g_function, '#HEIGHT#', g_height);
-   g_function := replace(g_function, '#VAXIS_TITLE#', g_vaxis_title);
-   g_function := replace(g_function, '#HAXIS_TITLE#', g_haxis_title);
-   g_function := replace(g_function, '#SCALE_TYPE#', g_scale_type);
-   g_function := replace(g_function, '#LINE_WIDTH#', g_line_width);
-   g_function := replace(g_function, '#LINE_COLOR#', g_line_color);
-   g_function := replace(g_function, '#BACKGROUND_COLOR#', g_background_color);
-   g_functions := g_functions || arcsql.clob_replace(to_clob(g_function), to_clob('#DATA#'), rtrim(g_data, ','));
-   g_chart_in_progress := false;
-end;
-
 procedure end_series is 
 begin 
    arcsql.debug2('end_series');
@@ -294,102 +307,49 @@ begin
    g_series_in_progress := false;
 end;
 
-function get_js_chunk return varchar2 is 
-   chunk clob;
-begin
-   arcsql.debug2('get_js_chunk');
-   dbms_lob.read(g_charts_js, g_chunk_amount, g_chunk_pos, chunk);
-   g_chunk_pos := g_chunk_pos + g_chunk_amount;
-   -- arcsql.debug2('chunk: '||chunk);
-   return chunk;
-exception
-   when no_data_found then 
-      g_chunk_pos := 1;
-      g_chunk_amount := 20000;
-      return null;
-end;
-
-function get_js return clob is 
+function get_js (
+   p_series_id in varchar2) 
+   return clob is 
 begin
    arcsql.debug2('get_js');
+   assert_series_id_has_not_changed(p_series_id);
    if g_series_in_progress then
       end_series;
    end if;
    return g_charts_js;
 end;
 
-procedure assemble_divs (
+function get_divs ( -- | Return all or a subset of the divs you need to render the charts.
    p_series_id in varchar2,
-   p_div_group in number default null,
-   p_set_class in varchar2 default 'gc',
-   p_having_tags in varchar2 default null) is 
-   add_div boolean default false;
-   start_of_tags number;
-   end_of_tags number;
-   tags_list varchar2(100) default null;
-   g_div_index number;
+   p_div_group in varchar2 default 'default',
+   p_having_div_tags in varchar2 default null,
+   p_set_class in varchar2 default 'google_charts')
+   return clob is 
+   i number;
    n number;
-begin 
-   g_divs := '<div class="'||p_set_class||'">';
-   g_div_index := g_divs_array.first;
-   while g_div_index is not null loop 
-      add_div := true;
-
-      if p_div_group is not null then 
-         if not instr(g_divs_array(g_div_index), 'group='||p_div_group) > 0 then 
-            add_div := false;
-         end if;
-      end if;
-
-      if p_having_tags is not null then 
-         -- Get the list of tags from the div
-         start_of_tags := instr(g_divs_array(g_div_index), 'tags=[')+6;
-         end_of_tags := instr(g_divs_array(g_div_index), ']', start_of_tags);
-         tags_list := substr(g_divs_array(g_div_index), start_of_tags, end_of_tags-start_of_tags);
-
-         select count(*) into n from (
-         select trim(regexp_substr(p_having_tags,'[^,]+', 1, level)) col1 from dual
-                connect by level <= regexp_count(p_having_tags, ',') + 1
-         minus
-         select trim(regexp_substr(tags_list,'[^,]+', 1, level)) col1 from dual
-                connect by level <= regexp_count(tags_list, ',') + 1);
-         if n > 0 then 
-            add_div := false;
-         end if;
-      end if;
-
-      if add_div then
-            g_divs := g_divs || '   ' ||g_divs_array(g_div_index);
-      end if;
-
-      g_div_index := g_divs_array.next(g_div_index);
-   end loop;
-   g_divs := g_divs || '</div>';
-end;
-
-function get_divs_chunk (
-   p_series_id in varchar2,
-   p_div_group in number default null,
-   p_set_class in varchar2 default 'gc',
-   p_having_tags in varchar2 default null) return varchar2 is 
-   chunk clob;
 begin
-   arcsql.debug2('get_divs_chunk');
-   if g_chunk_pos = 1 then 
-      assemble_divs (
-         p_series_id=>p_series_id,
-         p_div_group=>p_div_group,
-         p_set_class=>p_set_class,
-         p_having_tags=>p_having_tags);
-   end if;
-   dbms_lob.read(g_divs, g_chunk_amount, g_chunk_pos, chunk);
-   g_chunk_pos := g_chunk_pos + g_chunk_amount;
-   return chunk;
-exception
-   when no_data_found then 
-      g_chunk_pos := 1;
-      g_chunk_amount := 20000;
-      return null;
+   arcsql.debug2('get_divs: p_series_id='||p_series_id||', g_series_id='||g_series_id);
+   assert_series_id_has_not_changed(p_series_id);
+   g_divs_clob := '<div class="'||p_set_class||'">';
+   i := g_div_rows.first;
+   arcsql.debug('i='||i);
+   while i is not null loop
+      n := 0;
+      if p_having_div_tags is not null then 
+         select count(*) into n from (
+            select token from table(to_rows(p_having_div_tags, ','))
+            minus 
+            select token from table(to_rows(g_div_rows(i).div_tags, ','))
+            );
+      end if;
+      arcsql.debug2('p_div_group='||p_div_group||', g_div_rows(i).div_group='||g_div_rows(i).div_group||', n='||n);
+      if p_div_group = g_div_rows(i).div_group and n = 0 then
+         g_divs_clob := g_divs_clob || chr(10) || g_div_rows(i).div_text;
+      end if;
+      i := g_div_rows.next(i);
+   end loop;
+   g_divs_clob := g_divs_clob || chr(10) || '</div>';
+   return g_divs_clob;
 end;
 
 end;

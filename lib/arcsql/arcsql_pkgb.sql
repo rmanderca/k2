@@ -113,7 +113,7 @@ end;
 -- | Strings 
 -- | -----------------------------------------------------------------------------------
 
-function str_to_key_str (str in varchar2) -- | 
+function str_to_key_str (str in varchar2) -- | Replaces anything that isn't a letter or number with an underscore.
    return varchar2 is
    new_str varchar2(1000);
 begin
@@ -138,6 +138,13 @@ begin
          r := dbms_random.string('x', x);
    end case;
    return r;
+end;
+
+procedure assert_str_is_key_str (str in varchar2) is
+begin 
+   if not regexp_like(str, '^[a-zA-Z0-9_-]+$') then
+      raise_application_error(-20000, 'String contains invalid characters: '||str);
+   end if;
 end;
 
 function str_hash_md5 (text varchar2) return varchar2 is 
@@ -180,6 +187,18 @@ begin
       src=>p_text_to_decrypt,
       typ=>4356,
       key=>utl_i18n.string_to_raw(p_encryption_key, 'AL32UTF8')));
+end;
+
+function str_to_base64(t in varchar2) return varchar2 is
+  -- https://stackoverflow.com/questions/3804279/base64-encoding-and-decoding-in-oracle
+begin
+   return replace(replace(utl_raw.cast_to_varchar2(utl_encode.base64_encode(utl_raw.cast_to_raw(t))), chr(13)), chr(10));
+end;
+
+function str_from_base64(t in varchar2) return varchar2 is
+  -- https://stackoverflow.com/questions/3804279/base64-encoding-and-decoding-in-oracle
+begin
+   return utl_raw.cast_to_varchar2(utl_encode.base64_decode(utl_raw.cast_to_raw(t)));
 end;
 
 function str_is_email (text varchar2) return boolean is 
@@ -599,13 +618,17 @@ end;
 
 function is_truthy (p_val in varchar2) return boolean is 
 begin
+   debug2('is_truthy: '||p_val);
    if lower(p_val) in ('y','yes', '1', 'true') then
+      arcsql.debug2('is_truthy: true');
       return true;
    elsif instr(p_val, ' ') > 0 then 
       if cron_match(p_val) then 
+         arcsql.debug2('is_truthy: true');
          return true;
       end if;
    end if;
+   debug2('is_truthy: false');
    return false;
 end;
 

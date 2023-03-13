@@ -3,17 +3,17 @@
 delete from arcsql_log;
 
 create or replace package test as
-   email varchar2(100) := app_config.app_test_user;
+   email varchar2(128) := app_config.app_test_user;
    user_id number;
    n number;
-   bucket stat_bucket%rowtype;
+   dataset dataset%rowtype;
 end;
 /
 
 begin
    saas_auth_pkg.delete_user(test.email);
    saas_auth_pkg.add_user(
-        p_email=>test.email,
+        p_email_address=>test.email,
         p_user_name=>test.email,
         p_password=>app_config.app_test_pass);
 end;
@@ -24,22 +24,22 @@ exec test.user_id := saas_auth_pkg.get_user_from_user_name(p_user_name=>test.ema
 begin 
    select user_id into test.user_id from saas_auth where user_name=test.email;
 
-   arcsql.init_test('Create a bucket and update stat');
+   arcsql.init_test('Create a dataset and update metric');
    
-   -- Create a bucket
-   k2_stat_api.create_bucket_v1 (
-      p_bucket_key => 'test_bucket_'||test.user_id,
-      p_bucket_name => 'Test Bucket',
+   -- Create a dataset
+   k2_metric_api.create_dataset_v1 (
+      p_dataset_key => 'test_dataset_'||test.user_id,
+      p_dataset_name => 'Test dataset',
       p_user_id => test.user_id);
 
-   test.bucket := k2_stat.get_bucket_row(p_bucket_key=>'test_bucket_'||test.user_id);
+   test.dataset := k2_metric.get_dataset_row(p_dataset_key=>'test_dataset_'||test.user_id);
 
-   k2_stat_api.update_stat_v1 (
-      p_bucket_token => test.bucket.bucket_token,
-      p_stat => 'test_stat',
+   k2_metric_api.update_metric_v1 (
+      p_dataset_token => test.dataset.dataset_token,
+      p_metric => 'test_metric',
       p_value => 1.25);
 
-   select count(*) into test.n from stat_in where bucket_key=test.bucket.bucket_key;
+   select count(*) into test.n from metric_in where dataset_key=test.dataset.dataset_key;
    if test.n = 1 then 
       arcsql.pass_test;
    else 

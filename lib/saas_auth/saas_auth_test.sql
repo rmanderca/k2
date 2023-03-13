@@ -15,7 +15,7 @@ end;
 --    saas_auth_pkg.delete_user(test.email);
 --    saas_auth_pkg.create_account(
 --       p_user_name=>test.email,
---       p_email=>test.email,
+--       p_email_address=>test.email,
 --       p_password=>saas_auth_config.saas_auth_test_pass,
 --       p_confirm=>saas_auth_config.saas_auth_test_pass);
 -- end;
@@ -38,7 +38,7 @@ begin
    arcsql.init_test('Create a system user account');
    saas_auth_pkg.add_system_user (
       p_user_name=>test.email,
-      p_email=>test.email);
+      p_email_address=>test.email);
    select user_id into test.user_id from saas_auth where email=test.email;
    select count(*) into test.n from saas_auth where user_id=test.user_id and account_type='system';
    if test.n > 0 then 
@@ -58,7 +58,7 @@ begin
    -- wwv_flow_api.set_security_group_id;
    delete from saas_auth where user_name=v_email;
    -- User enters email on create-account page
-   saas_auth_pkg.initiate_account(p_email=>v_email);
+   saas_auth_pkg.initiate_account(p_email_address=>v_email);
    -- Send an email verification request to the user
    saas_auth_pkg.send_verify_email_request(p_user_name=>v_email);
    select email_verification_token into v_token from saas_auth where user_name=v_email;
