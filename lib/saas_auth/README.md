@@ -13,7 +13,7 @@ The code here has been inspired and borrowed from [this post](https://dgielis.bl
 
 I added a new role called 'system' which can be used if a user_id is needed on the back end.
 
-You might need a user_id on the back end to create an object which requires user_id (stat_bucket, contact_group, ...).
+You might need a user_id on the back end to create an object which requires user_id (dataset, contact_group, ...).
 
 There was no way to assign a role, I added assign_user_role procedure as a way to do this.
 

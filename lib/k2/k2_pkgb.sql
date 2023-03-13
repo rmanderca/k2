@@ -13,8 +13,8 @@ MONKEY PATCHES
 function monkey_patch_remove_app_root_url (  -- | Fixes random return of full internal apex domain in apex_page.get_url.
    p_url in varchar2)                        -- | If url contains the k2_config.internal_app_domain replace it with k2_config.external_app_domain.
    return varchar2 is                        -- | Return value always starts with leading slash /.
-   v_url varchar2(1200) := p_url;
-   r varchar2(1200);
+   v_url varchar2(2048) := p_url;
+   r varchar2(2048);
 begin 
    arcsql.debug('monkey_patch_remove_app_root_url: '||p_url);
    if substr(v_url, 1, 2) = 'f?' then 
@@ -192,7 +192,7 @@ function get_flash_message (
       and (expires_at is null  
        or expires_at > sysdate)
     order by id desc;
-   r varchar2(1200);
+   r varchar2(2048);
 begin 
    arcsql.debug2('get_flash_message: '||p_message_type);
    for m in c_messages loop 
@@ -222,7 +222,7 @@ function get_flash_messages ( -- | Return a string of messages from the flash_me
        or session_id=v('APP_SESSION'))
       and (expires_at is null or expires_at > sysdate)
     order by id desc;
-   r varchar2(1200);
+   r varchar2(2048);
    loop_count number := 0;
 begin 
    arcsql.debug2('get_flash_messages: '||p_message_type);

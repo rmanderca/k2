@@ -695,6 +695,10 @@ create or replace type arcsql_csv_tab is table of arcsql_csv_row;
 /
 
 create or replace function to_rows (
+   /*
+   It works something like this
+   select * from table(to_rows('foo, bar, baz'));
+   */
    p_csv in varchar2,
    p_delim varchar2 default ',') return arcsql_csv_tab pipelined as
   cursor tokens is

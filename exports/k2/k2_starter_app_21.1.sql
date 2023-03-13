@@ -18726,7 +18726,7 @@ wwv_flow_api.create_page_process(
 'arcsql.log(''UI -> USER CLICKED REGISTER'');',
 'saas_auth_pkg.create_account(',
 '    p_user_name => lower(:P20001_REGISTER_EMAIL),',
-'    p_email => lower(:P20001_REGISTER_EMAIL),',
+'    p_email_address => lower(:P20001_REGISTER_EMAIL),',
 '    p_password => :P20001_REGISTER_PASSWORD,',
 '    p_confirm => :P20001_REGISTER_CONFIRM,',
 '    p_timezone_name => :P20001_TIMEZONE_NAME);',
@@ -18745,7 +18745,7 @@ wwv_flow_api.create_page_process(
 ,p_process_name=>'Send token'
 ,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'saas_auth_pkg.send_reset_pass_token(',
-'   p_email => lower(:P20001_TOKEN_EMAIL));'))
+'   p_email_address => lower(:P20001_TOKEN_EMAIL));'))
 ,p_process_clob_language=>'PLSQL'
 ,p_process_error_message=>'An error occurred processing this request.'
 ,p_error_display_location=>'INLINE_IN_NOTIFICATION'

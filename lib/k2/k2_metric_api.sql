@@ -1,15 +1,13 @@
-declare 
-   v1_base_path varchar2(120) := k2_config.api_base_path || '/v1/';
 begin
 
    ords.define_template (
-      p_module_name=>'api_v1',
-      p_pattern=>'stats',
-      p_comments=>'Submit a stat');
+      p_module_name=>'k2_api_v1',
+      p_pattern=>'metrics',
+      p_comments=>'Submit a metric');
 
    ords.define_handler (
-      p_module_name=>'api_v1',
-      p_pattern=>'stats',
+      p_module_name=>'k2_api_v1',
+      p_pattern=>'metrics',
       p_method=>'GET',
       p_mimes_allowed=>'',
       p_source_type=>ords.source_type_plsql,
@@ -17,9 +15,9 @@ begin
 begin 
    k2_token.assert_valid_token(p_token=>nvl(:access_token, k2_api.get_bearer_token));
 
-   k2_stat_api.update_stat_v1 (
-      p_bucket_token=>:bucket_token,
-      p_stat=>:stat,
+   k2_metric_api.update_metric_v1 (
+      p_dataset_token=>:dataset_token,
+      p_metric=>:metric,
       p_value=>:value);
 
    k2_api.json_message('success');

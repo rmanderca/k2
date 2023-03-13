@@ -9,18 +9,15 @@ create or replace package k2_config as
 
     -- Used to form links to the application from the outside world.
     -- These values should not end with a slash /.
-    external_app_domain varchar2(120) := 'https://xxxxxxxxxxxxxxxxxxx.adb.us-phoenix-1.oraclecloudapps.com';
-    internal_app_domain varchar2(120) := 'https://xxxxxxxxxxxxxxxxxxx.adb.us-phoenix-1.oraclecloudapps.com';
+    external_app_domain varchar2(256) := 'https://xxxxxxxxxxxxxxxxxxx.adb.us-phoenix-1.oraclecloudapps.com';
+    internal_app_domain varchar2(256) := 'https://xxxxxxxxxxxxxxxxxxx.adb.us-phoenix-1.oraclecloudapps.com';
     -- This is 'ords' on Oracle Cloud and 'apex' on Maxapex.
-    ords_url_prefix varchar2(12) := 'ords';
+    ords_url_prefix varchar2(16) := 'ords';
 
     -- Determines if ords is enabled for the schema.
     enable_ords boolean := true;
 
-    secret_key varchar2(100) := 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
-
-    -- Do not include a trailing slash. '/v1/' or other versions will be appended to the base path.
-    api_base_path varchar2(120) := '/api';
+    secret_key varchar2(128) := 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 
 end;
 /

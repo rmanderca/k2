@@ -21,13 +21,13 @@ create or replace package saas_auth_pkg as
       p_password in varchar2);
 
    procedure add_account (
-      p_email in varchar2,
+      p_email_address in varchar2,
       p_full_name in varchar2,
       p_password in varchar2,
       p_account_status in varchar2 default 'inactive');
 
    procedure process_create_account (
-      p_email in varchar2,
+      p_email_address in varchar2,
       p_full_name in varchar2,
       p_password in varchar2);
 
@@ -51,7 +51,7 @@ create or replace package saas_auth_pkg as
    procedure auto_login;
 
    function get_email_override_when_set (
-      p_email varchar2) return varchar2;
+      p_email_address varchar2) return varchar2;
 
    function get_current_time_for_user (
       p_user_id in number) return timestamp;
@@ -61,7 +61,7 @@ create or replace package saas_auth_pkg as
 
    procedure add_system_user (
       p_user_name in varchar2,
-      p_email in varchar2);
+      p_email_address in varchar2);
 
    function does_user_name_exist ( 
       p_user_name in varchar2) return boolean;

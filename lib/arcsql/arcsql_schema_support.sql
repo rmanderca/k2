@@ -238,8 +238,8 @@ exception
 end;
 /
 
--- uninstall: drop procedure add_pk_constraint;
-create or replace procedure add_pk_constraint (
+-- uninstall: drop procedure add_primary_key;
+create or replace procedure add_primary_key (
    table_name in varchar2,
    column_name in varchar2) is 
 begin 
@@ -411,3 +411,4 @@ end;
 /
 
 
+exec drop_procedure('add_pk_constraint');

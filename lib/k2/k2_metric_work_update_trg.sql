@@ -1,95 +1,16 @@
-
-
-create or replace trigger stat_bucket_trg 
-   before insert or update on stat_bucket 
-   for each row
-begin
-   :new.calc_type := lower(:new.calc_type);
-   :new.date_format := upper(:new.date_format);
-   :new.avg_val_ref_group := upper(:new.avg_val_ref_group);
-end;
-/
-
-create or replace trigger stat_bucket_delete_trg 
-   before delete on stat_bucket
-   for each row
-begin
-   delete from stat_in where bucket_key=:old.bucket_key;
-end;
-/
-
-create or replace trigger stat_ins_trg
-   before insert on stat
-   for each row
-begin
-   -- If static json was not provided then see if it is embeded 
-   if :new.static_json is null and instr(:new.stat_name, '{"') > 0 then
-      -- :new.static_json := json_scalar(trim(substr(:new.stat_name, instr(:new.stat_name, '{"'))));
-      :new.static_json := trim(substr(:new.stat_name, instr(:new.stat_name, '{"')));
-   end if;
-
-exception
-   when others then
-      dbms_output.put_line(dbms_utility.format_error_stack);
-      raise;
-end;
-/
-
-create or replace trigger stat_in_ins_trg
-   before insert on stat_in
-   for each row
+create or replace trigger metric_work_upd_trg
+   -- Only fires when updated is updated. This tells us it is coming from process_datasets.
+   before update of updated on metric_work for each row
 declare
-begin
-   if :new.stat_time is null then 
-      :new.stat_time := systimestamp;
-   end if;
-exception
-   when others then
-      dbms_output.put_line(dbms_utility.format_error_stack);
-      raise;
-end;
-/
-
-create or replace trigger stat_work_ins
-   before insert on stat_work 
-   for each row 
-begin
-   -- Do not do below, should already be set by the invoker. 
-   -- k2_stat.set_bucket_by_id(:new.bucket_id);
-   if k2_stat.g_bucket.ignore_negative = 1 and 
-      :new.received_val < 0 then
-         :new.received_val := 0;
-   end if;
-   -- Calc is entirely driven off the value in stat_bucket, we simply copy here for our reference.
-   if :new.calc_type is null then 
-      :new.calc_type := k2_stat.g_bucket.calc_type;
-   end if;
-   if k2_stat.g_bucket.calc_type = 'none' then
-      :new.calc_val := :new.received_val;
-      -- Stat count begins at one if not a rate or delta.
-      :new.calc_count := 1;
-      :new.avg_val := :new.received_val;
-   else 
-      -- Stat count begins at zero for rates and deltas.
-      :new.calc_count := 0;
-   end if;
-end;
-/
-
-create or replace trigger stat_work_upd_trg
-   -- Only fires when updated is updated. This tells us it is coming from process_buckets.
-   before update of updated on stat_work
-   for each row
-declare
-   p_stat_pct number;
-   v_stat_percentiles_ref stat_percentiles_ref%rowtype;
+   p_metric_pct number;
+   v_metric_percentiles_ref metric_percentiles_ref%rowtype;
    n number;
    temp_total number;
    try_again boolean;
 begin
-   -- g_bucket should be set already when this trigger fires.
-   if k2_stat.g_bucket.bucket_id != :new.bucket_id then 
-      raise_application_error(-20001, 'g_bucket not set in stat_work_upd_trg!');
+   -- g_dataset should be set already when this trigger fires.
+   if k2_metric.g_dataset.dataset_id != :new.dataset_id then 
+      raise_application_error(-20001, 'g_dataset not set in metric_work_upd_trg!');
    end if;
    -- Due to a possible hourly reset we need a writable var to reference so
    -- we set :new to :old. This can be super confusing below. Probably need to 
@@ -97,7 +18,9 @@ begin
    :new.avg_val_ref_calc_count := :old.avg_val_ref_calc_count;
    :new.avg_val_ref := :old.avg_val_ref;
    :new.calc_count := :old.calc_count;
-   :new.avg_val := :old.avg_val;
+   :new.delta_val_total := :old.delta_val_total;
+   :new.elapsed_seconds_total := :old.elapsed_seconds_total;
+   :new.calc_val_total := :old.calc_val_total;
    :new.pct10x := :old.pct10x;
    :new.pct20x := :old.pct20x;
    :new.pct40x := :old.pct40x;
@@ -127,26 +50,34 @@ begin
    :new.zero_calc_count := :old.zero_calc_count;
 
    -- IN ADDITION TO SCHEDULED TASK REFRESH REFERENCES ON HOUR SWITCH FOR FIRST 14 DAYS
-   if :new.created > systimestamp-14 and trunc(:old.stat_time, 'HH24') < trunc(:new.stat_time, 'HH24') then
-      k2_stat.refresh_references(p_bucket_id=>:new.bucket_id, p_stat_key=>:new.stat_key);
+   if :new.created > systimestamp-14 and trunc(:old.metric_time, 'HH24') < trunc(:new.metric_time, 'HH24') then
+      k2_metric.refresh_references(p_dataset_id=>:new.dataset_id, p_metric_id=>:new.metric_id);
    end if;
 
    -- ARCHIVE THE CURRENT RECORD AND START A NEW ONE WHEN DATE FORMAT VALUE CHANGES
-   if trunc(:old.stat_time, k2_stat.g_bucket.date_format) < trunc(:new.stat_time, k2_stat.g_bucket.date_format) and 
+   if trunc(:old.metric_time, k2_metric.g_dataset.metric_interval_date_format) < trunc(:new.metric_time, k2_metric.g_dataset.metric_interval_date_format) and 
       :old.calc_count > 0 then 
 
-      insert into stat_archive (
-      stat_work_id,
-      stat_name,
-      stat_key,
-      stat_level,
-      bucket_id,
+      arcsql.debug2(:old.metric_work_id);
+      arcsql.debug2('x: '||trunc(:old.metric_time, k2_metric.g_dataset.metric_interval_date_format)||', y: '||trunc(:new.metric_time, k2_metric.g_dataset.metric_interval_date_format));
+
+      insert into metric_work_archive (
+      metric_id,
+      metric_name,
+      metric_key,
+      metric_alt_id,
+      metric_level,
+      dataset_id,
       calc_count,
-      calc_type,
+      calc_val_total,
+      elapsed_seconds_total,
+      rate_per_second_total,
+      metric_work_calc_type,
       avg_val,
-      stat_time,
+      metric_time,
       last_non_zero_val,
-      received_val,
+      value_received,
+      delta_val_total,
       pctile0x,
       pctile10x,
       pctile20x,
@@ -173,21 +104,26 @@ begin
       pct_score,
       avg_pct_of_avg_val_ref,
       avg_val_ref,
-      avg_val_ref_group,
+      avg_val_target_group,
       neg_calc_count,
       zero_calc_count
       ) values (
-      :old.stat_work_id,
-      :old.stat_name,
-      :old.stat_key,
-      :old.stat_level,
-      :old.bucket_id,
+      :old.metric_id,
+      :old.metric_name,
+      :old.metric_key,
+      :old.metric_alt_id,
+      :old.metric_level,
+      :old.dataset_id,
       :old.calc_count,
-      :old.calc_type,
+      :old.calc_val_total,
+      :old.elapsed_seconds_total,
+      :old.rate_per_second_total,
+      :old.metric_work_calc_type,
       :old.avg_val,
-      trunc(:old.stat_time, k2_stat.g_bucket.date_format),
+      trunc(:old.metric_time, k2_metric.g_dataset.metric_interval_date_format),
       :old.last_non_zero_val,
-      :old.received_val,
+      :old.value_received,
+      :old.delta_val_total,
       :old.pctile0x,
       :old.pctile10x,
       :old.pctile20x,
@@ -214,25 +150,25 @@ begin
       :old.pct_score,
       :old.avg_pct_of_avg_val_ref,
       :old.avg_val_ref,
-      :old.avg_val_ref_group,
+      :old.avg_val_target_group,
       :old.neg_calc_count,
       :old.zero_calc_count
       );
 
       try_again := true;
       
-      if k2_stat.g_bucket.avg_val_ref_group = 'HH24' then 
+      if k2_metric.g_dataset.avg_val_target_group = 'HH24' then 
          begin 
             select avg_val,
                    calc_count
               into :new.avg_val_ref,
                    :new.avg_val_ref_calc_count
-              from stat_avg_val_hist_ref a 
-             where a.avg_val_ref_group='HH24' 
-               and a.hist_key=to_char(:new.stat_time, 'HH24')||':00'
-               and a.stat_key=:new.stat_key
-               and row_count > k2_stat.g_bucket.avg_val_required_row_count;
-            :new.avg_val_ref_group := 'HH24';
+              from metric_avg_val_hist_ref a 
+             where a.avg_val_target_group='HH24' 
+               and a.hist_key=to_char(:new.metric_time, 'HH24')||':00'
+               and a.metric_id=:new.metric_id
+               and row_count > k2_metric.g_dataset.avg_val_min_sample_count;
+            :new.avg_val_target_group := 'HH24';
             try_again := false;
          exception 
             when no_data_found then 
@@ -240,19 +176,19 @@ begin
          end;
       end if;
 
-      if try_again and k2_stat.g_bucket.avg_val_ref_group in ('DY', 'HH24') then 
+      if try_again and k2_metric.g_dataset.avg_val_target_group in ('DY', 'HH24') then 
          begin 
             select avg_val,
                    calc_count
               into :new.avg_val_ref,
                    :new.avg_val_ref_calc_count
-              from stat_avg_val_hist_ref a 
-             where a.avg_val_ref_group='DY'  
-               and a.hist_key=to_char(:new.stat_time, 'DY') 
-               and a.stat_key=:new.stat_key
-               and row_count > k2_stat.g_bucket.avg_val_required_row_count;
+              from metric_avg_val_hist_ref a 
+             where a.avg_val_target_group='DY'  
+               and a.hist_key=to_char(:new.metric_time, 'DY') 
+               and a.metric_id=:new.metric_id
+               and row_count > k2_metric.g_dataset.avg_val_min_sample_count;
             try_again := false;
-            :new.avg_val_ref_group := 'DY';
+            :new.avg_val_target_group := 'DY';
          exception 
             when no_data_found then 
                null;
@@ -265,22 +201,26 @@ begin
                    calc_count
               into :new.avg_val_ref,
                    :new.avg_val_ref_calc_count
-              from stat_avg_val_hist_ref a 
-             where a.avg_val_ref_group='ALL'  
+              from metric_avg_val_hist_ref a 
+             where a.avg_val_target_group='ALL'  
                and a.hist_key='ALL'
-               and a.stat_key=:new.stat_key;
-               :new.avg_val_ref_group := 'ALL';
+               and a.metric_id=:new.metric_id;
+               :new.avg_val_target_group := 'ALL';
          exception 
             when no_data_found then 
                :new.avg_val_ref := 0;
                :new.avg_val_ref_calc_count := 0;
          end;
-         -- arcsql.debug('** stat_name: '||:new.stat_name||', avg_val_ref_calc_count: '||:new.avg_val_ref_calc_count);
+         -- arcsql.debug('** metric_name: '||:new.metric_name||', avg_val_ref_calc_count: '||:new.avg_val_ref_calc_count);
       end if;
 
       :new.calc_count := 0;
-      :new.avg_val := 0;
       :new.pct_of_avg_val_ref := 0;
+      :new.delta_val_total := 0;
+      :new.elapsed_seconds := 0;
+      :new.elapsed_seconds_total := 0;
+      :new.rate_per_second_total := 0;
+      :new.calc_val_total := 0;
       :new.pct10x := to_number('.'||floor(:old.pct10x));
       :new.pct20x := to_number('.'||floor(:old.pct20x));
       :new.pct40x := to_number('.'||floor(:old.pct40x));
@@ -309,25 +249,28 @@ begin
 
    end if;
 
-   if :old.calc_type != k2_stat.g_bucket.calc_type then 
-      :new.calc_type := k2_stat.g_bucket.calc_type;
+   if :old.metric_work_calc_type != k2_metric.g_dataset.metric_work_calc_type then 
+      :new.metric_work_calc_type := k2_metric.g_dataset.metric_work_calc_type;
    end if;
 
-   :new.elapsed_seconds := round(arcsql.secs_between_timestamps(:new.stat_time, :old.stat_time));
+   :new.elapsed_seconds := round(arcsql.secs_between_timestamps(:new.metric_time, :old.metric_time));
+   :new.elapsed_seconds_total := :new.elapsed_seconds_total + :new.elapsed_seconds;
 
    -- ToDo: Controlled by a var.
-   :new.delta_val := round(:new.received_val-:old.received_val, 3);
+   :new.delta_val := round(:new.value_received-:old.value_received, 3);
+   :new.delta_val_total := :new.delta_val_total + :new.delta_val;
 
    -- Negative seconds elapsed would be an error or some sort.
    if :new.elapsed_seconds <= 0 then 
       :new.rate_per_second := 0;
    else 
       :new.rate_per_second := round(:new.delta_val/:new.elapsed_seconds, 3);
+      :new.rate_per_second_total := round(:new.delta_val_total/:new.elapsed_seconds_total, 3);
    end if;
 
    -- Figure out what calc_val needs to be.
-   case k2_stat.g_bucket.calc_type 
-      when 'none' then :new.calc_val := :new.received_val;
+   case k2_metric.g_dataset.metric_work_calc_type 
+      when 'none' then :new.calc_val := :new.value_received;
       when 'rate/s' then :new.calc_val := :new.rate_per_second;
       when 'rate/m' then :new.calc_val := :new.rate_per_second*60;
       when 'rate/h' then :new.calc_val := :new.rate_per_second*60*60;
@@ -337,7 +280,7 @@ begin
    end case;
 
    if :new.calc_val != 0 then
-      :new.last_non_zero_val := :new.stat_time;
+      :new.last_non_zero_val := :new.metric_time;
       if :new.convert_eval is not null then 
          :new.calc_val := arcsql.str_eval_math_v2(p_expression=>:new.calc_val||:new.convert_eval);
       end if;
@@ -351,44 +294,44 @@ begin
       :new.zero_calc_count := :new.zero_calc_count+1;
    end if;
 
-   if k2_stat.g_bucket.ignore_negative = 1 and :new.calc_val < 0 then
+   if k2_metric.g_dataset.allow_negative_values = 0 and :new.calc_val < 0 then
       :new.calc_val := 0;
    end if;
 
-   -- The number of stats that have been sampled within the current hour.
+   :new.calc_val_total := :new.calc_val_total + :new.calc_val;
+
+   -- The number of metrics that have been sampled within the current hour.
    :new.calc_count := nvl(:new.calc_count, 0) + 1;
     
    -- Only do pctiles if we have data to compare to.
-   select count(*) into n from stat_percentiles_ref
-    where bucket_id=:new.bucket_id 
-      and stat_key=:new.stat_key 
+   select count(*) into n from metric_percentiles_ref
+    where metric_id=:new.metric_id 
       and rownum <= 1;
 
    if n > 0 then 
-      select * into v_stat_percentiles_ref
-        from stat_percentiles_ref
-       where bucket_id=:new.bucket_id 
-         and stat_key=:new.stat_key;
-      -- Percentile Buckets
-      if :new.calc_val <= v_stat_percentiles_ref.pctile0 then 
+      select * into v_metric_percentiles_ref
+        from metric_percentiles_ref
+       where metric_id=:new.metric_id;
+      -- Percentile datasets
+      if :new.calc_val <= v_metric_percentiles_ref.pctile0 then 
          :new.pctile0x := :new.pctile0x + 1;
-      elsif :new.calc_val <= v_stat_percentiles_ref.pctile10 then 
+      elsif :new.calc_val <= v_metric_percentiles_ref.pctile10 then 
          :new.pctile10x := :new.pctile10x + 1;
-      elsif :new.calc_val <= v_stat_percentiles_ref.pctile20 then 
+      elsif :new.calc_val <= v_metric_percentiles_ref.pctile20 then 
          :new.pctile20x := :new.pctile20x + 1;
-      elsif :new.calc_val <= v_stat_percentiles_ref.pctile30 then 
+      elsif :new.calc_val <= v_metric_percentiles_ref.pctile30 then 
          :new.pctile30x := :new.pctile30x + 1;
-      elsif :new.calc_val <= v_stat_percentiles_ref.pctile40 then 
+      elsif :new.calc_val <= v_metric_percentiles_ref.pctile40 then 
          :new.pctile40x := :new.pctile40x + 1;
-      elsif :new.calc_val <= v_stat_percentiles_ref.pctile50 then 
+      elsif :new.calc_val <= v_metric_percentiles_ref.pctile50 then 
          :new.pctile50x := :new.pctile50x + 1;
-      elsif :new.calc_val <= v_stat_percentiles_ref.pctile60 then 
+      elsif :new.calc_val <= v_metric_percentiles_ref.pctile60 then 
          :new.pctile60x := :new.pctile60x + 1;
-      elsif :new.calc_val <=v_stat_percentiles_ref.pctile70 then 
+      elsif :new.calc_val <=v_metric_percentiles_ref.pctile70 then 
          :new.pctile70x := :new.pctile70x + 1;
-      elsif :new.calc_val <= v_stat_percentiles_ref.pctile80 then 
+      elsif :new.calc_val <= v_metric_percentiles_ref.pctile80 then 
          :new.pctile80x := :new.pctile80x + 1;
-      elsif :new.calc_val <= v_stat_percentiles_ref.pctile90 then 
+      elsif :new.calc_val <= v_metric_percentiles_ref.pctile90 then 
          :new.pctile90x := :new.pctile90x + 1;
       else  
          :new.pctile100x := :new.pctile100x + 1;
@@ -408,8 +351,9 @@ begin
    end if;
 
    -- Update the avg_val.
-   temp_total := :new.avg_val * (:new.calc_count-1);
-   :new.avg_val := round((temp_total + :new.calc_val) / :new.calc_count, 3);
+   :new.avg_val :=  round(:new.calc_val_total / :new.calc_count, 3);
+   -- temp_total := :new.avg_val * (:new.calc_count-1);
+   -- :new.avg_val := round((temp_total + :new.calc_val) / :new.calc_count, 3);
 
    -- This blocked confused me for a bit. I think I am keeping the avg_val_ref up to 
    -- date even when it is pulled from history. The advantage here is that when there is
@@ -430,28 +374,28 @@ begin
    :new.avg_pct_of_avg_val_ref := round((temp_total + :new.pct_of_avg_val_ref) / :new.calc_count);
    
    if not :new.avg_val_ref is null then 
-      p_stat_pct := :new.pct_of_avg_val_ref;
-      if p_stat_pct <= 10 then 
+      p_metric_pct := :new.pct_of_avg_val_ref;
+      if p_metric_pct <= 10 then 
          :new.pct10x := :new.pct10x + 1;
-      elsif p_stat_pct <= 20 then 
+      elsif p_metric_pct <= 20 then 
          :new.pct20x := :new.pct20x + 1;
-      elsif p_stat_pct <= 40 then 
+      elsif p_metric_pct <= 40 then 
          :new.pct40x := :new.pct40x + 1;
-      elsif p_stat_pct <= 80 then 
+      elsif p_metric_pct <= 80 then 
          :new.pct80x := :new.pct80x + 1;
-      elsif p_stat_pct < 100 then 
+      elsif p_metric_pct < 100 then 
          :new.pct100x := :new.pct100x + 1;
-      elsif p_stat_pct = 100 then 
+      elsif p_metric_pct = 100 then 
          :new.pct100x := :new.pct100x + 1;
-      elsif p_stat_pct < 120 then 
+      elsif p_metric_pct < 120 then 
          :new.pct120x := :new.pct120x + 1;
-      elsif p_stat_pct <= 240 then 
+      elsif p_metric_pct <= 240 then 
          :new.pct240x := :new.pct240x + 1;
-      elsif p_stat_pct <= 480 then 
+      elsif p_metric_pct <= 480 then 
          :new.pct480x := :new.pct480x + 1;
-      elsif p_stat_pct <= 960 then 
+      elsif p_metric_pct <= 960 then 
          :new.pct960x := :new.pct960x + 1;
-      elsif p_stat_pct <= 1920 then 
+      elsif p_metric_pct <= 1920 then 
          :new.pct1920x := :new.pct1920x + 1;
       else  
          :new.pct9999x := :new.pct9999x + 1;

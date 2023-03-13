@@ -16,6 +16,11 @@ create or replace package k2_json as
       p_json_key in varchar2,
       p_json_data in clob);
 
+   function does_json_data_path_exist (
+      p_json_key in varchar2,
+      p_json_path in varchar2) 
+      return boolean;
+
    function get_json_data_string (
       p_json_key in varchar2,
       p_json_path in varchar2) return varchar2;

@@ -123,7 +123,7 @@ procedure set_auto_login ( -- | Called from login form. Enables or disables auto
    is 
    v_auto_token varchar2(120) := sys_guid();
 begin 
-   arcsql.debug('set_auto_login: '||p_auto_login);
+   arcsql.debug2('set_auto_login: '||p_auto_login);
    if nvl(saas_auth_config.enable_auto_login_days, 0) = 0 then 
       return;
    end if;
@@ -169,7 +169,7 @@ function is_able_to_auto_login_with_auto_token -- | Return true if conditions al
    n number;
    t saas_auth.auto_token%type;
 begin 
-   arcsql.debug('is_able_to_auto_login_with_auto_token: '||v('APP_USER')||', '||v('APP_SESSION'));
+   arcsql.debug2('is_able_to_auto_login_with_auto_token: '||v('APP_USER')||', '||v('APP_SESSION'));
    if v('APP_USER') != 'nobody' then 
       arcsql.debug2('App user is not nobody: '||v('APP_USER'));
       -- User is already logged in as someone
@@ -205,7 +205,7 @@ procedure auto_login is -- | Triggers an auto login if a valid token in in query
    v_token saas_auth.auto_token%type;
    r saas_auth%rowtype;
 begin 
-   arcsql.debug('auto_login: '||v('APP_USER')||', '||v('APP_SESSION'));
+   arcsql.debug2('auto_login: '||v('APP_USER')||', '||v('APP_SESSION'));
 
    if lower(owa_util.get_cgi_env('QUERY_STRING')) like '%auth\_token%' escape '\' then 
       return;
@@ -296,9 +296,9 @@ exception
 end;
 
 function get_email_override_when_set ( -- | Returns the override address if set otherwise returns the original address.
-   p_email varchar2) return varchar2 is 
+   p_email_address varchar2) return varchar2 is 
 begin 
-   return nvl(trim(app_config.email_override), p_email);
+   return nvl(trim(app_config.email_override), p_email_address);
 end;  
 
 procedure assert_password_passes_complexity_check ( -- | Raises error if password does not adhere to defined specifications.
@@ -552,9 +552,9 @@ begin
 end;
 
 procedure raise_does_not_appear_to_be_an_email_format ( -- | Raises an error if the string does not look like an email.
-   p_email in varchar2) is 
+   p_email_address in varchar2) is 
 begin 
-   if not arcsql.str_is_email(p_email) then 
+   if not arcsql.str_is_email(p_email_address) then 
       raise_error('Email does not appear to be a valid email address.');
    end if;
 end;
@@ -576,7 +576,7 @@ end;
 
 procedure add_system_user ( -- | Add an user account for a system user.
    p_user_name in varchar2,
-   p_email in varchar2) is 
+   p_email_address in varchar2) is 
    n number;
 begin 
    select count(*) into n from saas_auth where user_name=lower(p_user_name);
@@ -587,7 +587,7 @@ begin
          password,
          account_type) values (
          lower(p_user_name),
-         lower(p_email), 
+         lower(p_email_address), 
          arcsql.str_random(12)||'!',
          'system');
    end if;
@@ -685,15 +685,15 @@ begin
 end;
 
 procedure assert_valid_email_format ( -- | Throw an error if the email address format looks invalid.
-   p_email in varchar2) is 
+   p_email_address in varchar2) is 
 begin
-   if not arcsql.str_is_email(p_email) then 
+   if not arcsql.str_is_email(p_email_address) then 
       raise_error('Invalid email address.');
    end if;
 end;
 
 procedure add_account (
-   p_email in varchar2,
+   p_email_address in varchar2,
    p_full_name in varchar2,
    p_password in varchar2,
    p_account_status in varchar2 default 'inactive') is 
@@ -709,9 +709,9 @@ begin
       password,
       account_status) values (
       -- For now user name is email
-      lower(p_email),
+      lower(p_email_address),
       p_full_name,
-      lower(p_email), 
+      lower(p_email_address), 
       sys_guid(),
       v('APP_SESSION'),
       arcsql.str_random(12)||'x!',
@@ -723,26 +723,26 @@ begin
 end;
 
 procedure process_create_account ( -- | Add email to the saas_auth table with an unknown password and unverified email.
-   p_email in varchar2,
+   p_email_address in varchar2,
    p_full_name in varchar2,
    p_password in varchar2) is 
    n number;
    r saas_auth%rowtype;
    v_user_id number;
 begin 
-   arcsql.debug('process_create_account: '||p_email);
+   arcsql.debug('process_create_account: '||p_email_address);
 
    assert_password_passes_complexity_check(p_password=>p_password);
-   assert_valid_email_format(p_email=>p_email);
+   assert_valid_email_format(p_email_address=>p_email_address);
    assert_password_prefix_present_if_required(p_password=>p_password);
 
    select count(*) into n from saas_auth
-    where user_name=lower(p_email);
+    where user_name=lower(p_email_address);
 
    -- If the account already exists
    if n = 1 then 
       -- And the status is still 'inactive'
-      r := get_saas_auth_row(p_user_id=>to_user_id(p_user_name=>p_email));
+      r := get_saas_auth_row(p_user_id=>to_user_id(p_user_name=>p_email_address));
       if r.account_status = 'inactive' then 
          -- Update the password and full name because the user has never logged in
          set_password (
@@ -768,9 +768,9 @@ begin
          password,
          account_status) values (
          -- For now user name is email
-         lower(p_email),
+         lower(p_email_address),
          p_full_name,
-         lower(p_email), 
+         lower(p_email_address), 
          sys_guid(),
          v('APP_SESSION'),
          arcsql.str_random(12)||'x!',

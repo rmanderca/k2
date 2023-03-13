@@ -1,4 +1,10 @@
 
+begin
+   if 1=1 then 
+      drop_table('saas_auth');
+   end if;
+end;
+/
 
 exec drop_table('saas_auth_role');
 exec drop_column('saas_auth', 'role_id');
@@ -55,81 +61,131 @@ begin
       updated_by varchar2(120) not null,
       -- This is set each time the user logs in by detecting the current value from the browser.
       timezone_name varchar2(120) default null,
-      timezone_offset varchar2(12) default null
-      )', false);
+      timezone_offset varchar2(12) default null,
+      attribute_1 varchar2(256) default null,
+      attribute_2 varchar2(256) default null,
+      attribute_3 varchar2(256) default null,
+      attribute_4 varchar2(256) default null,
+      attribute_5 varchar2(256) default null,
+      attribute_6 varchar2(256) default null,
+      attribute_7 varchar2(256) default null,
+      attribute_8 varchar2(256) default null,
+      attribute_9 varchar2(256) default null,
+      attribute_10 varchar2(256) default null
+      )');
    end if;
-   add_pk_constraint('saas_auth', 'user_id');
+   add_primary_key('saas_auth', 'user_id');
    if not does_index_exist('saas_auth_1') then 
       execute_sql('
-         create unique index saas_auth_1 on saas_auth (user_name)', false);
+         create unique index saas_auth_1 on saas_auth (user_name)');
    end if;
    if not does_column_exist('saas_auth', 'email_verification_token') then 
       execute_sql('
-         alter table saas_auth add (email_verification_token varchar2(12) default null)', false);
+         alter table saas_auth add (email_verification_token varchar2(12) default null)');
    end if;
    if not does_column_exist('saas_auth', 'email_verification_token_expires_at') then 
       execute_sql('
-         alter table saas_auth add (email_verification_token_expires_at date default null)', false);
+         alter table saas_auth add (email_verification_token_expires_at date default null)');
    end if;
    if not does_column_exist('saas_auth', 'email_verified') then 
       execute_sql('
-         alter table saas_auth add (email_verified date default null)', false);
+         alter table saas_auth add (email_verified date default null)');
    end if;
    if not does_column_exist('saas_auth', 'email_old') then 
       execute_sql('
-         alter table saas_auth add (email_old varchar2(120) default null)', false);
+         alter table saas_auth add (email_old varchar2(120) default null)');
    end if;
    if not does_column_exist('saas_auth', 'uuid') then 
       execute_sql('
-         alter table saas_auth add (uuid varchar2(120) default sys_guid())', false);
+         alter table saas_auth add (uuid varchar2(120) default sys_guid())');
    end if;
    if not does_column_exist('saas_auth', 'account_status') then 
       execute_sql('
-         alter table saas_auth add (account_status varchar2(12) default ''active'')', false);
+         alter table saas_auth add (account_status varchar2(12) default ''active'')');
    end if;
    if not does_column_exist('saas_auth', 'auto_login') then 
       execute_sql('
-         alter table saas_auth add (auto_login date default null)', false);
+         alter table saas_auth add (auto_login date default null)');
    end if;
    if not does_column_exist('saas_auth', 'auto_login_token') then 
       execute_sql('
-         alter table saas_auth add (auto_login_token varchar2(120) default null)', false);
+         alter table saas_auth add (auto_login_token varchar2(120) default null)');
    end if;
    if not does_column_exist('saas_auth', 'remove_date') then 
       execute_sql('
-         alter table saas_auth add (remove_date date default null)', false);
+         alter table saas_auth add (remove_date date default null)');
    end if;
    if not does_column_exist('saas_auth', 'email_count') then 
       execute_sql('
-         alter table saas_auth add (email_count number default 0)', false);
+         alter table saas_auth add (email_count number default 0)');
    end if;
    if not does_column_exist('saas_auth', 'last_email') then 
       execute_sql('
-         alter table saas_auth add (last_email timestamp default null)', false);
+         alter table saas_auth add (last_email timestamp default null)');
    end if;
    if not does_column_exist('saas_auth', 'account_type') then
       execute_sql('
-         alter table saas_auth add (account_type varchar2(12) default ''user'')', false);
+         alter table saas_auth add (account_type varchar2(12) default ''user'')');
    end if;
    if not does_column_exist('saas_auth', 'full_name') then
       execute_sql('
-         alter table saas_auth add (full_name varchar2(120) default null)', false);
+         alter table saas_auth add (full_name varchar2(120) default null)');
    end if;
    if not does_column_exist('saas_auth', 'auth_token') then
       execute_sql('
-         alter table saas_auth add (auth_token varchar2(120) default null)', false);
+         alter table saas_auth add (auth_token varchar2(120) default null)');
    end if;
    if not does_column_exist('saas_auth', 'auth_token_expire') then
       execute_sql('
-         alter table saas_auth add (auth_token_expire date default null)', false);
+         alter table saas_auth add (auth_token_expire date default null)');
    end if;
    if not does_column_exist('saas_auth', 'auto_token') then
       execute_sql('
-         alter table saas_auth add (auto_token varchar2(120) default null)', false);
+         alter table saas_auth add (auto_token varchar2(120) default null)');
    end if;
    if not does_column_exist('saas_auth', 'auto_token_expire') then
       execute_sql('
-         alter table saas_auth add (auto_token_expire date default null)', false);
+         alter table saas_auth add (auto_token_expire date default null)');
+   end if;
+   if not does_column_exist('saas_auth', 'attribute_1') then 
+      execute_sql('
+         alter table saas_auth add (attribute_1 varchar2(256) default null)');
+   end if;
+   if not does_column_exist('saas_auth', 'attribute_2') then 
+      execute_sql('
+         alter table saas_auth add (attribute_2 varchar2(256) default null)');
+   end if;
+   if not does_column_exist('saas_auth', 'attribute_3') then 
+      execute_sql('
+         alter table saas_auth add (attribute_3 varchar2(256) default null)');
+   end if;
+   if not does_column_exist('saas_auth', 'attribute_4') then 
+      execute_sql('
+         alter table saas_auth add (attribute_4 varchar2(256) default null)');
+   end if;
+   if not does_column_exist('saas_auth', 'attribute_5') then 
+      execute_sql('
+         alter table saas_auth add (attribute_5 varchar2(256) default null)');
+   end if;
+   if not does_column_exist('saas_auth', 'attribute_6') then 
+      execute_sql('
+         alter table saas_auth add (attribute_6 varchar2(256) default null)');
+   end if;
+   if not does_column_exist('saas_auth', 'attribute_7') then 
+      execute_sql('
+         alter table saas_auth add (attribute_7 varchar2(256) default null)');
+   end if;
+   if not does_column_exist('saas_auth', 'attribute_8') then 
+      execute_sql('
+         alter table saas_auth add (attribute_8 varchar2(256) default null)');
+   end if;
+   if not does_column_exist('saas_auth', 'attribute_9') then 
+      execute_sql('
+         alter table saas_auth add (attribute_9 varchar2(256) default null)');
+   end if;
+   if not does_column_exist('saas_auth', 'attribute_10') then 
+      execute_sql('
+         alter table saas_auth add (attribute_10 varchar2(256) default null)');
    end if;
 end;
 /

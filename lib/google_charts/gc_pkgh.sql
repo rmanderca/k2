@@ -1,7 +1,16 @@
 create or replace package gc is
 
+   g_chart_count number := 0;
+   
    procedure start_series (
          p_series_id in varchar2);
+
+   procedure add_column (
+      p_data_type in varchar2,
+      p_column_name in varchar2);
+
+   procedure add_data (
+      p_data in varchar2);
 
    procedure add_line_chart (
       p_title in varchar2,
@@ -14,29 +23,20 @@ create or replace package gc is
       p_height in number default 400,
       p_background_color in varchar2 default 'white',
       p_tags in varchar2 default null,
-      p_div_group in number default 0);
-
-   procedure add_column (
-      p_data_type in varchar2,
-      p_column_name in varchar2);
-
-   procedure add_data (
-      p_data in varchar2);
-
-   procedure end_chart;
+      p_div_group in varchar2 default 'default',
+      p_url in varchar2 default null);
 
    procedure end_series;
 
-   function get_js_chunk return varchar2;
+   function get_js (
+      p_series_id in varchar2)
+      return clob;
 
-   function get_js return clob;
-
-   function get_divs_chunk (
+   function get_divs (
       p_series_id in varchar2,
-      p_div_group in number default null,
-      p_set_class in varchar2 default 'gc',
-      p_having_tags in varchar2 default null) return varchar2;
-
-   
+      p_div_group in varchar2 default 'default',
+      p_having_div_tags in varchar2 default null,
+      p_set_class in varchar2 default 'google_charts')
+      return clob;
 end;
 /
