@@ -3,7 +3,7 @@
 
 -- WARNING: You may want to exclude files starting with secret* from git. See the .gitignore file.
 
-@app_config.sql
+@demo_config.sql
 @app_patch.sql
 @app_schema.sql
 @app_pkgh.sql

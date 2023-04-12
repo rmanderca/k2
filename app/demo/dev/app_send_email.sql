@@ -102,13 +102,3 @@ end;
 /
 
 -- uninstall: exec drop_procedure('send_test_email');
-create or replace procedure send_test_email is -- | Send a test email.
-begin 
-   app_send_email (
-      p_subject=>'Test email sent at '||to_char(sysdate,'MM/DD/YYYY HH24:MI:SS'),
-      p_body=>'This is a test email sent at '||to_char(sysdate,'MM/DD/YYYY HH24:MI:SS'));
-end;
-/
-
-
-
