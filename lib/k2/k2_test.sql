@@ -7,6 +7,18 @@ end;
 
 create or replace package body k2_test as 
 
+/*
+
+### setup (procedure)
+
+Performs common test setup tasks.
+
+* Deletes all data from ARCSQL_LOG table.
+* Deletes and recreates your main test user (account status is set to active) - app_config.app_test_user
+* Sets k2_test.user_id to the test user.
+
+*/
+
 procedure setup is 
 begin 
    delete from arcsql_log;

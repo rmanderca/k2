@@ -1,4 +1,4 @@
-
+define username=
 -- Direct grant required to create sequences from PL/SQL code.
 grant create sequence to &username;
 grant create session to &username;
@@ -14,6 +14,7 @@ grant drop public synonym to &username;
 -- These are used for some lock related views.
 grant select on sys.gv_$lock to &username;
 grant select on sys.gv_$session to &username;
+grant select on gv$session to &username;
 grant select on sys.gv_$bgprocess to &username;
 grant select on gv_$locked_object to &username;
 grant select on dba_objects to &username;
@@ -23,6 +24,7 @@ grant select on dba_users to &username;
 
 -- Used for SQL_LOG.
 grant select on gv_$sql to &username;
+grant select on gv$sql to &username;
 -- Only used if licensed and explicitly specified in the arcsql_config table.
 grant select on gv_$active_session_history to &username;
 
@@ -88,15 +90,27 @@ grant execute on dbms_session to &username;
 
 -- Additional grants for admin level type scripts in sql folder of ArcSQL.
 grant select on gv_$archived_log to &username;
+grant select on gv$archived_log to &username;
 grant select on gv_$resource_limit to &username;
+grant select on gv$resource_limit to &username;
 grant select on gv_$db_object_cache to &username;
+grant select on gv$db_object_cache to &username;
 grant select on gv_$object_dependency to &username;
+grant select on gv$object_dependency to &username;
 grant select on gv_$sort_usage to &username;
+grant select on gv$sort_usage to &username;
 grant select on gv_$sqlarea to &username;
+grant select on gv$sqlarea to &username;
 -- Not a mistake to use v_ instead of gv_, see use in sort_info view for more info.
 grant select on v_$tempfile to &username;
+grant select on v$tempfile to &username;
+grant select on gv$tempfile to &username;
+grant select on gv$tempstat to &username;
 grant select on dba_free_space to &username;
 grant select on dba_data_files to &username;
 grant select on dba_segments to &username;
+grant select on dba_temp_files to &username;
 grant select on gv_$filestat to &username;
+grant select on gv$filestat to &username;
 grant select on v_$filestat to &username;
+grant select on v$filestat to &username;

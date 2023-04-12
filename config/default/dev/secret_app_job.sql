@@ -26,8 +26,5 @@ create or replace package app_job as
 	process_k2_metrics varchar2(256) := 'y';
 	collect_oracle_metrics varchar2(256) := 'y';
 
-	-- Saas Auth
-	enable_saas_auth_automations varchar2(256) := 'y';
-
 end;
 /

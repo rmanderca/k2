@@ -699,17 +699,17 @@ create or replace function to_rows (
    It works something like this
    select * from table(to_rows('foo, bar, baz'));
    */
-   p_csv in varchar2,
-   p_delim varchar2 default ',') return arcsql_csv_tab pipelined as
-  cursor tokens is
-  select replace(trim(regexp_substr(p_csv,'[^'||p_delim||']+', 1, level)), ' ', ',') token, level
-     from dual connect by regexp_substr(p_csv, '[^'||p_delim||']+', 1, level) is not null
+   p_list in varchar2,
+   p_sep varchar2 default ',') return arcsql_csv_tab pipelined as
+   cursor tokens is
+   select replace(trim(regexp_substr(p_list,'[^'||p_sep||']+', 1, level)), ' ', ',') token, level
+     from dual connect by regexp_substr(p_list, '[^'||p_sep||']+', 1, level) is not null
     order by level;
 begin
-  for x in tokens loop
+   for x in tokens loop
      pipe row(arcsql_csv_row(x.token, x.level));
-  end loop;
-  return;
+   end loop;
+   return;
 end;
 /
 

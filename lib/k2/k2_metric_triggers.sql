@@ -3,9 +3,9 @@
 create or replace trigger dataset_before_insert_or_update_trg 
    before insert or update on dataset for each row
 begin
-   :new.metric_work_calc_type := lower(:new.metric_work_calc_type);
+   :new.calc_type := lower(:new.calc_type);
    :new.metric_interval_date_format := upper(:new.metric_interval_date_format);
-   :new.avg_val_target_group := upper(:new.avg_val_target_group);
+   :new.avg_target_group := upper(:new.avg_target_group);
 end;
 /
 
@@ -29,23 +29,7 @@ create or replace trigger metric_work_before_insert_trg
 begin
    -- Do not do below, should already be set by the invoker. 
    -- k2_metric.set_dataset_by_id(:new.dataset_id);
-   if k2_metric.g_dataset.allow_negative_values = 1 and 
-      :new.value_received < 0 then
-         :new.value_received := 0;
-   end if;
-   -- Calc is entirely driven off the value in dataset, we simply copy here for our reference.
-   if :new.metric_work_calc_type is null then 
-      :new.metric_work_calc_type := k2_metric.g_dataset.metric_work_calc_type;
-   end if;
-   if k2_metric.g_dataset.metric_work_calc_type = 'none' then
-      :new.calc_val := :new.value_received;
-      -- metric count begins at one if not a rate or delta.
-      :new.calc_count := 1;
-      :new.avg_val := :new.value_received;
-   else 
-      -- metric count begins at zero for rates and deltas.
-      :new.calc_count := 0;
-   end if;
+   null;
 end;
 /
 

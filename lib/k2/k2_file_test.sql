@@ -16,7 +16,7 @@ begin
     
    arcsql.init_test('Send file as email attachement');
    v_file_store := k2_file.get_file_store_row('test_file');
-   app_send_email_attachement(
+   app_send_email_attachment(
       p_to=>app_config.app_owner_email,
       p_from=>app_config.app_from_email,
       p_body=>'Test email with attachement.',

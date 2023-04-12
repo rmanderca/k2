@@ -1,29 +1,9 @@
 
 
-create or replace function saas_auth_verify_email_subject return clob is 
-begin
-	return 'Reminder: Complete your '||app_config.app_name||' sign up';
-end;
-/
+exec drop_procedure('saas_auth_verify_email_subject');
 
-create or replace function saas_auth_verify_email_body return clob is 
-	/*
-	You can create your own version of this function in your app.
-	Placeholders:
-		{APP_NAME}
-		{ONE_TIME_LOGIN_LINK}
-	*/
-begin
-	return '### You''re almost there!
- 
-Thank you for signing up for '||app_config.app_name||'! Click the link below to verify your email, and we''ll help you get started.
+exec drop_procedure('saas_auth_verify_email_body');
 
-### #ONE_TIME_LOGIN_LINK#
-
-You received this email because you signed up for an '||app_config.app_name||' account with this email address. If this was a mistake, ignore this email -- the account hasn''t been created yet.';
-
-end;
-/
 
 create or replace function saas_auth_one_time_login_subject return clob is 
 begin

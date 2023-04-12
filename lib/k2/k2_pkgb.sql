@@ -3,12 +3,101 @@ set define off
 
 create or replace package body k2 as 
 
+function app_alias return varchar2 is 
+begin
+   return k2_utl.get_app_alias;
+end;
+
+function app_id return number is 
+begin 
+   return k2_utl.get_app_id;
+end;
+
+/*
+
+### fire_event_proc (function)
+
+Calls a procedure with a no parameters if it exists.
+
+* **p_proc_name** - The name of the procedure.
+
+This is used to notify your app of of certain events within the framework. The notification passes a single numeric key which can be used to retrieve the relevant data.
+
+*/
+
+procedure fire_event_proc (
+   -- Required
+   p_proc_name in varchar2) is 
+   n number;
+begin 
+   arcsql.debug('fire_event_proc: '||p_proc_name);
+   select count(*) into n from user_source
+    where name = upper(p_proc_name)
+      and type='PROCEDURE';
+   if n > 0 then 
+      execute immediate 'begin '||p_proc_name||'; end;';
+   end if;
+end;
+
+/*
+
+### fire_event_proc (function)
+
+Calls a procedure with a single parameter (number) if it exists.
+
+* **p_proc_name** - The name of the procedure.
+* **p_parm** - Numeric ID used to identify the event data.
+
+This is used to notify your app of of certain events within the framework. The notification passes a single numeric key which can be used to retrieve the relevant data.
+
+*/
+
+procedure fire_event_proc (
+   -- Required
+   p_proc_name in varchar2,
+   p_parm in number) is 
+   n number;
+begin 
+   arcsql.debug('fire_event_proc: '||p_proc_name);
+   select count(*) into n from user_source
+    where name = upper(p_proc_name)
+      and type='PROCEDURE';
+   if n > 0 then 
+      execute immediate 'begin '||p_proc_name||'('||p_parm||'); end;';
+   end if;
+end;
+
+/*
+
+### fire_event_proc (function)
+
+Calls a procedure with a single parameter (string) if it exists.
+
+* **p_proc_name** - The name of the procedure.
+* **p_parm** - Numeric ID used to identify the event data.
+
+*/
+
+procedure fire_event_proc (
+   -- Required
+   p_proc_name in varchar2,
+   p_parm in varchar2) is 
+   n number;
+begin 
+   arcsql.debug('fire_event_proc: '||p_proc_name);
+   select count(*) into n from user_source
+    where name = upper(p_proc_name)
+      and type='PROCEDURE';
+   if n > 0 then 
+      execute immediate 'begin '||p_proc_name||'('''||p_parm||'''); end;';
+   end if;
+end;
+
 /*
 -----------------------------------------------------------------------------------
 MONKEY PATCHES
 -----------------------------------------------------------------------------------
 */
-
 
 function monkey_patch_remove_app_root_url (  -- | Fixes random return of full internal apex domain in apex_page.get_url.
    p_url in varchar2)                        -- | If url contains the k2_config.internal_app_domain replace it with k2_config.external_app_domain.
@@ -63,24 +152,43 @@ COOKIES
 -----------------------------------------------------------------------------------
 */
 
+/*
+
+### add_cookie (procedure)
+
+Adds a cookie to the cookie table which will be deployed the next time process_cookies is called.
+
+* **p_name** - Name of cookie. Should be unique across apps, consider adding app name or other id.
+* **p_value** - Value of cookie
+* **p_expires** - Date cookie expires
+* **p_user_name** - User name of user to associate cookie with
+* **p_session_id** - Session ID of user to associate cookie with
+* **p_user_id** - User ID of user to associate cookie with
+* **p_secure** - Y or N, defaults to Y. Not sure why we would want N here. Just here in case.
+
+> Note
+* The cookie will be deployed the next time process_cookies is called.
+* The on_page_load event should directly or indirectly call process_cookies.
+* The user can provide a user_id or user_name for the cookie, if neither is provided, the session id will be used.
+
+*/
 
 procedure add_cookie (
-   -- Queues a cookie by adding it to the cookie table.
-   --
    p_name in varchar2,
    p_value in varchar2,
    p_expires in date default null,
    p_user_name in varchar2 default null,
-   p_session_id in number default null) is 
-   v_user_id number;
+   p_user_id in number default null,
+   p_secure in varchar2 default 'Y') is 
+   v_user_id number := p_user_id;
    v_user_name saas_auth.user_name%type := lower(p_user_name); 
    v_session_id number;
 begin 
    arcsql.debug('add_cookie: name='||p_name);
-   if p_user_name is not null then 
-      select user_id into v_user_id from saas_auth where user_name=lower(p_user_name);
+   if p_user_id is null and p_user_name is not null then 
+      v_user_id := saas_auth_pkg.to_user_id(p_user_name=>p_user_name);
    end if;
-   if p_user_name is null and p_session_id is null then 
+   if v_user_id is null then 
       v_session_id := v('APP_SESSION');
    end if;
    insert into cookie (
@@ -88,15 +196,14 @@ begin
       cookie_value,
       expires_at,
       user_id,
-      user_name,
-      session_id) values (
+      session_id,
+      secure) values (
       lower(p_name),
       p_value, 
       p_expires, 
       v_user_id, 
-      v_user_name, 
-      v_session_id
-      );
+      v_session_id,
+      p_secure);
 exception 
    when others then
       arcsql.log_err('add_cookie: '||dbms_utility.format_error_stack);
@@ -104,30 +211,66 @@ exception
 end;
 
 
-procedure set_cookies is -- | Called from the global page. Sets any cookies that are queued.
-   --
+/*
+
+### invalidate_cookie (procedure)
+
+* Refer to add_cookie for parameter definitions
+* The new cookie is expired and has a null value. It will invalidate any existing cookies. Web search suggest this is more reliable than remove cookie.
+
+*/
+
+procedure invalidate_cookie (
+   p_name in varchar2,
+   p_user_name in varchar2 default null,
+   p_user_id in number default null) is 
+begin 
+   arcsql.debug('invalidate_cookie: name='||p_name);
+   add_cookie(
+      p_name=>p_name,
+      p_value=>null,
+      p_user_name=>p_user_name,
+      p_user_id=>p_user_id,
+      p_expires=>sysdate-1);
+end;
+
+/*
+
+### process_cookies (procedure)
+
+Retrieves cookie from the "cookie" table based on the current user's session or user ID, and then sends the retrieved cookies to the user's browser using the "owa_cookie.send" function. The cookies are deleted from the table after they are sent to the browser.
+
+*/
+
+procedure process_cookies is 
    cursor c_cookies is 
    select * from cookie 
-    where user_name=lower(v('APP_USER')) 
-       or session_id=v('APP_SESSION');
+    where session_id=v('APP_SESSION')
+       or user_id=saas_auth_pkg.user_id;
 begin 
-   arcsql.debug2('set_cookies: ');
    for c in c_cookies loop 
       owa_cookie.send (
          name    => c.cookie_name,
          value   => c.cookie_value,
          expires => c.expires_at,
-         path    => '/',
          domain  => null,
-         secure  => 'Y');
+         secure  => c.secure);
       delete from cookie where id=c.id;
    end loop;
+end;
+
+-- ToDo: Remove set_cookies
+procedure set_cookies is 
+   cursor c_cookies is 
+   select * from cookie 
+    where session_id=v('APP_SESSION');
+begin 
+   arcsql.log_deprecated('set_cookies');
 exception 
    when others then
       arcsql.log_err('set_cookies: '||dbms_utility.format_error_stack);
       raise;
 end;
-
 
 function get_cookie (
    p_cookie_name in varchar2) return varchar2 is 
@@ -142,10 +285,9 @@ exception
    when others then
       arcsql.log_err('get_cookie: '||dbms_utility.format_error_stack);
       -- Do not raise error here. The 15 min admin job was getting 6502 err here and breaking.
-      -- Not sure why admin job would be calling this. Might be from plsq in auto login auth scheme.
+      -- Not sure why admin job would be calling this. Might be from plsql in auto login auth scheme.
       -- raise;
 end;
-
 
 /* 
 -----------------------------------------------------------------------------------
@@ -266,8 +408,6 @@ exception
       arcsql.log_err('flash_message_count: '||dbms_utility.format_error_stack);
       raise;
 end;
-
-
 
 end;
 /

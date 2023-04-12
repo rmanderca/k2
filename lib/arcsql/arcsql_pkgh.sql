@@ -120,7 +120,7 @@ create or replace package arcsql as
    function get_token (
       p_list  varchar2,
       p_index number,
-      p_delim varchar2 := ',') return varchar2;
+      p_sep varchar2 := ',') return varchar2;
 
    function shift_list (
       p_list in varchar2,
@@ -149,6 +149,27 @@ create or replace package arcsql as
       p_replacement_string   in clob,
       p_offset               in integer default 1,
       p_occurance_number     in integer default 1) return clob;
+
+   function str_last_n_items (
+      p_list in varchar2,
+      p_items in number,
+      p_sep in varchar2 default ',')
+      return varchar2;
+
+   function str_avg_list (
+      p_list in varchar2,
+      p_sep in varchar2 default ',')
+      return number;
+
+   function str_max_list (
+      p_list in varchar2,
+      p_sep in varchar2 default ',')
+      return number;
+
+   function str_sum_list (
+      p_list in varchar2,
+      p_sep in varchar2 default ',')
+      return number;
 
    /* 
    -----------------------------------------------------------------------------------
@@ -490,6 +511,21 @@ create or replace package arcsql as
       -- p_key in varchar2 default 'arcsql',
       p_tags in varchar2 default null);
 
+   procedure assert_not_null (
+      p_value in varchar2, 
+      p_error_message in varchar2 default 'Value should not be null!');
+
+   procedure assert_not_null (
+      p_timestamp in timestamp, 
+      p_error_message in varchar2 default 'Timestamp should not be null!');
+
+   procedure assert_not_null (
+      p_date in date, 
+      p_error_message in varchar2 default 'Date should not be null!');
+
+   procedure kill_sessions (
+      p_username in varchar2,
+      p_last_call_et in number default 600);
 
 end;
 /

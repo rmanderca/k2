@@ -1,7 +1,6 @@
 
 create or replace package body k2_utl as
 
-
 /* 
 -----------------------------------------------------------------------------------
 Setting and getting sys_context values.

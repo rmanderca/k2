@@ -29,33 +29,21 @@ end;
 /
 
 @./config/&k2_app_dir/&k2_env_dir/install.sql
--- @./config/&k2_app_dir/&k2_env_dir/secret_arcsql_cfg.sql
--- @./config/&k2_app_dir/&k2_env_dir/secret_k2_config.sql
--- @./config/&k2_app_dir/&k2_env_dir/secret_saas_auth_config.sql 
--- @./config/&k2_app_dir/&k2_env_dir/secret_app_config.sql
--- @./config/&k2_app_dir/&k2_env_dir/secret_app_job.sql
--- @./config/&k2_app_dir/&k2_env_dir/secret_app_dev.sql
-@./lib/arcsql/arcsql_install.sql
-@./lib/saas_auth/saas_auth_schema.sql 
-@./lib/k2/k2_schema.sql 
+@./&k2_lib_dir/arcsql/arcsql_install.sql
+@./&k2_lib_dir/saas_auth/saas_auth_schema.sql 
+@./&k2_lib_dir/k2/k2_schema.sql 
 
+@./&k2_lib_dir/k2/k2_utl_pkgh.sql
+@./&k2_lib_dir/k2/k2_utl_pkgb.sql
+@./&k2_lib_dir/k2/k2_pkgh.sql
+@./&k2_lib_dir/k2/k2_pkgb.sql
+@./&k2_lib_dir/saas_auth/saas_auth_install.sql 
+@./&k2_lib_dir/k2/k2_install.sql
 
-@./lib/k2/k2_utl_pkgh.sql
-@./lib/k2/k2_utl_pkgb.sql
-@./lib/k2/k2_pkgh.sql
-@./lib/k2/k2_pkgb.sql
-@./lib/saas_auth/saas_auth_install.sql 
-@./lib/k2/k2_install.sql
-
-
-@./lib/k2/k2_metrics_pkgh.sql
-@./lib/k2/k2_metrics_pkgb.sql
+@./&k2_lib_dir/k2/k2_metrics_pkgh.sql
+@./&k2_lib_dir/k2/k2_metrics_pkgb.sql
 
 -- Patchy stuff
 -- Did not need this.
 exec drop_package('app_dev');
 
-create or replace package k2_app as 
-    version number := 20221209;
-end;
-/

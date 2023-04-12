@@ -1,18 +1,5 @@
 create or replace package body chatgpt as 
 
-procedure assert_no_errors ( -- | This procedure checks for errors in a JSON response and raises an error if any errors are found, using the k2_json package in PL/SQL.
-   p_request_id in varchar2) is 
-begin
-   if k2_json.does_json_data_path_exist (
-      p_json_key=>p_request_id,
-      p_json_path=>'root.error') then 
-      raise_application_error(
-         -20001, 
-         k2_json.get_json_data_string(p_json_key=>p_request_id, p_json_path=>'root.error.type') || ' ' ||
-         k2_json.get_json_data_string(p_json_key=>p_request_id, p_json_path=>'root.error.message'));
-   end if;
-end;
-
 procedure make_rest_request ( -- | This procedure makes a REST API request with headers, parses the response JSON data into rows in a table, and checks for errors in the response using the k2_json package in PL/SQL.
    p_request_id in varchar2,
    p_full_url in varchar2,
@@ -37,7 +24,11 @@ begin
       p_json_data=>last_response_json,
       p_json_key=>p_request_id);
 
-   assert_no_errors(p_request_id=>p_request_id);
+   k2_json.assert_no_errors (
+      p_json_key=>p_request_id,
+      p_error_path=>'root.error',
+      p_error_type_path=>'root.error.type',
+      p_error_message_path=>'root.error.message');
 
 end;
 

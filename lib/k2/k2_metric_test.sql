@@ -25,7 +25,7 @@ begin
       p_dataset_key=>'test',
       p_dataset_name=>'Test',
       p_user_id=>null,
-      p_metric_work_calc_type=>'none');
+      p_calc_type=>'none');
    if k2_metric.does_dataset_exist('test') then 
       arcsql.pass_test;
    else 

@@ -1,20 +1,10 @@
-# K2 
+# K2 App Development Framework for Oracle and Oracle APEX
 
-The fastest way to build and prototype applications on Oracle APEX. Subscribe to the [APEX Reloaded YouTube channel](https://www.youtube.com/channel/UC8cIGO-lRvWM-mPtJdO_9XQ) for updates.
-
-Share K2 with others using the link [builtonapex.com/k2](builtonapex.com/k2) which redirects here!
+Follow me on [YouTube](builtonapex.com/youtube) and [Twitter](builtonapex.com/twitter).
 
 ## Project goal and focus
 
-K2 focuses on your ability to build a proof of concept (POC) or minimal viable product (MVP) in the shortest amount of time possible. It is a starting point for your application, it is not the end.
-
-Using K2 you will be able to build a basic monitized SAAS application in as little as a few hours that has the look and feel of any other application. 
-
-K2 is not only a framework, it is a file layout and development methodology that enhances the productivity of developers.
-
-K2 comes with API "enabled". This means that you can easily build a REST API for your application. You can also easily build a mobile application using the K2 API.
-
-Minimize costs. K2 will make it easy to deploy multiple applications and keep costs at a minimum.
+K2 provides a set of pre-written code and tools that developers use to build applications. The main purpose of a K2 is to simplify the development process and reduce the time and effort required to build an application. To achieve this, K2 provides a consistent file layout, tools, and development methodology that enhances the productivity of developers.
 
 ## How to install K2 and set up folders for your new app
 

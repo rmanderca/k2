@@ -1,15 +1,29 @@
 create or replace package stripe as
 
-   procedure parse_data_request (
-      p_request_id in number);
+   last_status_code number;
+   last_response_json clob;
 
-   function make_get_request (
-      p_url in varchar2)
-      return clob;
+   function get_customer_row (
+      p_customer_id varchar2)
+      return stripe_customer%rowtype;
 
-   procedure store_products;
+   function get_subscription_row (
+      p_subscription_id varchar2)
+      return stripe_subscription%rowtype;
 
-   procedure parse_data_requests;
+   function get_product_row (
+      p_product_id varchar2)
+      return stripe_product%rowtype;
+
+   procedure fetch_subscription (
+      p_subscription_id in varchar2);
+
+   procedure create_customer (
+      p_email in varchar2);
+
+   procedure refresh_stripe_products_v;
+
+   procedure process_webhooks;
 
 end;
 /

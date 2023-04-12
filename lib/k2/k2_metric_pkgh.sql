@@ -1,3 +1,7 @@
+
+exec drop_package('k2_stat');
+exec drop_package('k2_stat_api');
+
 -- uninstall: exec drop_package('k2_metric');
 create or replace package k2_metric as 
 
@@ -11,10 +15,9 @@ create or replace package k2_metric as
       p_user_id in number default null,
       p_dataset_key in varchar2 default null,
       p_dataset_type in varchar2 default null,
-      p_metric_work_calc_type in varchar2 default 'none',
+      p_calc_type in varchar2 default 'none',
       p_allow_negative_values in number default 1,
       p_metric_detail_hours in number default 0,
-      p_pause_archive_when_zero_days in number default 0,
       p_auto_process in number default 1,
       p_dataset_alt_id in number default null);
 

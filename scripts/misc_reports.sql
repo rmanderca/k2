@@ -51,3 +51,16 @@ select apex_user,
        trunc(view_date),
        agent
 order by trunc(view_date) desc;
+
+select j.job_name,
+       j.enabled,
+       j.last_start_hours,
+       l.status,
+       l.additional_info
+  from (select job_name, enabled, round(arcsql.secs_between_timestamps(systimestamp, last_start_date)/60, 1) as last_start_hours from user_scheduler_jobs) j,
+       (select a.job_name, a.log_date, a.status, a.additional_info 
+          from user_scheduler_job_log a,
+               (select job_name, max(log_date) log_date from user_scheduler_job_log group by job_name) b 
+         where a.job_name=b.job_name
+           and a.log_date=b.log_date) l
+ where j.job_name=l.job_name(+);

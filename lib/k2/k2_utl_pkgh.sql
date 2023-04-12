@@ -1,6 +1,6 @@
 -- uninstall: exec drop_package('k2_utl');
 create or replace package k2_utl as
-
+   
     /* 
     -----------------------------------------------------------------------------------
     Setting and getting sys_context values.

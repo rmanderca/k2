@@ -29,9 +29,9 @@ create or replace package app_config as
    -- Disables the app_send_email proc which disables all emails. Truthy values work here.
    disable_email varchar2(256) := 'n';
 
-   -- Route all emails to this address instead of using the address for the account. Used for dev/test usually.
-   email_override varchar2(256) := null;
-
+   -- Force all emails using procs in app_email.sql to use this in the "to" field instead of the value passed to the proc.
+   email_override varchar2(256) := 'post.ethan@gmail.com';
+   
    -- Add an account for testing to avoid the registration process. Needs to be an email address.
    app_test_user varchar2(256) := 'test@mycompany.com';
    -- Super common error to get an invalid password here and see an error when your app_users.sql script runs during install.
