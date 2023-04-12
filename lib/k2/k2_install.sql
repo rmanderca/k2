@@ -51,4 +51,6 @@ exec saas_auth_pkg.add_system_user(p_user_name=>'k2', p_email_address=>app_confi
 
 @k2_test.sql
 
+@k2_app.sql
+
 select 'K2 install complete.' message from dual;

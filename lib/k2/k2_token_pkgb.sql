@@ -58,11 +58,12 @@ end;
 procedure create_token ( -- | Create a token for a user.
    p_token_key in varchar2,
    p_token_type in varchar2,
-   p_user_id in number,
+   p_user_id in number default null,
    p_expires_in_minutes in number default null,
-   p_token_alt_id number default null) is 
+   p_token_alt_id in number default null,
+   p_bytes in number default 32) is 
    v_expires timestamp;
-   v_token varchar2(256) := dbms_crypto.randombytes(32);
+   v_token varchar2(256) := dbms_crypto.randombytes(p_bytes);
    -- v_token := sys_guid();
 begin
    if p_expires_in_minutes is not null then
@@ -86,9 +87,10 @@ end;
 function create_token ( -- | Create a token for a user while returning the token.
    p_token_key in varchar2,
    p_token_type in varchar2,
-   p_user_id in number,
+   p_user_id in number default null,
    p_expires_in_minutes in number default null,
-   p_token_alt_id number default null)
+   p_token_alt_id in number default null,
+   p_bytes in number default 32)
    return varchar2 is 
    r tokens%rowtype;
 begin 
@@ -97,22 +99,34 @@ begin
       p_token_type=>p_token_type,
       p_user_id=>p_user_id, 
       p_expires_in_minutes=>p_expires_in_minutes,
-      p_token_alt_id=>p_token_alt_id);
+      p_token_alt_id=>p_token_alt_id,
+      p_bytes=>p_bytes);
    r := get_token_row(p_token_key=>p_token_key);
    return r.token;
 end;
 
+function is_valid_token (
+   p_token in varchar2,
+   p_user_id in number default null)
+   return boolean is 
+   n number;
+begin 
+   select count(*) into n from tokens 
+    where token=p_token
+      and nvl(expires, systimestamp+1) > systimestamp
+      and is_enabled = 1
+      and (user_id=nvl(p_user_id, user_id)
+       or user_id is null);
+   return n=1;
+end;
+
 procedure assert_valid_token ( -- | Raise an error if the token is invalid.
-   p_token in varchar2) is 
+   p_token in varchar2,
+   p_user_id in number default null) is 
    n number;
    r tokens%rowtype;
 begin 
-   select count(*) into n 
-     from tokens 
-    where token=p_token
-      and nvl(expires, systimestamp-1) < systimestamp
-      and is_enabled = 1;
-   if n = 0 then
+   if not is_valid_token(p_token=>p_token, p_user_id=>p_user_id) then
       raise_application_error(-20001, 'Token is invalid');
    end if;
 end;

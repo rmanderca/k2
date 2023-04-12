@@ -44,6 +44,83 @@ g_line_width number default 1;
 g_line_color varchar2(256);
 g_background_color varchar2(256);
 
+/*
+
+### get_colors_block (function)
+
+* **p_line_color** - Comma separated list of colors.
+
+Takes something like this.
+
+'blue, gray, green'
+
+And returns the block of colors for the chart. It will look something like this.
+
+['blue', 'gray', 'green']
+
+*/
+
+function get_colors_block (p_line_color in varchar2)
+   return varchar2 is
+   colors_list apex_t_varchar2;
+   colors_block varchar2(4000);
+begin
+  colors_block := '[';
+  colors_list := apex_string.split(p_str=>p_line_color, p_sep=>',');
+  for i in 1..colors_list.count loop
+    colors_block := colors_block || '''' || trim(colors_list(i)) || '''' || ', ';
+  end loop;
+  -- Remove the last comma and space
+  colors_block := rtrim(colors_block, ', ') || ']';
+  return colors_block;
+end;
+
+function get_data_block (
+   p_data1 in varchar2,
+   p_data2 in varchar2 default null,
+   p_data3 in varchar2 default null,
+   p_data4 in varchar2 default null,
+   p_data5 in varchar2 default null)
+   return varchar2 is
+   r varchar2(4000);
+begin
+   r := '[';
+   -- This is a chunk of JavaScript at the moment and should not be quoted even if it is a string
+   if p_data1 is not null then
+     r := r || p_data1;
+   end if;
+   if p_data2 is not null then
+      if arcsql.str_is_number_y_or_n(p_data2) = 'y' then
+         r := r || ',' || '''' || p_data2 || '''';
+      else 
+         r := r || ',' || p_data2;
+      end if;
+   end if;
+   if p_data3 is not null then
+     if arcsql.str_is_number_y_or_n(p_data3) = 'y' then
+         r := r || ',' || '''' || p_data3 || '''';
+      else 
+         r := r || ',' || p_data3;
+      end if;
+   end if;
+   if p_data4 is not null then
+     if arcsql.str_is_number_y_or_n(p_data4) = 'y' then
+         r := r || ',' || '''' || p_data4 || '''';
+      else 
+         r := r || ',' || p_data4;
+      end if;
+   end if;
+   if p_data5 is not null then
+     if arcsql.str_is_number_y_or_n(p_data5) = 'y' then
+         r := r || ',' || '''' || p_data5 || '''';
+      else 
+         r := r || ',' || p_data5;
+      end if;
+   end if;
+   r := r || ']';
+   return r;
+end;
+
 procedure assert_column_count_is_not_locked is
 begin
    if g_lock_column_count then
@@ -121,30 +198,30 @@ begin
    --    0: {type: ''polynomial'', color: ''gray'', opacity: 1, degree: 5},
    -- },
    return 
-'function #FUNCTION_NAME#() {
+q''function #FUNCTION_NAME#() {
    console.log("#FUNCTION_NAME#");
    var data = new google.visualization.DataTable();
    #COLUMNS#
    data.addRows([#DATA#]);
    var options = {
-      title:''#TITLE#'',
+      title:'#TITLE#',
       width: #WIDTH#,
       height: #HEIGHT#,
-      colors: [''#LINE_COLOR#''],
-      legend: ''none'',
-      backgroundColor: ''#BACKGROUND_COLOR#'',
-      scaleType: ''#SCALE_TYPE#'',
+      colors: #LINE_COLOR#,
+      legend: 'none',
+      backgroundColor: '#BACKGROUND_COLOR#',
+      scaleType: '#SCALE_TYPE#',
       lineWidth: #LINE_WIDTH#,
       hAxis: {
-         title: ''#HAXIS_TITLE#''
+         title: '#HAXIS_TITLE#'
       },
       vAxis: {
-         title: ''#VAXIS_TITLE#''
+         title: '#VAXIS_TITLE#'
       }};
-   var chart = new google.visualization.LineChart(document.getElementById(''#DIV_NAME#''));
+   var chart = new google.visualization.LineChart(document.getElementById('#DIV_NAME#'));
    chart.draw(data, options);
 }
-';
+'';
 end;
 
 procedure init_chart_defaults is 
@@ -163,7 +240,7 @@ begin
    g_haxis_title := '';
    g_scale_type := 'linear';
    g_line_width := 1;
-   g_line_color := 'black';
+   g_line_color := 'blue, gray, green, black, red, yellow, orange, purple, brown, pink';
    g_background_color := 'white';
    g_chart_in_progress := false;
 end;
@@ -215,7 +292,7 @@ begin
    g_function := replace(g_function, '#HAXIS_TITLE#', g_haxis_title);
    g_function := replace(g_function, '#SCALE_TYPE#', g_scale_type);
    g_function := replace(g_function, '#LINE_WIDTH#', g_line_width);
-   g_function := replace(g_function, '#LINE_COLOR#', g_line_color);
+   g_function := replace(g_function, '#LINE_COLOR#', get_colors_block(g_line_color));
    g_function := replace(g_function, '#BACKGROUND_COLOR#', g_background_color);
    g_functions := g_functions || arcsql.clob_replace(to_clob(g_function), to_clob('#DATA#'), rtrim(g_data, ','));
    g_chart_in_progress := false;
@@ -227,7 +304,8 @@ procedure add_line_chart ( -- | Start creating a new chart.
    p_haxis_title in varchar2 default '',
    p_scale_type in varchar2 default 'linear',
    p_line_width in number default 1,
-   p_line_color in varchar2 default 'black',
+   -- Comma sep list of colors
+   p_line_color in varchar2 default 'blue, gray, green, black, red, yellow, orange, purple, brown, pink',
    p_width in number default 600,
    p_height in number default 400,
    p_background_color in varchar2 default 'white',
@@ -282,16 +360,32 @@ begin
 ';
 end;
 
+-- procedure add_data (
+--    p_data in varchar2) is
+-- begin
+--    arcsql.debug2('add_data: '||p_data);
+--    assert_series_is_started;
+--    assert_columns_are_defined;
+--    assert_chart_is_defined;
+--    g_row_count := g_row_count + 1;
+--    g_data := g_data ||
+-- p_data || ',';
+-- end;
+
 procedure add_data (
-   p_data in varchar2) is
+   p_data1 in varchar2,
+   p_data2 in varchar2 default null,
+   p_data3 in varchar2 default null,
+   p_data4 in varchar2 default null,
+   p_data5 in varchar2 default null) is
 begin
-   arcsql.debug2('add_data: '||p_data);
+   arcsql.debug2('add_data: ');
    assert_series_is_started;
    assert_columns_are_defined;
    assert_chart_is_defined;
    g_row_count := g_row_count + 1;
    g_data := g_data ||
-p_data || ',';
+get_data_block(p_data1, p_data2, p_data3, p_data4, p_data5) || ',';
 end;
 
 procedure end_series is 

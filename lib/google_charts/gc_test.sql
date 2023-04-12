@@ -3,11 +3,11 @@
 create or replace view gc_demo_view as
 select metric_name, 
        round(arcsql.secs_between_timestamps(metric_time, localtimestamp)/60/60)*-1 hours_ago,
-       round(avg_val) value
-   from (select metric_name, metric_time, avg_val 
+       round(rate_per_sec_avg) value
+   from (select metric_name, metric_time, rate_per_sec_avg 
            from metric_work_archive
           union all
-         select metric_name, metric_time, avg_val 
+         select metric_name, metric_time, rate_per_sec_avg 
            from metric_work)
   where metric_time >= systimestamp - 2
     and metric_name in (select metric_name from metric_work where metric_level=1)
@@ -35,18 +35,18 @@ begin
       p_tags=>'foo, bar');
 
    -- [Hours, Minutes, Seconds]
-   gc.add_data(p_data=>'[[8, 0, 0], 35.5]');
-   gc.add_data(p_data=>'[[9, 0, 0], 55.2]');
-   gc.add_data(p_data=>'[[10, 0, 0], 65]');
-   gc.add_data(p_data=>'[[11, 0, 0], 21.9]');
+   gc.add_data('[8, 0, 0]', 35.5);
+   gc.add_data('[9, 0, 0]', 55.2);
+   gc.add_data('[10, 0, 0]', 65);
+   gc.add_data('[11, 0, 0]', 21.9);
 
    gc.add_line_chart (
      p_title=>'Disk IO');
 
-   gc.add_data(p_data=>'[[8, 0, 0], 50000]');
-   gc.add_data(p_data=>'[[9, 0, 0], 55000]');
-   gc.add_data(p_data=>'[[10, 0, 0], 90]');
-   gc.add_data(p_data=>'[[11, 0, 0], 83400]');
+   gc.add_data('[8, 0, 0]', 50000);
+   gc.add_data('[9, 0, 0]', 55000);
+   gc.add_data('[10, 0, 0]', 90);
+   gc.add_data('[11, 0, 0]', 83400);
 
    gc.end_series;
 

@@ -41,7 +41,7 @@ function secs_between_timestamps ( -- | Return the number of seconds between two
 begin
    d := time_end - time_start;
    total_secs := abs(extract(second from d) + extract(minute from d)*60 + extract(hour from d)*60*60 + extract(day from d)*24*60*60);
-   return total_secs;
+   return round(total_secs, 3);
 end;
 
 function secs_since_timestamp ( -- | Return number of seconds since a timestamp.
@@ -56,25 +56,29 @@ begin
    return total_secs;
 end;
 
-function get_date_from_epoch(p_epoch in number) 
+function get_date_from_epoch ( -- | This function converts an epoch timestamp to a date value.
+   p_epoch in number) 
    return date is
 begin
    return date'1970-01-01' + ( p_epoch / 86400 );
 end;
 
-function get_timestamp_from_epoch(p_epoch in number) 
+function get_timestamp_from_epoch ( -- | This function returns a timestamp value from the input epoch value, which represents the number of seconds that have elapsed since January 1, 1970, at 00:00:00 UTC.
+   p_epoch in number) 
    return timestamp is
 begin
    return timestamp'1970-01-01 00:00:00' + numtodsinterval (p_epoch, 'second');
 end;
 
-function get_epoch_from_date(p_date in date)
+function get_epoch_from_date ( -- | This function returns the epoch timestamp (number of seconds since 1970-01-01 00:00:00 UTC) corresponding to a given date input.
+   p_date in date)
    return number is 
 begin 
    return round ((p_date-date'1970-01-01') * 86400);
 end;
 
-function get_epoch_from_timestamp(p_timestamp in timestamp)
+function get_epoch_from_timestamp ( -- | This function returns the epoch time (number of seconds since 1970-01-01 00:00:00 UTC) for a given timestamp.
+   p_timestamp in timestamp)
    return number is 
 begin 
    return round(secs_between_timestamps(p_timestamp, timestamp'1970-01-01 00:00:00'));
@@ -121,7 +125,9 @@ begin
    return new_str;
 end;
 
-function str_random (length in number default 33, string_type in varchar2 default 'an') return varchar2 is
+function str_random ( -- | This function generates a random string of specified length and type, which can be alphabetic (a), numeric (n), or alphanumeric (an).
+   length in number default 33, 
+   string_type in varchar2 default 'an') return varchar2 is
    r varchar2(4000);
    x number := 0;
 begin
@@ -140,14 +146,16 @@ begin
    return r;
 end;
 
-procedure assert_str_is_key_str (str in varchar2) is
+procedure assert_str_is_key_str ( -- | This procedure takes a string argument and raises an error if it contains characters other than alphabets (both upper and lower case), digits, underscore, and hyphen.
+   str in varchar2) is
 begin 
    if not regexp_like(str, '^[a-zA-Z0-9_-]+$') then
       raise_application_error(-20000, 'String contains invalid characters: '||str);
    end if;
 end;
 
-function str_hash_md5 (text varchar2) return varchar2 is 
+function str_hash_md5 ( -- | This function takes a string input and returns its MD5 hash value as a hexadecimal string.
+   text varchar2) return varchar2 is 
    r varchar2(1000);
 begin
    select dbms_crypto.hash(rawtohex(text), 2) into r from dual;
@@ -214,13 +222,11 @@ begin
    end if;
 end;
 
-function str_count (
+function str_count ( -- | Return number of occurrances of a string with another string.
    p_str varchar2, 
    p_char varchar2)
    return number is
-   -- Return number of occurrances of a string with another string.
    -- Not using regex functions. Don't want to deal with escaping chars like "|".
-
    /*
    http://www.oracle.com/technology/oramag/code/tips2004/121304.html
    Aui de la Vega, DBA, in Makati, Philippines
@@ -458,7 +464,7 @@ end;
 function get_token (
    p_list  varchar2,
    p_index number,
-   p_delim varchar2 := ',') return varchar2 is 
+   p_sep varchar2 := ',') return varchar2 is 
    -- Return a single member of a list in the form of 'a,b,c'.
    -- Largely taken from https://glosoli.blogspot.com/2006/07/oracle-plsql-function-to-split-strings.html.
    start_pos number;
@@ -467,15 +473,15 @@ begin
    if p_index = 1 then
        start_pos := 1;
    else
-       start_pos := instr(p_list, p_delim, 1, p_index - 1);
+       start_pos := instr(p_list, p_sep, 1, p_index - 1);
        if start_pos = 0 then
            return null;
        else
-           start_pos := start_pos + length(p_delim);
+           start_pos := start_pos + length(p_sep);
        end if;
    end if;
 
-   end_pos := instr(p_list, p_delim, start_pos, 1);
+   end_pos := instr(p_list, p_sep, start_pos, 1);
 
    if end_pos = 0 then
        return substr(p_list, start_pos);
@@ -552,6 +558,70 @@ begin
      ).getNumberVal() into n
      from dual;
    return round(n, p_decimals);
+end;
+
+/*
+
+### str_last_n_items (function)
+
+Returns last N items in a delimited list.
+
+* **p_list** - Deliminated list of items.
+* **p_items** - The last N items to return.
+
+If p_items is zero null is returned. If p_items in larger than the total number of items all items are returned.
+
+*/
+
+function str_last_n_items (
+   -- Required
+   p_list in varchar2,
+   p_items in number,
+   p_sep in varchar2 default ',')
+   return varchar2 is 
+   item_count number;
+   start_position number;
+begin
+   if p_items = 0 then
+      return null;
+   end if;
+   item_count := nvl(regexp_count(p_list, p_sep)+1, 0);
+   if item_count > p_items then
+      start_position := regexp_instr(p_list, '['||p_sep||']+', 1, item_count-p_items);
+   else
+      start_position := 0;
+   end if;
+   return trim(substr(p_list, start_position+1));
+end;
+
+function str_avg_list (
+   p_list in varchar2,
+   p_sep in varchar2 default ',')
+   return number is 
+   n number;
+begin
+   select avg(to_number(token)) into n from table(to_rows(p_list=>p_list, p_sep=>p_sep));
+   return n;
+end;
+
+function str_max_list (
+   p_list in varchar2,
+   p_sep in varchar2 default ',') 
+   return number is 
+   n number;
+begin
+   select max(to_number(token)) into n from table(to_rows(p_list=>p_list, p_sep=>p_sep));
+   return n;
+end;
+
+function str_sum_list (
+   p_list in varchar2,
+   p_sep in varchar2 default ',')
+   return number is 
+   n number;
+begin
+   select sum(to_number(token)) into n from table(to_rows(p_list=>p_list, p_sep=>p_sep));
+   return n;
 end;
 
 -- | -----------------------------------------------------------------------------------
@@ -2705,8 +2775,8 @@ function cron_match (
       left_side number;
       right_side number;
    begin 
-      left_side := get_token(p_list=>v, p_index=>1, p_delim=>'-');
-      right_side := get_token(p_list=>v, p_index=>2, p_delim=>'-');
+      left_side := get_token(p_list=>v, p_index=>1, p_sep=>'-');
+      right_side := get_token(p_list=>v, p_index=>2, p_sep=>'-');
       -- Low value to high value.
       if left_side < right_side then 
          if t >= left_side and t <= right_side then 
@@ -2814,11 +2884,11 @@ begin
    v_expression := replace(v_expression, '*', 'X');
    raise_invalid_cron_expression(v_expression);
 
-   v_min := get_token(p_list=>v_expression, p_index=>1, p_delim=>' ');
-   v_hr := get_token(p_list=>v_expression, p_index=>2, p_delim=>' ');
-   v_dom := get_token(p_list=>v_expression, p_index=>3, p_delim=>' ');
-   v_mth := convert_mth(get_token(p_list=>v_expression, p_index=>4, p_delim=>' '));
-   v_dow := convert_dow(get_token(p_list=>v_expression, p_index=>5, p_delim=>' '));
+   v_min := get_token(p_list=>v_expression, p_index=>1, p_sep=>' ');
+   v_hr := get_token(p_list=>v_expression, p_index=>2, p_sep=>' ');
+   v_dom := get_token(p_list=>v_expression, p_index=>3, p_sep=>' ');
+   v_mth := convert_mth(get_token(p_list=>v_expression, p_index=>4, p_sep=>' '));
+   v_dow := convert_dow(get_token(p_list=>v_expression, p_index=>5, p_sep=>' '));
 
    t_min := to_number(to_char(p_datetime, 'MI'));
    t_hr := to_number(to_char(p_datetime, 'HH24'));
@@ -2926,5 +2996,61 @@ begin
       p_level=>0);
 end;
 
+procedure assert_not_null (
+   p_value in varchar2, 
+   p_error_message in varchar2 default 'Value should not be null!') is
+begin
+   if p_value is null then
+      raise_application_error(-20001, p_error_message);
+   end if;
+end;
+
+procedure assert_not_null (
+   p_timestamp in timestamp, 
+   p_error_message in varchar2 default 'Timestamp should not be null!') is
+begin
+   if p_timestamp is null then
+      raise_application_error(-20001, p_error_message);
+   end if;
+end;
+
+procedure assert_not_null (
+   p_date in date, 
+   p_error_message in varchar2 default 'Date should not be null!') is
+begin
+   if p_date is null then
+      raise_application_error(-20001, p_error_message);
+   end if;
+end;
+
+/*
+
+### kill_sessions (procedure)
+
+Kills sessions for given user if last call et is >= to the input value.
+
+* **p_username** - The database user name.
+* p_last_call_et - Kills session older than N seconds.
+
+Requires user to have ALTER SYSTEM privs which are not given by default.
+
+*/
+
+procedure kill_sessions (
+   p_username in varchar2,
+   p_last_call_et in number default 600) is 
+   cursor sessions_to_kill is 
+   select inst_id, sid, serial#
+     from gv$session
+    where username=p_username 
+      and last_call_et >= p_last_call_et;
+begin 
+   for s in sessions_to_kill loop 
+      execute immediate 'alter system kill session ''' ||s.sid|| ',' ||s.serial# || ',' || '@' || s.inst_id || ''' immediate';
+   end loop;
+end;
+
+
 end;
 /
+

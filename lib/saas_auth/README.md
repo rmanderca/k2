@@ -7,34 +7,6 @@ This package is used to support the custom authentication form which is part of 
 The code here has been inspired and borrowed from [this post](https://dgielis.blogspot.com/2017/08/create-custom-authentication-and.html) by Dimitri Gielis. 
 
 
-### Change Log
-
-**12/6/2022**
-
-I added a new role called 'system' which can be used if a user_id is needed on the back end.
-
-You might need a user_id on the back end to create an object which requires user_id (dataset, contact_group, ...).
-
-There was no way to assign a role, I added assign_user_role procedure as a way to do this.
-
-I added a test file. It is just a start.
-
-
-### User Events
-
-### after_create_account
-
-### activate_account
-
-#### before_user_logon
-
-#### on_login
-
-#### after_user_logon
-
-#### before_delete_user
-
-#### after_delete_user
 
 
 

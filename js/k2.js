@@ -9,17 +9,23 @@ function make_buttons_large() {
   $(".a-Button").not(".js-desc, .js-asc").addClass("t-Button--large");
 }
 
+/*
 
-function auto_dismiss_message_box() {
-// Auto dismiss message box after 2 seconds.
-apex.jQuery(function() {
-  apex.theme42.util.configAPEXMsgs({
-    autoDismiss: true,
-    duration: 2000 // duration is optional (Default is 3000 milliseconds)
-  });
-});
-}
+### auto_dismiss_message_box
 
+Auto dismiss APEX messages after a specified duration.
+
+* **durationMilliseconds** - Duration in milliseconds.
+
+*/
+
+function auto_dismiss_message_box(milliseconds = 2000) {
+   apex.jQuery(function() {
+      apex.theme42.util.configAPEXMsgs({
+         autoDismiss: true,
+         duration: milliseconds});
+   });
+};
 
 function hide_lastpass_icon() {
 // Two methods to try to deal with LastPass icons.

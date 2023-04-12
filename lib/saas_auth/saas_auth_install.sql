@@ -29,15 +29,9 @@ whenever sqlerror continue;
 @saas_auth_templates.sql
 @saas_auth_pkgh.sql 
 @saas_auth_pkgb.sql 
+@saas_auth_ui_pkgh.sql
+@saas_auth_ui_pkgb.sql
 @saas_auth_schedules.sql
-
-begin
-	if k2_app.version <= 20221019 then
-		-- We changed this to before_create_account which is clearer (12/7/2022).
-		drop_procedure('on_create_account');
-	end if;
-end;
-/
 
 select 'SAAS_AUTH install complete.' MESSAGE from dual;
 

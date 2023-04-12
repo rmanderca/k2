@@ -4,17 +4,17 @@ begin
    if 1=1 then
       drop_table('dataset');
       drop_table('metric_interval_date_format');
-      drop_table('dataset_avg_val_target_group');
+      drop_table('dataset_avg_target_group');
       drop_table('metric');
       drop_table('metric_property');
       drop_table('metric_in');
       drop_table('metric_work');
       drop_table('metric_work_archive');
       drop_table('metric_detail');
-      drop_table('metric_percentiles_ref');
-      drop_table('metric_avg_val_hist_ref');
+      drop_table('metric_pctiles_ref');
+      drop_table('metric_avg_val_ref');
       drop_table('metric_profile');
-      drop_table('metric_work_calc_type');
+      drop_table('calc_type');
    end if;
 end;
 /
@@ -23,17 +23,22 @@ begin
    if 1=1 then
       drop_table('dataset');
       drop_table('stat_interval_date_format');
-      drop_table('dataset_avg_val_target_group');
+      drop_table('dataset_avg_target_group');
       drop_table('stat');
       drop_table('stat_property');
       drop_table('stat_in');
       drop_table('stat_work');
       drop_table('stat_work_archive');
       drop_table('stat_detail');
-      drop_table('stat_percentiles_ref');
+      drop_table('stat_pctiles_ref');
       drop_table('stat_avg_val_hist_ref');
       drop_table('stat_profile');
       drop_table('stat_work_calc_type');
+      drop_table('stat_bucket');
+      drop_table('stat_calc_type');
+      drop_table('stat_archive');
+      drop_table('stat_percentiles_ref');
+      drop_view('v_stat_avg_val_hist_ref');
    end if;
 end;
 /
@@ -44,13 +49,11 @@ exec drop_table('metric_archive');
 begin
    drop_table('metric_bucket');
    drop_table('metric_bucket_avg_val_ref_group');
-   drop_table('metric_bucket_avg_val_target_group');
+   drop_table('metric_bucket_avg_target_group');
    drop_table('metric_bucket_date_format');
    drop_table('metric_bucket_metric_work_date_format');
 end;
 /
-
-
 
 /*
 
@@ -60,20 +63,20 @@ metric_IN data gets processed in batch.
 
 */
 
--- uninstall: exec drop_table('metric_work_calc_type');
+-- uninstall: exec drop_table('calc_type');
 begin 
-   if not does_table_exist('metric_work_calc_type') then
+   if not does_table_exist('calc_type') then
       execute_sql('
-      create table metric_work_calc_type (
-      metric_work_calc_type varchar2(16))', false);
-      execute_sql(q'<insert into metric_work_calc_type (metric_work_calc_type) values ('none')>');
-      execute_sql(q'<insert into metric_work_calc_type (metric_work_calc_type) values ('delta')>');
-      execute_sql(q'<insert into metric_work_calc_type (metric_work_calc_type) values ('rate/s')>');
-      execute_sql(q'<insert into metric_work_calc_type (metric_work_calc_type) values ('rate/m')>');
-      execute_sql(q'<insert into metric_work_calc_type (metric_work_calc_type) values ('rate/h')>');
-      execute_sql(q'<insert into metric_work_calc_type (metric_work_calc_type) values ('rate/d')>');
+      create table calc_type (
+      calc_type varchar2(16))', false);
+      execute_sql(q'<insert into calc_type (calc_type) values ('none')>');
+      execute_sql(q'<insert into calc_type (calc_type) values ('delta')>');
+      execute_sql(q'<insert into calc_type (calc_type) values ('rate/s')>');
+      execute_sql(q'<insert into calc_type (calc_type) values ('rate/m')>');
+      execute_sql(q'<insert into calc_type (calc_type) values ('rate/h')>');
+      execute_sql(q'<insert into calc_type (calc_type) values ('rate/d')>');
    end if;
-   add_primary_key('metric_work_calc_type', 'metric_work_calc_type');
+   add_primary_key('calc_type', 'calc_type');
 end;
 /
 
@@ -110,32 +113,32 @@ begin
 end;
 /
 
--- uninstall: exec drop_table('dataset_avg_val_target_group');
+-- uninstall: exec drop_table('dataset_avg_target_group');
 begin 
    -- -- Historical avg val for metrics is determined by looking at ALL records, DY records matching the day of week, or HH24 records matching the day of week and hour of day.
-   if not does_table_exist('dataset_avg_val_target_group') then
+   if not does_table_exist('dataset_avg_target_group') then
       execute_sql('
-      create table dataset_avg_val_target_group (
-      avg_val_target_group varchar2(16))', false);
+      create table dataset_avg_target_group (
+      avg_target_group varchar2(16))', false);
    end if;
-   add_primary_key('dataset_avg_val_target_group', 'avg_val_target_group');
+   add_primary_key('dataset_avg_target_group', 'avg_target_group');
 end;
 /
 
 declare 
    n number;
 begin
-   select count(*) into n from dataset_avg_val_target_group where avg_val_target_group='ALL';
+   select count(*) into n from dataset_avg_target_group where avg_target_group='ALL';
    if n = 0 then
-      insert into dataset_avg_val_target_group (avg_val_target_group) values ('ALL');
+      insert into dataset_avg_target_group (avg_target_group) values ('ALL');
    end if;
-   select count(*) into n from dataset_avg_val_target_group where avg_val_target_group='DY';
+   select count(*) into n from dataset_avg_target_group where avg_target_group='DY';
    if n = 0 then
-      insert into dataset_avg_val_target_group (avg_val_target_group) values ('DY');
+      insert into dataset_avg_target_group (avg_target_group) values ('DY');
    end if;
-   select count(*) into n from dataset_avg_val_target_group where avg_val_target_group='HH24';
+   select count(*) into n from dataset_avg_target_group where avg_target_group='HH24';
    if n = 0 then
-      insert into dataset_avg_val_target_group (avg_val_target_group) values ('HH24');
+      insert into dataset_avg_target_group (avg_target_group) values ('HH24');
    end if;
 end;
 /
@@ -173,29 +176,32 @@ begin
       user_id number default null,
       dataset_key varchar2(256) not null, -- When creating a dataset you can provide a unique identity
       dataset_alt_id number default null, -- Alternate numberic id a dev can assign to the dataset
-      dataset_type varchar2(255) default null,
+      dataset_type varchar2(256) default null,
       dataset_name varchar2(256) not null, -- Uniqueness not required. Your name for this dataset.
       dataset_description varchar2(512) default null,
-      metric_work_calc_type varchar2(16) default ''none'' not null, -- What kind of calc to perform on data in this dataset.
+      calc_type varchar2(16) default ''none'' not null, -- What kind of calc to perform on data in this dataset.
       metric_detail_hours number default 0, -- How long to keep detailed metric history for in metric_detail.
-      pause_detail_when_zero_hours number default 0, -- Stop saving detail data if value have all been 0 for X hours.
       archive_history_days number default 90, -- The number of days to store archive rows from metric_work for.
-      pause_archive_when_zero_days number default 0, -- Stop archiving data if values have all been 0 for more than X hours.
       last_metric_time timestamp, -- Last time this dataset was processed.
       calc_count number default 0, -- Number of times this dataset has been processed.
-      allow_negative_values number default 1 not null, -- If a counter rolls you can see a big negative value. We may want to ignore these.
       metric_interval_date_format varchar2(16) default ''HH24'',
       rolling_percentile_days number default 1 not null, -- Number of days of data detail from metric table to determine values for pctiles.
-      avg_val_min_sample_count number default 7 not null, -- The number of required rows in the HH24 and DY avg val ref sample set before the data can referenced.
+      avg_val_min_row_count number default 7 not null, -- The number of required rows in the HH24 and DY avg val ref sample set before the data can referenced.
       rolling_avg_window_days number default 30 not null, -- How many days are used when calculating the avg historical value of a metric.
-      avg_val_target_group varchar2(16) default ''HH24'', 
+      avg_target_group varchar2(16) default ''HH24'', 
       auto_process number default 1 not null, -- If set to zero it is expected the developer will set up a job to process the dataset.
+      recv_val_min_allowed number default 0,
+      recv_val_max_allowed number default null,
       created timestamp default systimestamp,
-      attribute_1 varchar2(255) default null,
-      attribute_2 varchar2(255) default null,
-      attribute_3 varchar2(255) default null,
-      attribute_4 varchar2(255) default null,
-      attribute_5 varchar2(255) default null,
+      system varchar2(256) default null,
+      subsystem varchar2(256) default null,
+      application varchar2(256) default null,
+      attribute_1 varchar2(256) default null,
+      attribute_2 varchar2(256) default null,
+      attribute_3 varchar2(256) default null,
+      attribute_4 varchar2(256) default null,
+      attribute_5 varchar2(256) default null,
+      -- ToDo: Get rid of this.
       collect_meta_data number default 1
       -- ToDo: Change auto process to a truthy column which determins when this data is auto-processed.
       -- ToDo: Add enabled/disabled truthy col to specify when this dataset is process/active.
@@ -205,21 +211,21 @@ begin
    if not does_index_exist('dataset_1') then 
       execute_sql('create unique index dataset_1 on dataset (dataset_key)');
    end if;
-   if not does_constraint_exist('fk_dataset_metric_work_calc_type') then 
-      execute_sql('alter table dataset add constraint fk_dataset_metric_work_calc_type foreign key (metric_work_calc_type) references metric_work_calc_type (metric_work_calc_type)');
+   if not does_constraint_exist('fk_dataset_calc_type') then 
+      execute_sql('alter table dataset add constraint fk_dataset_calc_type foreign key (calc_type) references calc_type (calc_type)');
    end if;
    -- ToDo: Change below to look up tables with fk contstraint
    if not does_constraint_exist('dataset_check_1') then
       execute_sql('alter table dataset add constraint dataset_check_3 check (metric_interval_date_format in (''HH24'', ''DY'', ''MM''))');
    end if;
    if not does_constraint_exist('dataset_check_2') then
-      execute_sql('alter table dataset add constraint dataset_check_4 check (avg_val_target_group in (''HH24'', ''DY'', ''ALL''))');
+      execute_sql('alter table dataset add constraint dataset_check_4 check (avg_target_group in (''HH24'', ''DY'', ''ALL''))');
    end if;
    if not does_constraint_exist('fk_metric_interval_date_format') then 
       execute_sql('alter table dataset add constraint fk_metric_interval_date_format foreign key (metric_interval_date_format) references metric_interval_date_format (metric_interval_date_format)');
    end if;
    if not does_constraint_exist('fk_dataset_avg_val_hist_group') then 
-      execute_sql('alter table dataset add constraint fk_dataset_avg_val_hist_group foreign key (avg_val_target_group) references dataset_avg_val_target_group (avg_val_target_group)');
+      execute_sql('alter table dataset add constraint fk_dataset_avg_val_hist_group foreign key (avg_target_group) references dataset_avg_target_group (avg_target_group)');
    end if;
 end;
 /
@@ -257,10 +263,10 @@ begin
    null;
    -- ToDo: Below is harder than it looks, need to check for data in a lot of places before we know if we can change this. Might want to write a function for this or come up with a better way.
    -- ToDo: Might want to make a way to change this. For now throw an error.
-   -- if :new.metric_work_calc_type != :old.metric_work_calc_type or :new.metric_work_calc_type is null then
+   -- if :new.calc_type != :old.calc_type or :new.calc_type is null then
    --    select count(*) into n from metric_work where dataset_id = :new.dataset_id;
    --    if n > 0 then
-   --       raise_application_error(-20000, 'Cannot change metric_work_calc_type once set.');
+   --       raise_application_error(-20000, 'Cannot change calc_type once set.');
    --    end if;
    -- end if;
 end;
@@ -285,6 +291,10 @@ begin
       dynamic_json varchar2(256) default null,
       metric_time timestamp default systimestamp, -- UTC time
       value number not null,
+      system varchar2(256) default null,
+      subsystem varchar2(256) default null,
+      hostname varchar2(256) default null,
+      application varchar2(256) default null,
       created timestamp default systimestamp)');
    end if;
    add_primary_key('metric_in', 'metric_in_id');
@@ -311,74 +321,75 @@ begin
       metric_level number default 0,
       dataset_id number not null,
       static_json varchar2(512) default null,
-      value_received number not null, -- The raw value received from the metric_in table
-      -- String used to convert the received value when calculating.
-      convert_eval varchar2(128) default null,
-      -- The delta is equal to current value minus last value.
-      delta_val number default 0 not null,
-      delta_val_total number default 0 not null,
-      -- Seconds elapsed between the current value and last value.
-      elapsed_seconds number default 0 not null,
-      elapsed_seconds_total number default 0 not null,
-      -- Rate of delta per second.
-      rate_per_second number,
-      rate_per_second_total number,
-      -- This is mirrored from the dataset, this does not control the metric_work_calc_type.
-      metric_work_calc_type varchar2(16),
-      -- Tracks the # of times the calc_val was negative.
-      neg_calc_count number default 0,
-      -- Tracks the # of times the calc_val was zero.
-      zero_calc_count number default 0,
-      -- The value we care about after processing it per "metric_work_calc_type".
-      calc_val number default 0,
-      calc_val_total number default 0,
-      -- Average of calc_val for the current hour. This needs to be null to begin
-      -- as the update trigger references this field in one case to check for null.
-      avg_val number default 0 not null,
-      -- Current value as a % of one of the historical values.
-      pct_of_avg_val_ref number default 0 not null,
-      -- Current avg value for pct_of_avg_val_ref.
-      avg_pct_of_avg_val_ref number default 0 not null,
       -- Total # of updates for the current hour.
-      calc_count number default 0,
+      row_count number default 0,
+      -- The raw value received from the metric_in table
+      recv_val number not null, 
+      recv_val_total number default 0 not null,
+      recv_val_avg number default null,
+      recv_val_avg_ref number default null,
+      recv_val_as_pct_of_avg_ref number default null,
+      recv_val_avg_as_pct_of_avg_ref number default null,
+      rolling_recv_val_avg_as_pct_of_avg_ref varchar2(256) default null,
+      delta_val number default null,
+      delta_val_total number default 0 not null,
+      delta_val_avg number default null,
+      delta_val_avg_ref number default null,
+      delta_val_as_pct_of_avg_ref number default null,
+      delta_val_avg_as_pct_of_avg_ref number default null,
+      rolling_delta_val_avg_as_pct_of_avg_ref varchar2(256) default null,
+      rate_per_sec number default null,
+      rate_per_sec_avg number default null,
+      rate_per_sec_avg_ref number default null,
+      rate_per_sec_as_pct_of_avg_ref number default null,
+      rate_per_sec_avg_as_pct_of_avg_ref number default null,
+      rolling_rate_per_sec_avg_as_pct_of_avg_ref varchar2(256) default null,
+      -- Seconds elapsed between the current value and last value.
+      elapsed_secs number default 0 not null,
+      elapsed_secs_total number default 0 not null,
+      -- Over-rides the value set in the dataset table if provided.
+      calc_type varchar2(16) default null,
+      -- String used to convert the received value when applied to any calculations.
+      -- ToDo: Should this initially be inherited from the dataset also?
+      calc_eval varchar2(128) default null,
+      calc_eval_desc varchar2(128) default null,
       -- Time the metric was sampled.
-      metric_time timestamp,
+      metric_time timestamp default systimestamp not null,
       -- The metric_time this record was updated.
-      updated timestamp default systimestamp,
-      -- Last time a non-zero value was calculated.
-      last_non_zero_val timestamp,
-      pctile0x number default 0,
-      pctile10x number default 0,
-      pctile20x number default 0,
-      pctile30x number default 0,
-      pctile40x number default 0,
-      pctile50x number default 0,
-      pctile60x number default 0,
-      pctile70x number default 0,
-      pctile80x number default 0,
-      pctile90x number default 0,
-      pctile100x number default 0,
-      pctile_score number default 0,
+      updated timestamp default null,
+      pctile0x number default 0 not null,
+      pctile10x number default 0 not null,
+      pctile20x number default 0 not null,
+      pctile30x number default 0 not null,
+      pctile40x number default 0 not null,
+      pctile50x number default 0 not null,
+      pctile60x number default 0 not null,
+      pctile70x number default 0 not null,
+      pctile80x number default 0 not null,
+      pctile90x number default 0 not null,
+      pctile100x number default 0 not null,
+      pctile_score number default 0 not null,
       -- # of times value is in range compared to the avg_val_ref.
-      pct10x number default 0,
-      pct20x number default 0,
-      pct40x number default 0,
-      pct80x number default 0,
-      pct100x number default 0,
-      pct120x number default 0,
-      pct240x number default 0,
-      pct480x number default 0,
-      pct960x number default 0,
-      pct1920x number default 0,
-      pct9999x number default 0,
-      pct_score number default 0,
-      -- Historical max, min, and avg values are periodically updated here for reference.
-      avg_val_ref number default 0 not null,
-      -- Total number of calcs used to determine the avg_val_ref. Gives some idea of the sample size.
-      avg_val_ref_calc_count number default 0 not null,
-      -- Provides the name of the group which avg_val_ref is pulled from.
-      avg_val_target_group varchar2(16) default null,
-      created timestamp default systimestamp
+      pct10x number default 0 not null,
+      pct20x number default 0 not null,
+      pct40x number default 0 not null,
+      pct80x number default 0 not null,
+      pct100x number default 0 not null,
+      pct120x number default 0 not null,
+      pct240x number default 0 not null,
+      pct480x number default 0 not null,
+      pct960x number default 0 not null,
+      pct1920x number default 0 not null,
+      pct9999x number default 0 not null,
+      pct_score number default 0 not null,
+      rolling_pct_score varchar2(256) default null,
+      rolling_pctile_score varchar2(256) default null,
+      created timestamp default systimestamp not null,
+      refs_row_count number default 0 not null,
+      system varchar2(256) default null,
+      subsystem varchar2(256) default null,
+      hostname varchar2(256) default null,
+      application varchar2(256) default null
       )');
       execute_sql('
       create unique index metric_work_1 on metric_work (dataset_id, metric_key)');
@@ -414,7 +425,7 @@ begin
       execute_sql('
          create table metric_profile (
          metric_profile_id number generated by default on null as identity cache 20 noorder nocycle nokeep noscale not null,
-         metric_id varchar2(255) not null,
+         metric_id varchar2(256) not null,
          profile_name varchar2(256) not null,
          created timestamp default systimestamp
          )');
@@ -463,47 +474,43 @@ begin
       metric_key varchar2(256) not null,
       metric_alt_id number default null,
       metric_name varchar2(256) not null,
-      metric_level number default 0,
       dataset_id number not null,
-      value_received number not null,
-      delta_val_total number default 0 not null,
-      calc_count number default 0,
-      calc_val_total number default 0,
-      elapsed_seconds_total number default 0 not null,
-      rate_per_second_total number default 0 not null,
-      metric_work_calc_type varchar2(16),
-      neg_calc_count number default 0,
-      zero_calc_count number default 0,
-      avg_val number,
+      recv_val_avg number not null,
+      recv_val_avg_ref number,
+      recv_val_avg_as_pct_of_avg_ref number default null,
+      delta_val_avg number,
+      delta_val_avg_ref number,
+      delta_val_avg_as_pct_of_avg_ref number default null,
+      rate_per_sec_avg number,
+      rate_per_sec_avg_ref number,
+      rate_per_sec_avg_as_pct_of_avg_ref number default null,
+      row_count number,
+      elapsed_secs_total number not null,
       metric_time timestamp not null,
-      last_non_zero_val timestamp,
-      pctile0x number default 0,
-      pctile10x number default 0,
-      pctile20x number default 0,
-      pctile30x number default 0,
-      pctile40x number default 0,
-      pctile50x number default 0,
-      pctile60x number default 0,
-      pctile70x number default 0,
-      pctile80x number default 0,
-      pctile90x number default 0,
-      pctile100x number default 0,
-      pctile_score number default 0,
-      pct10x number default 0,
-      pct20x number default 0,
-      pct40x number default 0,
-      pct80x number default 0,
-      pct100x number default 0,
-      pct120x number default 0,
-      pct240x number default 0,
-      pct480x number default 0,
-      pct960x number default 0,
-      pct1920x number default 0,
-      pct9999x number default 0,
-      pct_score number default 0,
-      avg_val_ref number default 0,
-      avg_val_target_group varchar2(16) default null,
-      avg_pct_of_avg_val_ref number default 0,
+      pctile0x number,
+      pctile10x number,
+      pctile20x number,
+      pctile30x number,
+      pctile40x number,
+      pctile50x number,
+      pctile60x number,
+      pctile70x number,
+      pctile80x number,
+      pctile90x number,
+      pctile100x number,
+      pctile_score number,
+      pct10x number,
+      pct20x number,
+      pct40x number,
+      pct80x number,
+      pct100x number,
+      pct120x number,
+      pct240x number,
+      pct480x number,
+      pct960x number,
+      pct1920x number,
+      pct9999x number,
+      pct_score number,
       created timestamp default systimestamp
       )', false);
    end if;
@@ -517,33 +524,37 @@ begin
 end;
 /
 
--- uninstall: exec drop_table('metric_avg_val_hist_ref');
+-- uninstall: exec drop_table('metric_avg_val_ref');
 begin
-   if not does_table_exist('metric_avg_val_hist_ref') then 
+   if not does_table_exist('metric_avg_val_ref') then 
       execute_sql('
-      create table metric_avg_val_hist_ref (
-      avg_val_target_group varchar2(16),
+      create table metric_avg_val_ref (
+      avg_target_group varchar2(16),
       hist_key varchar2(16),
       metric_id varchar2(256) not null,
       row_count number,
-      calc_count number,
-      avg_val number,
+      recv_val_avg number,
+      delta_val_avg number,
+      rate_per_sec_avg number,
       created timestamp default systimestamp
       )', false);
-      execute_sql('alter table metric_avg_val_hist_ref add constraint pk_metric_avg_val_hist_ref primary key (avg_val_target_group, hist_key, metric_id)');
+      execute_sql('alter table metric_avg_val_ref add constraint pk_metric_avg_val_ref primary key (avg_target_group, hist_key, metric_id)');
    end if;
-   if not does_constraint_exist('fk_metric_avg_val_hist_ref_metric_id') then
-      execute_sql('alter table metric_avg_val_hist_ref add constraint fk_metric_avg_val_hist_ref_metric_id foreign key (metric_id) references metric_work (metric_id) on delete cascade');
+   if not does_constraint_exist('fk_metric_avg_val_ref_metric_id') then
+      execute_sql('alter table metric_avg_val_ref add constraint fk_metric_avg_val_ref_metric_id foreign key (metric_id) references metric_work (metric_id) on delete cascade');
    end if;
 end;
 /
 
--- uninstall: exec drop_table('metric_percentiles_ref');
+-- uninstall: exec drop_table('metric_pctiles_ref');
 begin
-   if not does_table_exist('metric_percentiles_ref') then 
+   if not does_table_exist('metric_pctiles_ref') then 
       execute_sql('
-      create table metric_percentiles_ref (
+      create table metric_pctiles_ref (
+      metric_pctiles_ref_id number generated by default on null as identity cache 20 noorder nocycle nokeep noscale not null,
       metric_id varchar2(256) not null,
+      ref_type varchar2(12) not null,
+      -- Can be one of recv, delta, rate
       pctile0 number default 0,
       pctile10 number default 0,
       pctile20 number default 0,
@@ -555,25 +566,26 @@ begin
       pctile80 number default 0,
       pctile90 number default 0,
       pctile100 number default 0,
-      created timestamp default systimestamp
+      created timestamp default systimestamp,
+      updated timestamp default systimestamp
       )');
    end if;
-   add_primary_key('metric_percentiles_ref', 'metric_id');
-   if not does_constraint_exist('fk_metric_percentiles_ref_metric_id') then
-      execute_sql('alter table metric_percentiles_ref add constraint fk_metric_percentiles_ref_metric_id foreign key (metric_id) references metric_work (metric_id) on delete cascade');
+   add_primary_key('metric_pctiles_ref', 'metric_pctiles_ref_id');
+   if not does_constraint_exist('fk_metric_pctiles_ref_metric_id') then
+      execute_sql('alter table metric_pctiles_ref add constraint fk_metric_pctiles_ref_metric_id foreign key (metric_id) references metric_work (metric_id) on delete cascade');
    end if;
 end;
 /
 
--- uninstall: exec drop_view ('v_metric_avg_val_hist_ref');
-create or replace view v_metric_avg_val_hist_ref as 
-select 'ALL' avg_val_target_group,
+-- uninstall: exec drop_view ('v_metric_avg_val_ref');
+create or replace view v_metric_avg_val_ref as 
+select 'ALL' avg_target_group,
        'ALL' hist_key,
-       a.metric_id,
-       sum(1) row_count,      
-       sum(calc_count) calc_count,
-       sum(calc_count*avg_val) calc_sum,
-       round(avg(avg_val), 3) avg_val
+       a.metric_id,     
+       sum(row_count) row_count,
+       avg(recv_val_avg) recv_val_avg,
+       avg(delta_val_avg) delta_val_avg,
+       avg(rate_per_sec_avg) rate_per_sec_avg
   from metric_work_archive a,
        (select dataset_id, rolling_avg_window_days from dataset) b 
  where a.dataset_id=b.dataset_id 
@@ -585,11 +597,11 @@ select 'ALL' avg_val_target_group,
 union all
 select 'HH24',
        to_char(metric_time, 'HH24')||':00',
-       a.metric_id,
-       sum(1) row_count,
-       sum(calc_count) calc_count,
-       sum(calc_count*avg_val) calc_sum,
-       round(avg(avg_val), 3) avg_val
+       a.metric_id,     
+       sum(row_count) row_count,
+       avg(recv_val_avg) recv_val_avg,
+       avg(delta_val_avg) delta_val_avg,
+       avg(rate_per_sec_avg) rate_per_sec_avg
   from metric_work_archive a,
        (select dataset_id, rolling_avg_window_days from dataset) b 
  where a.dataset_id=b.dataset_id 
@@ -601,11 +613,11 @@ select 'HH24',
 union all
 select 'DY',
        to_char(metric_time, 'DY'),
-       a.metric_id,
-       sum(1) row_count,
-       sum(calc_count) calc_count,
-       sum(calc_count*avg_val) calc_sum,
-       round(avg(avg_val), 3) avg_val
+       a.metric_id,     
+       sum(row_count) row_count,
+       avg(recv_val_avg) recv_val_avg,
+       avg(delta_val_avg) delta_val_avg,
+       avg(rate_per_sec_avg) rate_per_sec_avg
   from metric_work_archive a,
        (select dataset_id, rolling_avg_window_days from dataset) b 
  where a.dataset_id=b.dataset_id 
@@ -615,7 +627,6 @@ select 'DY',
        to_char(metric_time, 'DY'),
        a.metric_id;
 
-
 -- uninstall: exec drop_table('metric_detail');
 begin 
    if not does_table_exist('metric_detail') then 
@@ -623,14 +634,10 @@ begin
       create table metric_detail (
       metric_detail_id number generated by default on null as identity cache 20 noorder nocycle nokeep noscale not null,
       metric_id varchar2(256) not null,
-      delta_val number default 0 not null,
-      value_received number not null,
-      elapsed_seconds number default 0 not null,
-      rate_per_second number,
-      metric_work_calc_type varchar2(16),
-      calc_val number,
-      pct_of_avg_val_ref number,
-      avg_val_ref number,
+      recv_val number,
+      delta_val number,
+      rate_per_sec number,
+      elapsed_secs number,
       metric_time timestamp,
       created timestamp default systimestamp
       )', false);
@@ -645,3 +652,5 @@ begin
 end;
 /
 
+exec drop_view('metric_work_v');
+exec drop_view('metric_work_union_v');

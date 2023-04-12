@@ -3,6 +3,13 @@
 
 create or replace package k2_json as 
 
+   procedure assert_no_errors (
+      p_json_key in varchar2,
+      p_error_path in varchar2,
+      p_error_type_path in varchar2 default null,
+      p_error_message_path in varchar2 default null
+      );
+   
    -- ToDo: This may need to support only json or both json and clob. Need some tests.
    procedure json_to_data_table (
       p_json_data in clob,

@@ -17,7 +17,7 @@ begin
          p_dataset_key=>v_dataset_key,
          p_user_id=>v_user_id);
       b := k2_metric.get_dataset_row(p_dataset_key=>v_dataset_key);
-      b.metric_work_calc_type := 'rate/m';
+      b.calc_type := 'rate/m';
       k2_metric.save_dataset_row(b);
    end if;
 

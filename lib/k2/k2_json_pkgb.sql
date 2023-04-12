@@ -1,7 +1,63 @@
 
 create or replace package body k2_json as 
 
-procedure json_to_data_table_handle_array ( -- Parses each element in a JSON array and inserts into a table.
+/*
+
+### assert_no_errors (procedure)
+
+Checks the JSON_DATA table for errors and raises an error if any errors are found.
+
+* **p_json_key** - The key for the transaction we are interested in evaluating.
+* p_error_path - The JSON_PATH in the JSON_DATA table which would indicate an error if one exists.
+* p_error_type_path - The JSON_PATH in the JSON_DATA table which would return the error type.
+* p_error_message_path - The JSON_PATH in the JSON_DATA table which would return the error message.
+
+> The easiest way to learn how the assert is used is to search the code base and study a couple examples.
+
+*/
+
+procedure assert_no_errors (
+   -- Required
+   p_json_key in varchar2,
+   p_error_path in varchar2,
+   -- Optional
+   p_error_type_path in varchar2 default null,
+   p_error_message_path in varchar2 default null
+   ) is 
+   v_error_type varchar2(1024);
+   v_error_message varchar2(1024);
+begin
+   if k2_json.does_json_data_path_exist (
+      p_json_key=>p_json_key,
+      p_json_path=>p_error_path) then 
+      if p_error_type_path is not null then 
+         v_error_type := k2_json.get_json_data_string(p_json_key=>p_json_key, p_json_path=>p_error_type_path);
+      end if;
+      if p_error_message_path is not null then 
+         v_error_message := k2_json.get_json_data_string(p_json_key=>p_json_key, p_json_path=>p_error_message_path);
+      end if;
+      raise_application_error(
+         -20001, 
+         'Error: '||trim(v_error_type || ' ' || v_error_message));
+   end if;
+end;
+
+/*
+
+### json_to_data_table_handle_array (procedure)
+
+Parses each element in a JSON array and inserts into a table.
+
+* **p_json_data** - The JSON data to parse, which should be an array.
+* **p_json_key** - The key for the data we are parsing. 
+* **p_json_path** - The current path to the array.
+* **p_depth** - Tracks recursion depth. Always starts at zero.
+* **p_data_key** - 
+
+*/
+
+procedure json_to_data_table_handle_array (
+   -- Required
    p_json_data clob,
    p_json_key in varchar2,
    p_json_path in varchar2,

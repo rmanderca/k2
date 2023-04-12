@@ -10,7 +10,11 @@ create or replace package gc is
       p_column_name in varchar2);
 
    procedure add_data (
-      p_data in varchar2);
+      p_data1 in varchar2,
+      p_data2 in varchar2 default null,
+      p_data3 in varchar2 default null,
+      p_data4 in varchar2 default null,
+      p_data5 in varchar2 default null);
 
    procedure add_line_chart (
       p_title in varchar2,
@@ -18,7 +22,7 @@ create or replace package gc is
       p_haxis_title in varchar2 default '',
       p_scale_type in varchar2 default 'linear',
       p_line_width in number default 1,
-      p_line_color in varchar2 default 'black',
+      p_line_color in varchar2 default 'blue, gray, green, black, red, yellow, orange, purple, brown, pink',
       p_width in number default 600,
       p_height in number default 400,
       p_background_color in varchar2 default 'white',

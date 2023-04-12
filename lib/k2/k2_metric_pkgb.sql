@@ -1,14 +1,35 @@
 create or replace package body k2_metric as 
 
+/*
+
+### create_dataset (procedure)
+
+Create a dataset.
+
+* **p_dataset_name** - Name of the dataset. What the user sees.
+* p_user_id - User ID from SAAS_AUTH table which indicates the owner of the dataset. 
+* p_dataset_key - A unique key for the dataset. 
+* p_dataset_type - Developer provided type used to categorize datasets.
+* p_calc_type - Indicates the data you are most interested in seeing when presented. See the CALC_TYPE table for options.
+* p_metric_detail_hours - Nummber of hours to keep detailed metric data. 0 means no detail.
+* p_auto_process - Indicates if the dataset should be processed by the scheduled job or if the developer will handle it.   
+
+The user id is optional. Datasets may belong to a user but don't have to. 
+
+Even if metric detail hours is zero we will collect detailed data if it is needed to calculate percentiles.
+
+*/
+
 procedure create_dataset ( -- | Create a dataset to store metrics in.
+   -- Required
    p_dataset_name in varchar2,
+   -- Optional
    p_user_id in number default null,
    p_dataset_key in varchar2 default null,
    p_dataset_type in varchar2 default null,
-   p_metric_work_calc_type in varchar2 default 'none',
+   p_calc_type in varchar2 default 'none',
    p_allow_negative_values in number default 1,
    p_metric_detail_hours in number default 0,
-   p_pause_archive_when_zero_days in number default 0,
    p_auto_process in number default 1,
    p_dataset_alt_id in number default null) is
 begin
@@ -17,20 +38,16 @@ begin
       dataset_key,
       dataset_type,
       dataset_name,
-      metric_work_calc_type,
-      allow_negative_values,
+      calc_type,
       metric_detail_hours,
-      pause_archive_when_zero_days,
       user_id,
       auto_process,
       dataset_alt_id) values (
       p_dataset_key,
       p_dataset_type,
       p_dataset_name,
-      p_metric_work_calc_type,
-      p_allow_negative_values,
+      p_calc_type,
       p_metric_detail_hours,
-      p_pause_archive_when_zero_days,
       p_user_id,
       p_auto_process,
       p_dataset_alt_id);
@@ -40,7 +57,19 @@ exception
       raise;
 end;
 
-function get_dataset_row ( -- | Return a row from dataset.
+/*
+
+### get_dataset_row (function)
+
+Return a row from DATASET.
+
+* **p_dataset_id** - The dataset id of the desired row.
+
+Error is raised when no data found.
+
+*/
+
+function get_dataset_row ( 
    p_dataset_id in number) return dataset%rowtype is 
    r dataset%rowtype;
 begin 
@@ -48,6 +77,18 @@ begin
    select * into r from dataset where dataset_id=p_dataset_id;
    return r;
 end;
+
+/*
+
+### get_dataset_row (function)
+
+Return a row from DATASET.
+
+* **p_dataset_key** - The dataset key of the desired row.
+
+Error is raised when no data found.
+
+*/
 
 function get_dataset_row ( -- | Return a row from dataset.
    p_dataset_key in varchar2) return dataset%rowtype is 
@@ -57,6 +98,18 @@ begin
    select * into r from dataset where dataset_key=p_dataset_key;
    return r;
 end;
+
+/*
+
+### get_dataset_row (function)
+
+Return a row from DATASET using a token. Assumes the dataset id is stored in the token_alt_id column of the TOKENS table.
+
+* **p_dataset_token** - The dataset token of the desired row.
+
+Error is raised when no data found.
+
+*/
 
 function get_dataset_row ( -- | Return a row from dataset.
    p_dataset_token in number) return dataset%rowtype is 
@@ -70,6 +123,18 @@ begin
     where dataset_id=(select token_alt_id from tokens where token=p_dataset_token);
    return r;
 end;
+
+/*
+
+### save_dataset_row (procedure)
+
+Saves a dataset row.
+
+* **p_dataset** - The dataset row.
+
+Error is raised when no data found.
+
+*/
 
 procedure save_dataset_row ( -- | Save a dataset record if dataset rowtype.
    p_dataset in dataset%rowtype) is 
@@ -125,32 +190,34 @@ begin
       p_dynamic_json);
 end;  
    
-procedure refresh_avg_val_hist_ref ( -- | Refresh the references for the metric's average value.
+procedure refresh_avg_val_ref ( -- | Refresh the references for the metric's average value.
    p_metric_id in varchar2) is 
 begin 
 
    delete 
-     from metric_avg_val_hist_ref 
+     from metric_avg_val_ref 
     where metric_id=p_metric_id;
 
-   insert into metric_avg_val_hist_ref (
-      avg_val_target_group,
+   insert into metric_avg_val_ref (
+      avg_target_group,
       metric_id,
       hist_key,
       row_count,
-      calc_count,
-      avg_val) (select 
-      avg_val_target_group,
+      recv_val_avg,
+      delta_val_avg,
+      rate_per_sec_avg) (select 
+      avg_target_group,
       metric_id,
       hist_key,
       row_count,
-      calc_count,
-      avg_val 
-      from v_metric_avg_val_hist_ref 
+      recv_val_avg,
+      delta_val_avg,
+      rate_per_sec_avg 
+      from v_metric_avg_val_ref 
      where metric_id=p_metric_id);
 exception
    when others then 
-      arcsql.log_err(p_text=>'refresh_avg_val_hist_ref: '||dbms_utility.format_error_stack, p_key=>'k2');
+      arcsql.log_err(p_text=>'refresh_avg_val_ref: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -161,35 +228,24 @@ begin
    arcsql.debug2('insert_metric_detail_bulk: '||p_dataset.dataset_key||', '||p_metric_time);
    insert into metric_detail (
       metric_id,
-      metric_work_calc_type,
-      calc_val,
-      pct_of_avg_val_ref,
-      avg_val_ref,
       metric_time,
       delta_val,
-      value_received,
-      elapsed_seconds,
-      rate_per_second
+      recv_val,
+      elapsed_secs,
+      rate_per_sec
       )
    select 
       metric_id,
-      metric_work_calc_type,
-      calc_val,
-      pct_of_avg_val_ref,
-      avg_val_ref,
       metric_time,
       delta_val,
-      value_received,
-      elapsed_seconds,
-      rate_per_second
+      recv_val,
+      elapsed_secs,
+      rate_per_sec
      from metric_work 
     where dataset_id=p_dataset.dataset_id
-      and metric_time=p_metric_time
-      -- Only store data if a non zero value exists within the pause_detail_when_zero_hours window.
-      and (round(arcsql.secs_between_timestamps(metric_time, last_non_zero_val)/60/60, 2) < p_dataset.pause_detail_when_zero_hours
-       or p_dataset.rolling_percentile_days > 0
-       or p_dataset.pause_detail_when_zero_hours = 0)
-      and calc_count > 0;
+      and (metric_time=p_metric_time
+       or p_dataset.rolling_percentile_days > 0)
+      and row_count > 0;
    arcsql.debug2('Inserted '||sql%rowcount||' rows');
 exception 
    when others then 
@@ -197,16 +253,25 @@ exception
       raise;
 end;
 
-procedure refresh_metric_percentiles_ref ( -- | Refreshes the percentiles reference for given dataset and metric.
+/*
+
+### refresh_metric_pctiles_ref (deprecated)
+
+See refresh_metric_pctiles_ref_from_metric_work_archive.
+
+*/
+
+procedure refresh_metric_pctiles_ref ( -- | Refreshes the pctiles reference for given dataset and metric.
    p_dataset_id in number,
    p_metric_id in varchar2) is 
 begin 
    g_dataset := get_dataset_row(p_dataset_id=>p_dataset_id);
    delete 
-     from metric_percentiles_ref 
+     from metric_pctiles_ref 
     where metric_id=p_metric_id;
-   insert into metric_percentiles_ref (
+   insert into metric_pctiles_ref (
       metric_id, 
+      ref_type,
       pctile0, 
       pctile10, 
       pctile20, 
@@ -220,17 +285,84 @@ begin
       pctile100) ( 
    select 
       a.metric_id,
-      percentile_cont(.0) within group (order by calc_val),
-      percentile_cont(.1) within group (order by calc_val),
-      percentile_cont(.2) within group (order by calc_val),
-      percentile_cont(.3) within group (order by calc_val),
-      percentile_cont(.4) within group (order by calc_val),
-      percentile_cont(.5) within group (order by calc_val),
-      percentile_cont(.6) within group (order by calc_val),
-      percentile_cont(.7) within group (order by calc_val),
-      percentile_cont(.8) within group (order by calc_val),
-      percentile_cont(.9) within group (order by calc_val),
-      percentile_cont(1) within group (order by calc_val)
+      'recv_val',
+      percentile_cont(.0) within group (order by recv_val),
+      percentile_cont(.1) within group (order by recv_val),
+      percentile_cont(.2) within group (order by recv_val),
+      percentile_cont(.3) within group (order by recv_val),
+      percentile_cont(.4) within group (order by recv_val),
+      percentile_cont(.5) within group (order by recv_val),
+      percentile_cont(.6) within group (order by recv_val),
+      percentile_cont(.7) within group (order by recv_val),
+      percentile_cont(.8) within group (order by recv_val),
+      percentile_cont(.9) within group (order by recv_val),
+      percentile_cont(1) within group (order by recv_val)
+   from metric_detail a
+   where a.metric_id=p_metric_id  
+     and a.metric_time >= a.metric_time-k2_metric.g_dataset.rolling_percentile_days
+   group by
+      a.metric_id);
+   insert into metric_pctiles_ref (
+      metric_id, 
+      ref_type,
+      pctile0, 
+      pctile10, 
+      pctile20, 
+      pctile30, 
+      pctile40, 
+      pctile50, 
+      pctile60, 
+      pctile70, 
+      pctile80, 
+      pctile90, 
+      pctile100) ( 
+   select 
+      a.metric_id,
+      'delta_val',
+      percentile_cont(.0) within group (order by delta_val),
+      percentile_cont(.1) within group (order by delta_val),
+      percentile_cont(.2) within group (order by delta_val),
+      percentile_cont(.3) within group (order by delta_val),
+      percentile_cont(.4) within group (order by delta_val),
+      percentile_cont(.5) within group (order by delta_val),
+      percentile_cont(.6) within group (order by delta_val),
+      percentile_cont(.7) within group (order by delta_val),
+      percentile_cont(.8) within group (order by delta_val),
+      percentile_cont(.9) within group (order by delta_val),
+      percentile_cont(1) within group (order by delta_val)
+   from metric_detail a
+   where a.metric_id=p_metric_id  
+     and a.metric_time >= a.metric_time-k2_metric.g_dataset.rolling_percentile_days
+   group by
+      a.metric_id);
+    insert into metric_pctiles_ref (
+      metric_id, 
+      ref_type,
+      pctile0, 
+      pctile10, 
+      pctile20, 
+      pctile30, 
+      pctile40, 
+      pctile50, 
+      pctile60, 
+      pctile70, 
+      pctile80, 
+      pctile90, 
+      pctile100) ( 
+   select 
+      a.metric_id,
+      'rate_per_sec',
+      percentile_cont(.0) within group (order by rate_per_sec),
+      percentile_cont(.1) within group (order by rate_per_sec),
+      percentile_cont(.2) within group (order by rate_per_sec),
+      percentile_cont(.3) within group (order by rate_per_sec),
+      percentile_cont(.4) within group (order by rate_per_sec),
+      percentile_cont(.5) within group (order by rate_per_sec),
+      percentile_cont(.6) within group (order by rate_per_sec),
+      percentile_cont(.7) within group (order by rate_per_sec),
+      percentile_cont(.8) within group (order by rate_per_sec),
+      percentile_cont(.9) within group (order by rate_per_sec),
+      percentile_cont(1) within group (order by rate_per_sec)
    from metric_detail a
    where a.metric_id=p_metric_id  
      and a.metric_time >= a.metric_time-k2_metric.g_dataset.rolling_percentile_days
@@ -238,7 +370,134 @@ begin
       a.metric_id);
 exception
    when others then 
-      arcsql.log_err(p_text=>'refresh_metric_percentiles_ref: '||dbms_utility.format_error_stack, p_key=>'k2');
+      arcsql.log_err(p_text=>'refresh_metric_pctiles_ref: '||dbms_utility.format_error_stack, p_key=>'k2');
+      raise;
+end;
+
+/*
+
+### refresh_metric_pctiles_ref_from_metric_work_archive (function)
+
+Refreshes the pctiles reference using the aggregated avgs in the METRIC_WORK_ARCHIVE table.
+
+* **p_dataset_id** - Dataset id.
+* **p_metric_id** - Metric id.
+
+On April 1, 2023, I switched to using average data instead of data from METRIC_DETAIL. This is because using the latter requires storing too much historical data to obtain relevant percentiles. I believe that utilizing more historical data, even if it's averaged out, is preferable to using less data to obtain more accurate percentiles. We also avoid the problem of needing to take rolling_percentile_days into account when storing data in METRIC_DETAIL.
+
+*/
+
+procedure refresh_metric_pctiles_ref_from_metric_work_archive ( 
+   -- Required
+   p_dataset_id in number,
+   p_metric_id in varchar2) is 
+begin 
+   g_dataset := get_dataset_row(p_dataset_id=>p_dataset_id);
+   delete 
+     from metric_pctiles_ref 
+    where metric_id=p_metric_id;
+   insert into metric_pctiles_ref (
+      metric_id, 
+      ref_type,
+      pctile0, 
+      pctile10, 
+      pctile20, 
+      pctile30, 
+      pctile40, 
+      pctile50, 
+      pctile60, 
+      pctile70, 
+      pctile80, 
+      pctile90, 
+      pctile100) ( 
+   select 
+      a.metric_id,
+      'recv_val',
+      percentile_cont(.0) within group (order by recv_val_avg),
+      percentile_cont(.1) within group (order by recv_val_avg),
+      percentile_cont(.2) within group (order by recv_val_avg),
+      percentile_cont(.3) within group (order by recv_val_avg),
+      percentile_cont(.4) within group (order by recv_val_avg),
+      percentile_cont(.5) within group (order by recv_val_avg),
+      percentile_cont(.6) within group (order by recv_val_avg),
+      percentile_cont(.7) within group (order by recv_val_avg),
+      percentile_cont(.8) within group (order by recv_val_avg),
+      percentile_cont(.9) within group (order by recv_val_avg),
+      percentile_cont(1) within group (order by recv_val_avg)
+   from metric_work_archive a
+   where a.metric_id=p_metric_id  
+     and a.metric_time >= a.metric_time-k2_metric.g_dataset.rolling_percentile_days
+   group by
+      a.metric_id);
+   insert into metric_pctiles_ref (
+      metric_id, 
+      ref_type,
+      pctile0, 
+      pctile10, 
+      pctile20, 
+      pctile30, 
+      pctile40, 
+      pctile50, 
+      pctile60, 
+      pctile70, 
+      pctile80, 
+      pctile90, 
+      pctile100) ( 
+   select 
+      a.metric_id,
+      'delta_val',
+      percentile_cont(.0) within group (order by delta_val_avg),
+      percentile_cont(.1) within group (order by delta_val_avg),
+      percentile_cont(.2) within group (order by delta_val_avg),
+      percentile_cont(.3) within group (order by delta_val_avg),
+      percentile_cont(.4) within group (order by delta_val_avg),
+      percentile_cont(.5) within group (order by delta_val_avg),
+      percentile_cont(.6) within group (order by delta_val_avg),
+      percentile_cont(.7) within group (order by delta_val_avg),
+      percentile_cont(.8) within group (order by delta_val_avg),
+      percentile_cont(.9) within group (order by delta_val_avg),
+      percentile_cont(1) within group (order by delta_val_avg)
+   from metric_work_archive a
+   where a.metric_id=p_metric_id  
+     and a.metric_time >= a.metric_time-k2_metric.g_dataset.rolling_percentile_days
+   group by
+      a.metric_id);
+    insert into metric_pctiles_ref (
+      metric_id, 
+      ref_type,
+      pctile0, 
+      pctile10, 
+      pctile20, 
+      pctile30, 
+      pctile40, 
+      pctile50, 
+      pctile60, 
+      pctile70, 
+      pctile80, 
+      pctile90, 
+      pctile100) ( 
+   select 
+      a.metric_id,
+      'rate_per_sec',
+      percentile_cont(.0) within group (order by rate_per_sec_avg),
+      percentile_cont(.1) within group (order by rate_per_sec_avg),
+      percentile_cont(.2) within group (order by rate_per_sec_avg),
+      percentile_cont(.3) within group (order by rate_per_sec_avg),
+      percentile_cont(.4) within group (order by rate_per_sec_avg),
+      percentile_cont(.5) within group (order by rate_per_sec_avg),
+      percentile_cont(.6) within group (order by rate_per_sec_avg),
+      percentile_cont(.7) within group (order by rate_per_sec_avg),
+      percentile_cont(.8) within group (order by rate_per_sec_avg),
+      percentile_cont(.9) within group (order by rate_per_sec_avg),
+      percentile_cont(1) within group (order by rate_per_sec_avg)
+   from metric_work_archive a
+   where a.metric_id=p_metric_id  
+     and a.metric_time >= a.metric_time-k2_metric.g_dataset.rolling_percentile_days
+   group by
+      a.metric_id);
+exception
+   when others then 
+      arcsql.log_err(p_text=>'refresh_metric_pctiles_ref_from_metric_work_archive: '||dbms_utility.format_error_stack, p_key=>'k2');
       raise;
 end;
 
@@ -246,8 +505,9 @@ procedure refresh_references ( -- | Refresh references for a metric.
    p_dataset_id in number,
    p_metric_id in varchar2) is 
 begin 
-   refresh_avg_val_hist_ref (p_metric_id);
-   refresh_metric_percentiles_ref (p_dataset_id, p_metric_id);
+   refresh_avg_val_ref (p_metric_id);
+   -- refresh_metric_pctiles_ref (p_dataset_id, p_metric_id);
+   refresh_metric_pctiles_ref_from_metric_work_archive (p_dataset_id, p_metric_id);
 exception
    when others then
       arcsql.log_err(p_text=>'refresh_references: '||dbms_utility.format_error_stack, p_key=>'k2');
@@ -374,7 +634,7 @@ begin
    end if;
    -- Update matching rows in metric_work from metric_in.
    update metric_work sw
-      set (value_received,
+      set (recv_val,
           metric_time,
           -- This is the column which will cause the trigger to fire! This needs to be here.
           updated) = (
@@ -398,22 +658,28 @@ begin
       metric_key,
       metric_description,
       dataset_id,
-      metric_work_calc_type,
-      value_received,
+      recv_val,
       metric_time,
       updated,
-      metric_alt_id) (
+      metric_alt_id,
+      system,
+      subsystem,
+      application,
+      hostname) (
    select 
       metric_name,
       metric_id,
       metric_key,
       metric_description,
       g_dataset.dataset_id,
-      k2_metric.g_dataset.metric_work_calc_type,
       value,
       metric_time,
       systimestamp,
-      metric_alt_id
+      metric_alt_id,
+      system,
+      subsystem,
+      application,
+      hostname
      from metric_in b
     where b.dataset_id=p_dataset_id
       and b.metric_time=p_metric_time
@@ -457,8 +723,7 @@ begin
    g_dataset := get_dataset_row(p_dataset_id=>p_dataset_id);
    for t in metric_times loop 
       process_dataset_time (p_dataset_id=>p_dataset_id, p_metric_time=>t.metric_time);
-      -- Re: rolling_percentile_days, detailed data is required if we need to compare percentiles.
-      if g_dataset.metric_detail_hours > 0 or g_dataset.rolling_percentile_days > 0 then 
+      if g_dataset.metric_detail_hours > 0 then 
          insert_metric_detail_bulk(p_dataset=>g_dataset, p_metric_time=>t.metric_time);
       end if;
    end loop;
@@ -501,15 +766,12 @@ end;
 procedure purge_metrics ( -- | Delete old data from metric_detail and metric_work_archive.
    p_dataset_id in number,
    p_metric_id in varchar2) is 
-   max_metric_detail_hours number;
 begin 
    arcsql.debug2('purge_metrics: '||p_metric_id);
    g_dataset := get_dataset_row(p_dataset_id=>p_dataset_id);
-   -- We may need to keep data to calculate percentiles.
-   max_metric_detail_hours := greatest(g_dataset.rolling_percentile_days*24, g_dataset.metric_detail_hours);
    delete from metric_detail
     where metric_id=p_metric_id 
-      and metric_time < systimestamp-(max_metric_detail_hours/24);
+      and metric_time < systimestamp-(g_dataset.metric_detail_hours/24);
    delete from metric_work_archive
     where metric_id=p_metric_id 
       and metric_time < systimestamp-k2_metric.g_dataset.archive_history_days;
