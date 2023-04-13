@@ -1,6 +1,8 @@
 # K2 App Development Framework for Oracle and Oracle APEX
 
-Follow me on [YouTube](builtonapex.com/youtube) and [Twitter](builtonapex.com/twitter).
+Main branch is on APEX 22.2.4. Last release date for main was 4/12/2023. Video playlist of project setup from scratch [here](https://www.youtube.com/playlist?list=PLoJwJp6kmzqULxbD3NDqie_ZbPdTnDfCj).
+
+You can also just follow the steps below and start with the DEMO app in the ./exports/demo folder. This is much easier but as the demo app gets more complex may contain more than you care to start with.
 
 ## Project goal and focus
 
@@ -27,3 +29,5 @@ As the new **database application user** run ```./install/foo/dev/foo_install.sq
 As an **APEX admin** link the app user schema to an APEX workspace.
 
 As an **APEX user** Import the starter app from ```./exports/k2``` folder into your APEX workspace.
+
+Follow me on [YouTube](builtonapex.com/youtube) and [Twitter](builtonapex.com/twitter).
