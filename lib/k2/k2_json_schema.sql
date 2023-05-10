@@ -1,6 +1,6 @@
 
 begin
-   if 1=1 then
+   if 1=2 then
       drop_table('json_store');
       drop_table('json_data');
    end if;

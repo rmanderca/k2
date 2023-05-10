@@ -1,6 +1,8 @@
 
 -- Patch added Dec 2022
 update saas_auth set account_type='system' where user_name='k2';
+exec drop_package('k2_metrics');
+exec drop_scheduler_job('k2_get_metrics_job');
 
 exec saas_auth_pkg.add_system_user(p_user_name=>'k2', p_email_address=>app_config.app_owner_email);
 
@@ -14,6 +16,7 @@ exec saas_auth_pkg.add_system_user(p_user_name=>'k2', p_email_address=>app_confi
 @k2_alert_schema.sql
 @k2_alert_pkgh.sql 
 @k2_alert_pkgb.sql
+@k2_alert_triggers.sql
 
 @k2_token_schema.sql
 @k2_token_pkgh.sql
@@ -40,10 +43,6 @@ exec saas_auth_pkg.add_system_user(p_user_name=>'k2', p_email_address=>app_confi
 @k2_metric_api_pkgh.sql
 @k2_metric_api_pkgb.sql
 @k2_metric_api.sql
-
-@k2_metrics_pkgh.sql
-@k2_metrics_pkgb.sql
-@k2_metrics_schedules.sql
 
 @k2_file_schema.sql
 @k2_file_pkgh.sql

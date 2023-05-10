@@ -35,7 +35,7 @@ create or replace package app_config as
    -- Add an account for testing to avoid the registration process. Needs to be an email address.
    app_test_user varchar2(256) := 'test@foo.com';
    -- Super common error to get an invalid password here and see an error when your app_users.sql script runs during install.
-   app_test_pass varchar2(256) := 'F4Phantom!!';
+   app_test_pass varchar2(256) := 'APP_TEST_PASS';
 
 end;
 /

@@ -146,6 +146,22 @@ begin
    end if;
 end;
 
+function get_url (
+   p_page_alias in varchar2,
+   p_items in varchar2 default null,
+   p_values in varchar2 default null)
+   return varchar2 is 
+   r varchar2(1024);
+begin 
+   r := apex_page.get_url (
+      p_page=>p_page_alias, 
+      p_items=>p_items, 
+      p_values=>p_values, 
+      p_plain_url=>true);
+   arcsql.debug('get_url: '||r);
+   return r;
+end;
+
 /* 
 -----------------------------------------------------------------------------------
 COOKIES

@@ -3,12 +3,22 @@
 -- uninstall: exec drop_package('saas_auth_config');
 create or replace package saas_auth_pkg as
 
+   -- Can be set for testing purposes if v('APP_USER') is not set and you want to use user_id procedure.
+   g_app_user varchar2(128);
+
    procedure raise_error (
       p_message in varchar2);
 
    procedure assert_valid_email_format ( 
       p_email_address in varchar2);
    
+   function add_account (
+      p_email_address in varchar2,
+      p_full_name in varchar2,
+      p_password in varchar2,
+      p_account_status in varchar2 default 'inactive') 
+      return number;
+
    procedure add_account (
       p_email_address in varchar2,
       p_full_name in varchar2,

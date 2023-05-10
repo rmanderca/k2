@@ -17,7 +17,7 @@ create or replace package k2_config as
     -- Determines if ords is enabled for the schema.
     enable_ords boolean := true;
 
-    secret_key varchar2(128) := 'TidalWavePowerFluxCircuitryXenonFlashTurbineAfterburner';
+    secret_key varchar2(128) := 'SECRET_KEY';
 
 end;
 /

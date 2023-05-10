@@ -19,13 +19,18 @@ create or replace package chatgpt as
 
    procedure build_chat (
       p_chat_session_id in varchar2,
-      p_user in varchar2, 
-      p_message in varchar2 
-      );
-
-   procedure chat (
+      p_user in varchar2,
       p_message in varchar2,
-      p_chat_session_id in varchar2 default null);
+      p_user_id in number default null,
+      p_alternate_id in number default null,
+      p_request_type in number default null);
+
+   procedure chat ( 
+      p_message in varchar2,
+      p_chat_session_id in varchar2 default null,
+      p_user_id in number default null,
+      p_alternate_id in number default null,
+      p_request_type in varchar2 default null);
 
 end;
 /

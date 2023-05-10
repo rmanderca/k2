@@ -1,6 +1,6 @@
 
 begin
-   if 1=1 then
+   if 1=2 then
       drop_table('tokens');
    end if;
 end;
@@ -20,6 +20,7 @@ begin
 		token_alt_id number default null, -- Can be used to associate the token with another object in your app, user defined.
 		token_type varchar2(256) not null, -- Used to logically determine what this token is associated with, user defined.
 		token varchar2(256) not null, -- Auto generated on insert if user does not provide one
+		token_url varchar2(512) default null, -- URL ref which can be used to invoke some action with this token
 		is_enabled number default 1 not null,
 		user_id number default null,
 		expires timestamp default null,
@@ -30,6 +31,9 @@ begin
 	add_primary_key('tokens', 'token_id');
 	if not does_index_exist('token_1') then
 		execute_sql('create unique index token_1 on tokens (token_key)', false);
+	end if;
+	if not does_column_exist('tokens', 'token_url') then
+		execute_sql('alter table tokens add token_url varchar2(512) default null', false);
 	end if;
 end;
 /

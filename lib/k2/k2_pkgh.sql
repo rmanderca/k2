@@ -30,6 +30,12 @@ create or replace package k2 as
       p_url in varchar2)
       return varchar2;
 
+   function get_url (
+      p_page_alias in varchar2,
+      p_items in varchar2 default null,
+      p_values in varchar2 default null)
+      return varchar2;
+
    /* 
    -----------------------------------------------------------------------------------
    COOKIES

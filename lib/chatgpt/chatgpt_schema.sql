@@ -1,13 +1,12 @@
 
 begin
-   if 1=1 then
+   if 1=2 then
       -- Add drop_table statements here if you want in any env where 1=0 is true.
       drop_table('chatgpt_chat_completions');
       drop_table('chatgpt_images');
    end if;
 end;
 /
-
 
 begin
 	if not does_table_exist('chatgpt_chat_completions') then
@@ -19,6 +18,9 @@ begin
 		request_id varchar(128), -- Each request gets a unique id. The response will also be in this table and occurs within the same request so will have the same request id.
 		response_status number, -- HTTP response code
 		content clob, -- The message or the response
+		user_id number default null, -- Optional user id
+		alternate_id number default null, -- Optional id
+		request_type varchar2(128) default null, -- Optional string used to identify one or more requests
 		created timestamp default systimestamp
 		)');
 	end if;

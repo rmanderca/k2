@@ -1,8 +1,24 @@
 
+.k2-text-sm {
+  font-size: 1.2em;
+  font-weight: bold;
+  /* font-family: Arial, sans-serif; */
+  letter-spacing: 0.05em;
+  line-height: 1.0;
+}
+
 .k2-text-md {
   font-size: 1.4em;
   font-weight: bold;
   /* font-family: Arial, sans-serif; */
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+}
+
+.k2-text-lg {
+  font-size: 2.0em;
+  font-weight: bold;
+  /* font-family: Arial, sans-serif; */
+  letter-spacing: 0.05em;
   line-height: 1.4;
 }

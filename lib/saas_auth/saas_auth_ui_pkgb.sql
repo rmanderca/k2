@@ -2,6 +2,47 @@
 
 create or replace package body saas_auth_ui as
 
+/*
+
+### get_auto_login_url (function)
+
+Creates a token with a randomly generated key, retrieves the token's details, generates a URL to the login page of the application with the token added as a parameter, saves the token's details to the tokens table, and returns the URL.
+
+*/
+
+function get_auto_login_url (
+   p_user_id in number)
+   return varchar2 is
+   v_token tokens%rowtype;
+begin 
+   v_token.token := k2_token.create_token (
+      p_token_key=>sys_guid(),
+      p_token_type=>'auto_login_link',
+      p_user_id=>p_user_id);
+
+   v_token := k2_token.get_token_row(p_token=>v_token.token);
+   
+   v_token.token_url :=  k2.monkey_patch_remove_app_root_url(apex_page.get_url (
+      p_application=>k2.app_id,
+      p_page=>'login',
+      p_clear_cache=>20001,
+      p_items=>'P20001_AUTO_LOGIN_TOKEN,P20001_REGION',
+      p_values=>v_token.token||',AUTO_LOGIN',
+      p_plain_url=>true));
+   
+   k2_token.save_token_row(v_token);
+   
+   return v_token.token_url;
+end;
+
+/*
+
+### set_auto_login (procedure)
+
+Enables or disables automatic login for a user. If p_checkbox_value is 'Y', a new token is created and added to a cookie. Otherwise, any existing automatic login tokens for the user are deleted.
+
+*/
+
 procedure set_auto_login (
    p_checkbox_value in varchar2 default 'N') is 
    v_user_id number := saas_auth_pkg.user_id;
@@ -44,19 +85,6 @@ exception
       arcsql.log_err('logout: '||dbms_utility.format_error_stack);
       raise;
 end;
-
-procedure process_create_account ( -- | Add email to the saas_auth table with an unknown password and unverified email.
-   p_email_address in varchar2,
-   p_full_name in varchar2,
-   p_password in varchar2,
-   p_requested_pricing_plan in varchar2 default null) is 
-   n number;
-   r saas_auth%rowtype;
-   v_user_id number;
-   v_email_address varchar2(256) := lower(p_email_address);
-begin 
-   arcsql.log_deprecated('process_create_account: ');
-end; 
 
 /*
 

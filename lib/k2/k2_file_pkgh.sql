@@ -1,4 +1,12 @@
 
+/*
+
+## k2_file (package)
+
+This package is used to create (from SQL), store, and download files.
+
+*/
+
 -- uninstall: exec drop_package('k2_file');
 create or replace package k2_file as 
 
@@ -8,8 +16,7 @@ create or replace package k2_file as
       p_sql in varchar2,
       p_file_format in varchar2,
       p_file_tags in varchar2 default null,
-      p_user_id in number default null,
-      p_user_name in varchar2 default null);
+      p_user_id in number default null);
 
    function get_file_store_row (
       p_file_store_key in varchar2) return file_store%rowtype;

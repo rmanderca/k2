@@ -406,14 +406,29 @@ begin
    end if;
 end;
 
-procedure add_account (
+/*
+
+### add_account (function)
+
+Adds a new account and returns the user id.
+
+* **p_email_address** - Email address for the user.
+* **p_full_name** - Full name of the user.
+* **p_password** - Password for the user.
+* *p_account_status* - Status of the account. Default is 'inactive'.
+
+Error is raised when no data found.
+
+*/
+
+function add_account (
    p_email_address in varchar2,
    p_full_name in varchar2,
    p_password in varchar2,
-   p_account_status in varchar2 default 'inactive') is 
+   p_account_status in varchar2 default 'inactive') 
+   return number is 
    v_user_id number;
 begin 
-   -- This code is similar to process_create_account but we would need to return the new user_id in we wanted to refactor.
    insert into saas_auth (
       user_name,
       full_name,
@@ -434,6 +449,29 @@ begin
       p_user_id=>v_user_id,
       p_password=>p_password);
    k2.fire_event_proc(p_proc_name=>'after_create_account', p_parm=>v_user_id);
+   return v_user_id;
+end;
+
+/*
+
+### add_account (procedure)
+
+See add account function.
+
+*/
+
+procedure add_account (
+   p_email_address in varchar2,
+   p_full_name in varchar2,
+   p_password in varchar2,
+   p_account_status in varchar2 default 'inactive') is 
+   v_user_id number;
+begin 
+   v_user_id := add_account (
+      p_email_address=>p_email_address,
+      p_full_name=>p_full_name,
+      p_password=>p_password,
+      p_account_status=>p_account_status);
 end;
 
 function custom_auth ( -- | Custom authorization function registered as APEX authorization scheme.
@@ -510,9 +548,12 @@ end;
 
 function user_id 
    return number is 
+   v_app_user varchar2(128);
 begin
-   if saas_auth_pkg.does_user_name_exist(p_user_name=>v('APP_USER')) then
-      return to_user_id(p_user_name => v('APP_USER'));
+   arcsql.debug('user_id: '||v('APP_USER')||', '||g_app_user);
+   v_app_user := nvl(trim(v('APP_USER')), g_app_user);
+   if saas_auth_pkg.does_user_name_exist(p_user_name=>v_app_user) then
+      return to_user_id(p_user_name => v_app_user);
    else 
       -- Often use this func when session may not be authenticated and we would get errors if we try to use to_user_id and not authenticated.
       return null;

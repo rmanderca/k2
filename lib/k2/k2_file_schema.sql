@@ -1,6 +1,6 @@
 
 begin
-   if 1=1 then
+   if 1=2 then
       drop_table('file_store');
    end if;
 end;

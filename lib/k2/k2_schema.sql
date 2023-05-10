@@ -1,7 +1,7 @@
 exec drop_table('api_token');
 
 begin 
-   if 1=1 then 
+   if 1=2 then 
       drop_table('cookie');
       drop_table('flash_message');
       drop_table('nav_menu');

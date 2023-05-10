@@ -1,6 +1,18 @@
 create or replace package body chatgpt as 
 
-procedure make_rest_request ( -- | This procedure makes a REST API request with headers, parses the response JSON data into rows in a table, and checks for errors in the response using the k2_json package in PL/SQL.
+/*
+
+### make_rest_request (procedure)
+
+Makes a REST API request to the specified URL with the specified data.
+
+- p_request_id: A unique identifier for the request. Must be a non-null, non-empty string.
+- p_full_url: The URL to which the request should be made. Must be a non-null, non-empty string.
+- p_data: The data to include in the request body. Must be a CLOB.
+
+*/
+
+procedure make_rest_request ( 
    p_request_id in varchar2,
    p_full_url in varchar2,
    p_data in clob) is 
@@ -101,10 +113,28 @@ begin
    delete from chatgpt_chat_completions where chat_session_id=p_chat_session_id;
 end;
 
+/*
+
+### build_chat (procedure)
+
+Builds a series of pre-prompts before beginning engagement with ChatGPT.
+
+- p_chat_session_id: The ID of the chat session. Must be a non-null, non-empty string.
+- p_user: The role of the user. Must be one of the following: system, user, or associate.
+- p_message: The content of the pre-prompt. Must be a non-null, non-empty string.
+
+Description:
+This procedure inserts a pre-prompt message into the chatgpt_chat_completions table, which is used to prompt users for information or to provide information to them before beginning a chat session. It takes three parameters: the chat session ID, the role of the user (which must be one of system, user, or associate), and the content of the pre-prompt message. The pre-prompt message is stored in the content column of the chatgpt_chat_completions table.
+
+*/
+
 procedure build_chat ( -- | Build a series of pre-prompts before you being engaging with ChatGPT.
    p_chat_session_id in varchar2,
    p_user in varchar2, -- | Must be system, user, or associate
-   p_message in varchar2 -- | 
+   p_message in varchar2,
+   p_user_id in number default null,
+   p_alternate_id in number default null,
+   p_request_type in number default null 
    ) is 
 begin
    -- ToDo: Do I need to have a way of know that these are pre-prompts
@@ -122,7 +152,10 @@ end;
 
 procedure chat ( -- | An implementation of a chat function that communicates with OpenAI's GPT-3 API to generate responses to user messages
    p_message in varchar2,
-   p_chat_session_id in varchar2 default null) is
+   p_chat_session_id in varchar2 default null,
+   p_user_id in number default null,
+   p_alternate_id in number default null,
+   p_request_type in varchar2 default null) is
    data_json clob;
    v_chat_session_id chatgpt_chat_completions.chat_session_id%type;
    v_request_id varchar2(128) := sys_guid;
@@ -139,12 +172,18 @@ begin
       chat_session_id,
       role,
       content,
-      request_id) values (
+      request_id,
+      user_id,
+      alternate_id,
+      request_type) values (
       v_chat_session_id,
       -- ToDo: This needs to be a var the user can set
       'user',
       p_message,
-      v_request_id);
+      v_request_id,
+      p_user_id,
+      p_alternate_id,
+      p_request_type);
 
    apex_json.initialize_clob_output;
    apex_json.open_object;
@@ -183,13 +222,19 @@ begin
       role,
       content,
       request_id,
-      response_status) values (
+      response_status,
+      user_id,
+      alternate_id,
+      request_type) values (
       v_chat_session_id,
       k2_json.get_json_data_string(
          p_json_key=>v_request_id, p_json_path=>'root.choices.1.message.role'),
       last_response_message,
       v_request_id,
-      last_status_code);
+      last_status_code,
+      p_user_id,
+      p_alternate_id,
+      p_request_type);
 
 exception
    when others then

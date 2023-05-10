@@ -1,3 +1,10 @@
+/*
+
+### app_schema.sql (file)
+
+There are some common table names in K2 like 'CONTACTS' that you will need to try to avoid using. The easiest way to do this is use something like APP_CONTACTS for you application. It is a good idea to look at the existing table names in your schema before you start building your tables here.
+
+*/
 
 begin
    if 1=1 then

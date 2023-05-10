@@ -49,7 +49,7 @@ API might look like
 */
 
 begin
-   if 1=1 then
+   if 1=2 then
       drop_table('alert_groups');
       drop_table('alert_priority_groups');
       drop_table('alert_priorities');
@@ -57,6 +57,14 @@ begin
    end if;
 end;
 /
+
+/*
+
+### alert_priority_groups (table)
+
+
+
+*/
 
 -- uninstall: exec drop_table('alert_priority_groups');
 exec drop_index('alert_groups_1');
@@ -77,13 +85,6 @@ begin
    if not does_index_exist('alert_priority_groups_1') then
       execute_sql('create unique index alert_priority_groups_1 on alert_priority_groups (alert_priority_group_key)', false);
    end if;
-end;
-/
-
-create or replace trigger alert_priority_groups_insert_trg 
-   before insert on alert_priority_groups for each row
-begin
-   arcsql.assert_str_is_key_str(:new.alert_priority_group_key);
 end;
 /
 
@@ -180,6 +181,13 @@ begin
 end;
 /
 
+create or replace view alert_priorities_v as (
+select b.priority_group_name,
+       a.*
+  from alert_priorities a,
+       alert_priority_groups b 
+ where a.alert_priority_group_id=b.alert_priority_group_id);
+
 -- uninstall: exec drop_view('alert_report_view');
 create or replace view alert_report_view as (
 select a.alert_id, 
@@ -205,3 +213,5 @@ select a.alert_id,
    and a.requested_priority_id=d.priority_id
    and (a.alert_status in ('open', 'abandoned')
     or (a.try_email='y' or a.try_sms='y')));
+
+

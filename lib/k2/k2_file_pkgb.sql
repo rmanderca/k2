@@ -1,27 +1,18 @@
 create or replace package body k2_file as 
 
--- ToDo: DO NOT REQUIRE USER_ID in other k2 modules if NOBODY is ever user!
+/*
 
-function gets_export_from_context (
-   p_context in apex_exec.t_context,
-   p_file_format in varchar2,
-   p_file_name in varchar2)
-   return apex_data_export.t_export is 
-begin
-   return apex_data_export.export (
-      p_context=>p_context,
-      p_format=>p_file_format,
-      p_file_name=>p_file_name);
-end;
+### add_row_to_file_store (procedure)
 
-function gets_context_from_sql (
-   p_sql in varchar2)
-   return apex_exec.t_context is 
-begin
-   return apex_exec.open_query_context (
-      p_location=>apex_exec.c_location_local_db,
-      p_sql_query=>p_sql);
-end;
+Add a row to FILE_STORE table.
+
+* **p_file_store_key** - Unique key that identifies the file in the file_store table.
+* **p_export** - apex_data_export.t_export object.
+* **p_file_format** - The format of the file to be created (e.g., CSV, XLSX, PDF, etc.).
+* p_file_tags - Tags associated with the file. 
+* p_user_id - User ID
+
+*/
 
 procedure add_row_to_file_store (
    p_file_store_key in varchar2,
@@ -57,34 +48,46 @@ begin
    select * into r from file_store where file_store_key=p_file_store_key;
    return r;
 end;
-   
+
+/*
+
+### create_file_from_sql (procedure)
+
+Creates a file from a provided SQL statement and stores it in the FILE_STORE table. 
+
+* **p_file_store_key** - Unique key that identifies the file in the file_store table.
+* **p_file_name** - The name of the file to be created.
+* **p_sql** - The SQL statement used to generate the file content.
+* **p_file_format** - Export format. Valid values are: XLSX, PDF, HTML, CSV, XML and JSON.
+* p_file_tags - Tags associated with the file. 
+* p_user_id - User ID
+
+It would be a good idea to review the docs for apex_data_export.export. There are a lot of options that are not exposed here.
+
+*/
+
 procedure create_file_from_sql ( -- | Create a file from SQL and store it in the file_store table.
    p_file_store_key in varchar2,
    p_file_name in varchar2,
    p_sql in varchar2,
    p_file_format in varchar2,
    p_file_tags in varchar2 default null,
-   -- Can be called with user id or user name.
-   p_user_id in number default null,
-   p_user_name in varchar2 default null) is 
+   p_user_id in number default null) is 
    v_context apex_exec.t_context; 
    v_export apex_data_export.t_export;
-   v_user_id number := p_user_id;
 begin
-   arcsql.debug('create_file_from_sql: ' || p_file_store_key || ', ' || p_file_name || ', ' || p_sql || ', ' || p_file_format || ', ' || p_file_tags || ', ' || p_user_id || ', ' || p_user_name);
+   arcsql.debug('create_file_from_sql: ' || p_file_store_key || ', ' || p_file_name || ', ' || p_sql || ', ' || p_file_format || ', ' || p_file_tags || ', ' || p_user_id);
    
    -- Prevents the "ORA-20001: This procedure must be invoked from within an application session." error when run outside an APEX session.
    wwv_flow_api.set_security_group_id;
 
-   if v('APP_USER') != 'nobody' and v_user_id is null then
-      v_user_id := saas_auth_pkg.to_user_id(p_user_name=>p_user_name);
-   end if;
+   v_context := apex_exec.open_query_context (
+      p_location=>apex_exec.c_location_local_db,
+      p_sql_query=>p_sql);
 
-   v_context := gets_context_from_sql(p_sql=>p_sql);
-
-   v_export := gets_export_from_context (
+   v_export := apex_data_export.export (
       p_context=>v_context,
-      p_file_format=>p_file_format,
+      p_format=>p_file_format,
       p_file_name=>p_file_name);
 
    apex_exec.close(v_context);
@@ -94,7 +97,7 @@ begin
       p_export=>v_export,
       p_file_format=>p_file_format,
       p_file_tags=>p_file_tags,
-      p_user_id=>v_user_id);
+      p_user_id=>p_user_id);
 
 exception
    when others then
@@ -102,13 +105,19 @@ exception
       raise;
 end;
 
-procedure download_file ( -- | Called from a page to download a file.
-   /*
-   Note the page must set "Reload on submit" to "Always". Create a process which calls this proc after submit.
-   Create a button that submits the page. Depending on file type it may open in the browser window
-   as opposed to downloading. Recommended you use the FOS download plugin instead of this process
-   if it is available.
-   */
+/*
+
+### download_file (procedure)
+
+Downloads a file from the FILE_STORE table.
+
+* **p_file_store_key** - Unique key that identifies the file in the file_store table.
+
+Note the page must set "Reload on submit" to "Always". Create a process which calls this proc after submit. Create a button that submits the page. Depending on file type it may open in the browser window as opposed to downloading. Recommended you use the FOS download plugin instead of this process if it is available.
+
+*/
+
+procedure download_file (
    p_file_store_key in varchar2) is 
    v_blob_content blob;
    v_mime_type varchar2(512);

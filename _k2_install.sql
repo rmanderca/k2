@@ -34,14 +34,14 @@ end;
 @./&k2_lib_dir/k2/k2_schema.sql 
 
 @./&k2_lib_dir/k2/k2_utl_pkgh.sql
-@./&k2_lib_dir/k2/k2_utl_pkgb.sql
 @./&k2_lib_dir/k2/k2_pkgh.sql
+@./&k2_lib_dir/saas_auth/saas_auth_pkgh.sql 
+@./&k2_lib_dir/saas_auth/saas_auth_ui_pkgh.sql
 @./&k2_lib_dir/k2/k2_pkgb.sql
+@./&k2_lib_dir/k2/k2_utl_pkgb.sql
 @./&k2_lib_dir/saas_auth/saas_auth_install.sql 
 @./&k2_lib_dir/k2/k2_install.sql
 
-@./&k2_lib_dir/k2/k2_metrics_pkgh.sql
-@./&k2_lib_dir/k2/k2_metrics_pkgb.sql
 
 -- Patchy stuff
 -- Did not need this.

@@ -1,6 +1,6 @@
 
 begin
-   if 1=1 then
+   if 1=2 then
       drop_table('stripe_data');
       drop_table('stripe_customer');
       drop_table('stripe_subscription');

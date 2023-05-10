@@ -6,13 +6,13 @@ private*
 superloser*
 reflash*
 chart*
-x*
-k2dev*
 scout*
 would*
-# demo*
+future*
+loan*
+fire*
 
-# I recommend you exlude files starting with secret. I am not including this 
+# I recommend you exclude files starting with secret. I am not including this 
 # because I need the config/default/secret* files to get included in the repo.
 # secret*
 

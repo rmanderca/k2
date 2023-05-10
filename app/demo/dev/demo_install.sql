@@ -27,6 +27,10 @@
 -- Install any scheduled jobs using the dbms job scheduler.
 @app_schedules.sql
 
+@app_alert.sql
+
+@app_test.sql
+
 commit;
 
 select 'APP install complete.' message from dual;

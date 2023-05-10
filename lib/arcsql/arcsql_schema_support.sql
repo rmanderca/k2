@@ -106,6 +106,13 @@ begin
 end;
 /
 
+create or replace procedure drop_trigger (trigger_name in varchar2) is 
+begin 
+  if does_object_exist(drop_trigger.trigger_name, 'TRIGGER') then 
+     execute_sql('drop trigger '||drop_trigger.trigger_name);
+  end if;
+end;
+/
 
 -- uninstall: drop function does_package_exist;
 create or replace function does_package_exist (package_name in varchar2) return boolean is 
@@ -222,7 +229,6 @@ exception
    raise;
 end;
 /
-
 
 -- uninstall: drop function does_constraint_exist;
 create or replace function does_constraint_exist (constraint_name varchar2) return boolean is
@@ -411,3 +417,46 @@ end;
 /
 
 exec drop_procedure('add_pk_constraint');
+
+create or replace procedure create_lookup_table (
+   p_name in varchar2) is 
+begin 
+   if not does_table_exist(p_name) then 
+      execute_sql('
+         create table '||p_name||' (
+         '||p_name||' varchar2(512)
+         )');
+      add_primary_key(p_name, p_name);
+   end if;
+end;
+/
+
+create or replace procedure add_lookup_value (
+   p_name in varchar2,
+   p_value in varchar2) is 
+begin 
+   execute immediate 'update '||p_name||' set '||p_name||'='''||p_value||''' where '||p_name||'='''||p_value||'''';
+   if sql%notfound then
+      execute immediate 'insert into '||p_name||' ('||p_name||') values ('''||p_value||''')';
+   end if;
+end;
+/
+
+create or replace procedure add_foreign_key (
+   p_table in varchar2,
+   p_column in varchar2,
+   p_parent_table in varchar2,
+   p_parent_column in varchar2,
+   p_cascade in boolean default false) is 
+   v_constraint_name varchar2(128);
+begin 
+   v_constraint_name := 'fk_'||p_table||'_'||p_column;
+   if not does_constraint_exist(v_constraint_name) then 
+      execute_sql('
+         alter table '||p_table||'
+         add constraint '||v_constraint_name||'
+         foreign key ('||p_column||')
+         references '||p_parent_table||' ('||p_parent_column||')'||(case when p_cascade then ' on delete cascade' else '' end));
+   end if;
+end;
+/

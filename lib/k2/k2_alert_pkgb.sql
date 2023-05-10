@@ -225,6 +225,14 @@ begin
       p_priority_name);
 end;
 
+/*
+
+### add_default_rows_to_new_group (procedure)
+
+Adds 5 default priorities when no priorities for group exist. Called from a before insert trigger on the alert_priority_groups table.
+
+*/
+
 procedure add_default_rows_to_new_group ( -- | Adds default priorities to a new priority group.
    p_alert_priority_group_id in number) is 
    n number;
@@ -245,8 +253,8 @@ end;
 procedure create_alert_priority_group ( -- | Creates a priority group with default rows if it does not exist. Does nothing if it does.
    p_alert_priority_group_key in varchar2, -- | Unique key for the priority group.
    p_alert_priority_group_name in varchar2, -- | Name of the priority group.
-   p_user_id in number,
-   p_alert_priority_group_alt_id number default null) is -- | References saas_auth table.
+   p_user_id in number default null,
+   p_alert_priority_group_alt_id number default null) is 
    v_priority_group_id number;
    n number;
 begin 
@@ -262,7 +270,6 @@ begin
          p_alert_priority_group_name, 
          p_user_id,
          p_alert_priority_group_alt_id) returning alert_priority_group_id into v_priority_group_id;
-      add_default_rows_to_new_group(v_priority_group_id);
    end if;
 end;
 

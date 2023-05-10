@@ -27,8 +27,11 @@ create or replace package k2_alert as
    procedure create_alert_priority_group (
       p_alert_priority_group_key in varchar2,
       p_alert_priority_group_name in varchar2,
-      p_user_id in number,
+      p_user_id in number default null,
       p_alert_priority_group_alt_id number default null);
+
+   procedure add_default_rows_to_new_group ( 
+      p_alert_priority_group_id in number);
 
    function does_priority_group_exist (
       p_alert_priority_group_key in varchar2)
